@@ -16,7 +16,7 @@ Five minutes on an existing Expo project. New projects can start from
 1.  **Run init.**
 
     ```sh
-    npx eoria init
+    npx @eoria/cli init
     ```
 
     It writes `eoria.json`, `src/unistyles.ts`, a Babel config with the Unistyles and Worklets
@@ -24,11 +24,11 @@ Five minutes on an existing Expo project. New projects can start from
     overwrite is skipped and reported. The [CLI page](/start/cli/#init) lists exactly what it
     touches.
 
-    Neither `eoria` nor `@eoria/core` is on npm yet. Until they are, build the CLI in a checkout
+    Neither `@eoria/cli` nor `@eoria/core` is on npm yet. Until they are, build the CLI in a checkout
     and run it with `--no-install`, then add `@eoria/core` as a workspace or `file:` dependency:
 
     ```sh
-    pnpm --filter eoria build
+    pnpm --filter @eoria/cli build
     node ../eoria/packages/cli/dist/index.js init --no-install
     ```
 
@@ -59,7 +59,7 @@ Five minutes on an existing Expo project. New projects can start from
           <CommandTabs
 
     items={[
-    { label: 'eoria CLI', command: 'npx eoria add button portal toast' },
+    { label: 'eoria CLI', command: 'npx @eoria/cli add button portal toast' },
     {
     label: 'shadcn CLI',
     command: 'npx shadcn@latest add https://eoria.adamtrip.pt/r/button.json',
@@ -105,6 +105,9 @@ Five minutes on an existing Expo project. New projects can start from
 </Steps>
 
 ## Peer versions
+
+The only hard requirement is the New Architecture. These are the versions the example app and
+the previews run on:
 
 | Package                    | Version |
 | -------------------------- | ------- |

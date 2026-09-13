@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: release
-        uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           # Supply this token to trigger CI on automated release PRs. See RELEASING.md.
           token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
@@ -25,7 +25,7 @@ jobs:
           manifest-file: .release-please-manifest.json
       - name: Start npm publication for each released package
         if: steps.release.outputs.releases_created == 'true'
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PATHS_RELEASED: ${{ steps.release.outputs.paths_released }}
           OUTPUTS: ${{ toJSON(steps.release.outputs) }}

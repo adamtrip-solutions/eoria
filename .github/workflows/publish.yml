@@ -19,7 +19,7 @@ jobs:
       version: ${{ steps.release.outputs.version }}
     steps:
       - id: release
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const match = /^refs\/tags\/(core|cli)-v((0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*))$/.exec(context.ref);
@@ -29,13 +29,13 @@ jobs:
             if (release.draft || release.prerelease) throw new Error('Only published stable releases can be published to latest.');
             const { data: commit } = await github.rest.repos.getCommit({ ...context.repo, ref: context.ref });
             if (commit.sha !== context.sha) throw new Error('Release tag moved after this workflow started.');
-            const packages = { core: '@eoria/core', cli: 'eoria' };
+            const packages = { core: '@eoria/core', cli: '@eoria/cli' };
             core.setOutput('sha', commit.sha);
             core.setOutput('tag', tag);
             core.setOutput('package', packages[match[1]]);
             core.setOutput('directory', `packages/${match[1]}`);
             core.setOutput('version', match[2]);
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ steps.release.outputs.sha }}
           fetch-depth: 0
@@ -71,13 +71,13 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
           registry-url: https://registry.npmjs.org
       - name: Use an OIDC-capable npm CLI
         run: npm install --global npm@11.13.0
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: npm-packages
       - name: Pick the tested tarball for this release
@@ -101,3 +101,13 @@ jobs:
         env:
           TARBALL: ${{ steps.tarball.outputs.tarball }}
         run: npm publish "$TARBALL" --access public --provenance --ignore-scripts
+  deploy-docs:
+    # The docs site also serves the registry, so it only goes live once the package is on npm.
+    needs: [release, publish]
+    permissions:
+      contents: read
+    uses: ./.github/workflows/deploy-docs.yml
+    with:
+      ref: ${{ needs.release.outputs.sha }}
+      branch: main
+    secrets: inherit

@@ -11,7 +11,7 @@ export interface ExtendOptions {
 
 export async function extend(root: string, base: string, name: string, options: ExtendOptions) {
   const config = await readConfig(root)
-  if (!config) throw new CliError('No eoria.json here. Run `npx eoria init` first.')
+  if (!config) throw new CliError('No eoria.json here. Run `npx @eoria/cli init` first.')
   try {
     assertPlainName(base, 'base')
     assertPlainName(name, 'name')

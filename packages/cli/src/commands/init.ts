@@ -113,7 +113,7 @@ export async function init(root: string, options: InitOptions): Promise<void> {
 
   log.info('')
   log.info(
-    `Next: ${log.bold('npx eoria add button')}, then mount <PortalHost /> and <Toaster /> in your root layout.`,
+    `Next: ${log.bold('npx @eoria/cli add button')}, then mount <PortalHost /> and <Toaster /> in your root layout.`,
   )
   log.info(log.dim('Full steps: https://eoria.adamtrip.pt/start/installation/'))
 }

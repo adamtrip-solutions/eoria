@@ -110,7 +110,7 @@ to force animations on, or `Always` to disable them everywhere.
 | Path            | Purpose                                                                                                |
 | --------------- | ------------------------------------------------------------------------------------------------------ |
 | `packages/core` | `@eoria/core`: recipe engine, theme tokens, Jest mock.                                                 |
-| `packages/cli`  | `eoria`: init, add, diff, extend over the registry.                                                    |
+| `packages/cli`  | `@eoria/cli`: the `eoria` binary with init, add, diff, extend over the registry.                       |
 | `registry/ui`   | Component sources. The source of truth for what users copy.                                            |
 | `registry/dist` | Static, shadcn-compatible registry JSON. Built, not committed.                                         |
 | `apps/example`  | Expo app: a screen per component group, showcase screens, and the /preview routes the docs screenshot. |

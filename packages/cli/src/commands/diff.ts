@@ -21,7 +21,7 @@ interface FileReport {
 
 export async function diff(root: string, name: string | undefined, options: DiffOptions) {
   const config = await readConfig(root)
-  if (!config) throw new CliError('No eoria.json here. Run `npx eoria init` first.')
+  if (!config) throw new CliError('No eoria.json here. Run `npx @eoria/cli init` first.')
   const names = name ? [name] : Object.keys(config.installed)
   if (names.length === 0) {
     log.info('Nothing installed yet.')

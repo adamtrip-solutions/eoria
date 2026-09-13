@@ -5,13 +5,14 @@ sidebar:
   order: 5
 ---
 
-Four commands. All of them are file plumbing over a static registry, so there is nothing to
-log in to and nothing that phones home.
+Four commands, shipped as `@eoria/cli` with an `eoria` binary. Run them with `npx @eoria/cli`,
+or add the package as a dev dependency and call `pnpm eoria`. All of them are file plumbing
+over a static registry, so there is nothing to log in to and nothing that phones home.
 
 ## init
 
 ```sh
-npx eoria init
+npx @eoria/cli init
 ```
 
 Writes `eoria.json` next to your `package.json`, then sets up what Unistyles needs:
@@ -31,7 +32,7 @@ the folder you already use.
 ## add
 
 ```sh
-npx eoria add button select
+npx @eoria/cli add button select
 ```
 
 Fetches each item from the registry, follows `registryDependencies` until nothing is missing,
@@ -48,8 +49,8 @@ replace either. npm dependencies the items declare are installed unless you pass
 ## diff
 
 ```sh
-npx eoria diff
-npx eoria diff button
+npx @eoria/cli diff
+npx @eoria/cli diff button
 ```
 
 Compares each installed item with the registry and prints changed hunks. Every file gets one
@@ -63,7 +64,7 @@ files, because they inherit the change through `extendSlotRecipe` the moment you
 ## extend
 
 ```sh
-npx eoria extend button checkout-button
+npx @eoria/cli extend button checkout-button
 ```
 
 Writes `checkout-button.tsx` next to `button.tsx`. The file imports the base recipe, calls

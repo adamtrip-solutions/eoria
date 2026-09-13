@@ -16,7 +16,7 @@ export interface AddOptions {
 
 export async function add(root: string, names: string[], options: AddOptions): Promise<void> {
   const config = await readConfig(root)
-  if (!config) throw new CliError('No eoria.json here. Run `npx eoria init` first.')
+  if (!config) throw new CliError('No eoria.json here. Run `npx @eoria/cli init` first.')
   if (names.length === 0)
     throw new CliError('Name at least one component, e.g. `eoria add button`.')
 

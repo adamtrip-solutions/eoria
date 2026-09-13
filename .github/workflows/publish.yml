@@ -29,7 +29,7 @@ jobs:
             if (release.draft || release.prerelease) throw new Error('Only published stable releases can be published to latest.');
             const { data: commit } = await github.rest.repos.getCommit({ ...context.repo, ref: context.ref });
             if (commit.sha !== context.sha) throw new Error('Release tag moved after this workflow started.');
-            const packages = { core: '@eoria/core', cli: 'eoria' };
+            const packages = { core: '@eoria/core', cli: '@eoria/cli' };
             core.setOutput('sha', commit.sha);
             core.setOutput('tag', tag);
             core.setOutput('package', packages[match[1]]);

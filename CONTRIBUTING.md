@@ -5,7 +5,7 @@ Use Node.js 22 or newer and the pnpm version pinned in `package.json`.
 ```sh
 pnpm install
 pnpm build:registry
-pnpm --filter @eoria/core --filter eoria build
+pnpm --filter @eoria/core --filter @eoria/cli build
 pnpm typecheck
 pnpm test
 pnpm format:check
@@ -26,7 +26,7 @@ npx expo run:ios
 | `registry/ui`   | Component sources. Edit these, never the copies.          |
 | `apps/example`  | Mirrors of the registry plus demo and showcase screens.   |
 | `packages/core` | `@eoria/core`, the recipe engine and tokens.              |
-| `packages/cli`  | `eoria`, the CLI.                                         |
+| `packages/cli`  | `@eoria/cli`, the `eoria` binary.                         |
 | `apps/docs`     | The docs site. Also serves the registry JSON under `/r/`. |
 
 After editing a registry file run `pnpm sync:example` so the example app picks it up, and

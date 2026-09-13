@@ -133,8 +133,8 @@ pnpm --filter docs previews   # screenshot every component on the booted iOS sim
 
 Run the example with `pnpm --filter example ios` after `npx expo prebuild`.
 
-The docs deploy to Cloudflare Pages as a static site. Build command `pnpm build:docs`,
-output directory `apps/docs/dist`, hosted at https://eoria.adamtrip.pt.
+The docs deploy to Cloudflare Pages as a static site at https://eoria.adamtrip.pt, from the
+release workflow so the site never documents an unpublished package. See [RELEASING.md](RELEASING.md).
 
 ## Testing components
 

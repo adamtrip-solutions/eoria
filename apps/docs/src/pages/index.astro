@@ -85,6 +85,14 @@ const features = [
           <div class="chips">
             <Chip active>Card</Chip><Chip>MB Way</Chip><Chip>Apple Pay</Chip>
           </div>
+          <Card>
+            <div class="row between line">
+              <span>Margherita <span class="muted">× 1</span></span><span>€12,90</span>
+            </div>
+            <div class="row between line">
+              <span>Tiramisù <span class="muted">× 1</span></span><span>€12,00</span>
+            </div>
+          </Card>
           <div class="grow"></div>
           <div class="row between total">
             <span class="muted">Total</span><span class="strong">€24,90</span>
@@ -179,16 +187,32 @@ const features = [
     display: flex;
     justify-content: center;
   }
+  /*
+    The mock is laid out at iPhone point size (393 x 852) so every control keeps the proportions
+    it has on a device, then scaled to the frame. Screen width = phone width * 389.5 / 433, so
+    a 340px phone has a 305.8px screen and a scale of 305.8 / 393.
+  */
   .demo :global(.hero-phone) {
-    width: min(100%, 340px);
+    --phone-scale: 0.778;
+    width: 340px;
+    max-width: 100%;
   }
   .mock {
-    height: 100%;
-    padding: 64px var(--space-4) var(--space-6);
+    width: 393px;
+    height: 852px;
+    transform: scale(var(--phone-scale));
+    transform-origin: top left;
+    padding: 62px var(--space-4) 34px;
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
     overflow: hidden;
+  }
+  @media (max-width: 400px) {
+    .demo :global(.hero-phone) {
+      --phone-scale: 0.687;
+      width: 300px;
+    }
   }
   .screen-title {
     margin: 0 0 var(--space-1);
@@ -227,6 +251,9 @@ const features = [
   }
   .total {
     font-size: var(--text-lg);
+  }
+  .line + .line {
+    margin-top: var(--space-2);
   }
   .features {
     display: grid;

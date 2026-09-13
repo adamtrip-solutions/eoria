@@ -1,0 +1,54 @@
+---
+// Mirrors registry/ui/input.tsx: 52pt filled field, muted fill, ring border on focus.
+interface Props {
+  label?: string
+  placeholder?: string
+  value?: string
+  type?: 'text' | 'email' | 'password' | 'number'
+  hint?: string
+  class?: string
+}
+const { label, placeholder, value, type = 'text', hint, class: cls } = Astro.props
+const id = `in-${Math.random().toString(36).slice(2, 8)}`
+---
+
+<div class:list={['field', cls]}>
+  {label && <label for={id}>{label}</label>}
+  <input id={id} type={type} placeholder={placeholder} value={value} />
+  {hint && <p class="hint">{hint}</p>}
+</div>
+
+<style>
+  .field {
+    display: grid;
+    gap: var(--space-2);
+  }
+  label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+  }
+  input {
+    width: 100%;
+    height: 52px;
+    padding: 0 var(--space-4);
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-md);
+    background: var(--color-muted);
+    color: var(--color-foreground);
+    font: inherit;
+    font-size: var(--text-md);
+    outline: none;
+    transition: border-color 120ms var(--ease);
+  }
+  input::placeholder {
+    color: var(--color-muted-foreground);
+  }
+  input:focus {
+    border-color: var(--color-ring);
+  }
+  .hint {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-muted-foreground);
+  }
+</style>

@@ -1,0 +1,106 @@
+---
+import ThemeControls from './ThemeControls.astro'
+const { pathname } = Astro.url
+const nav = [
+  { href: '/start/introduction/', label: 'Docs', active: pathname.startsWith('/start/') },
+  { href: '/components/accordion/', label: 'Components', active: pathname.startsWith('/components/') },
+]
+---
+
+<header class="header">
+  <div class="container inner">
+    <a href="/" class="brand" aria-label="eoria home">
+      <span class="mark" aria-hidden="true"></span>
+      eoria
+    </a>
+    <nav class="nav" aria-label="Primary">
+      {
+        nav.map((n) => (
+          <a href={n.href} aria-current={n.active ? 'page' : undefined}>
+            {n.label}
+          </a>
+        ))
+      }
+      <a href="https://github.com/adamtrip-solutions/eoria" rel="noopener">GitHub</a>
+    </nav>
+    <div class="spacer"></div>
+    <ThemeControls />
+  </div>
+</header>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    height: var(--header-h);
+    background: color-mix(in srgb, var(--color-background) 85%, transparent);
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .inner {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: var(--weight-bold);
+    font-size: var(--text-lg);
+    letter-spacing: -0.02em;
+  }
+  .mark {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    background: var(--color-primary);
+    position: relative;
+  }
+  .mark::after {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border-radius: 4px;
+    background: var(--color-primary-foreground);
+    opacity: 0.9;
+  }
+  .nav {
+    display: flex;
+    gap: var(--space-1);
+  }
+  .nav a {
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-muted-foreground);
+    transition:
+      background-color 120ms var(--ease),
+      color 120ms var(--ease);
+  }
+  .nav a:hover {
+    background: var(--color-surface);
+    color: var(--color-foreground);
+  }
+  .nav a[aria-current='page'] {
+    color: var(--color-foreground);
+  }
+  .spacer {
+    flex: 1;
+  }
+  @media (max-width: 640px) {
+    .inner {
+      gap: var(--space-3);
+    }
+    .nav {
+      display: none;
+    }
+  }
+</style>

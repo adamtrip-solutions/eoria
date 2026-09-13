@@ -1,0 +1,41 @@
+---
+// Mirrors the default Tabs trigger: 40pt pill, muted fill, foreground when active.
+interface Props {
+  active?: boolean
+  href?: string
+  class?: string
+}
+const { active = false, href, class: cls } = Astro.props
+const Tag = href ? 'a' : 'span'
+---
+
+<Tag href={href} class:list={['chip', { active }, cls]}><slot /></Tag>
+
+<style>
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    height: 40px;
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-full);
+    background: var(--color-muted);
+    color: var(--color-foreground);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+    transition:
+      transform 90ms var(--ease),
+      background-color 120ms var(--ease),
+      color 120ms var(--ease);
+  }
+  a.chip:hover {
+    background: var(--color-accent);
+  }
+  a.chip:active {
+    transform: scale(0.97);
+  }
+  .active {
+    background: var(--color-foreground);
+    color: var(--color-background);
+  }
+</style>

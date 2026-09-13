@@ -1,0 +1,52 @@
+---
+title: Tabs
+description: Pill chips by default, an iOS segmented control, or an underline bar.
+category: Display
+sidebar:
+  order: 19
+---
+
+```sh
+npx eoria add tabs
+```
+
+## Usage
+
+```tsx
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
+<Tabs defaultValue="posts" variant="underline">
+  <TabsList>
+    <TabsTrigger value="posts">Posts</TabsTrigger>
+    <TabsTrigger value="about">About</TabsTrigger>
+  </TabsList>
+  <TabsContent value="posts">…</TabsContent>
+  <TabsContent value="about">…</TabsContent>
+</Tabs>
+
+<Tabs variant="segmented" value={mode} onValueChange={setMode}>
+  <TabsList>
+    <TabsTrigger value="system">System</TabsTrigger>
+    <TabsTrigger value="light">Light</TabsTrigger>
+    <TabsTrigger value="dark">Dark</TabsTrigger>
+  </TabsList>
+</Tabs>
+```
+
+## Variants
+
+| Value       | Look                                                                                   |
+| ----------- | -------------------------------------------------------------------------------------- |
+| `default`   | Pill chips, active one filled with `foreground`. Scrolls when they overflow.           |
+| `segmented` | Full-pill track with a sliding thumb. Triggers share the width. Use for view switches. |
+| `underline` | 16pt labels with a 3pt bar that slides between them. Use for top-level sections.       |
+
+## Props
+
+`Tabs` takes `value`, `defaultValue`, `onValueChange` and `variant`. `TabsList` takes `scrollable`, which only applies to pills. `TabsTrigger` takes `value` and `disabled`. `TabsContent` renders only while its `value` is active.
+
+The thumb and the underline are one absolutely positioned view that animates over 150 ms to the trigger's measured layout. The first layout is placed without animating.
+
+## Source
+
+[`registry/ui/tabs.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/tabs.tsx)

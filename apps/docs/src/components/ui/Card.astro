@@ -1,0 +1,42 @@
+---
+// Mirrors registry/ui/card.tsx: surface fill, radius xl, padding 5.
+interface Props {
+  variant?: 'filled' | 'elevated' | 'outline'
+  href?: string
+  class?: string
+  padding?: boolean
+}
+const { variant = 'filled', href, class: cls, padding = true } = Astro.props
+const Tag = href ? 'a' : 'div'
+---
+
+<Tag href={href} class:list={['card', `v-${variant}`, { pad: padding, link: !!href }, cls]}>
+  <slot />
+</Tag>
+
+<style>
+  .card {
+    display: block;
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    color: var(--color-foreground);
+    transition: transform 90ms var(--ease);
+  }
+  .pad {
+    padding: var(--space-5);
+  }
+  .v-elevated {
+    background: var(--color-elevated);
+    box-shadow: var(--shadow-elevated);
+  }
+  .v-outline {
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+  }
+  .link {
+    cursor: pointer;
+  }
+  .link:active {
+    transform: scale(0.985);
+  }
+</style>

@@ -1,0 +1,71 @@
+{
+  "name": "@eoria/core",
+  "version": "0.0.1",
+  "description": "Slot recipe engine and theme tokens for eoria, built on react-native-unistyles",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./jest": {
+      "types": "./dist/jest.d.ts",
+      "import": "./dist/jest.js",
+      "require": "./dist/jest.cjs"
+    },
+    "./tokens": {
+      "types": "./dist/tokens.d.ts",
+      "import": "./dist/tokens.js",
+      "require": "./dist/tokens.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "jest"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-native": ">=0.76",
+    "react-native-unistyles": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/react": "~19.2.2",
+    "jest": "^30.1.3",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-unistyles": "^3.0.0",
+    "ts-jest": "^29.4.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adamtrip-solutions/eoria.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://eoria.adamtrip.pt",
+  "bugs": "https://github.com/adamtrip-solutions/eoria/issues",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "ui",
+    "unistyles",
+    "recipes",
+    "theme"
+  ]
+}

@@ -1,0 +1,45 @@
+---
+title: Card
+description: Surface tile with header, content and footer. Filled by default, no hairline border.
+category: Display
+sidebar:
+  order: 9
+---
+
+```sh
+npx eoria add card
+```
+
+## Usage
+
+```tsx
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+
+<Card>
+  <CardHeader>
+    <CardTitle>Shipping</CardTitle>
+    <CardDescription>Arrives in 2 to 5 days.</CardDescription>
+  </CardHeader>
+  <CardContent>…</CardContent>
+</Card>
+
+<Card variant="elevated" onPress={open} accessibilityLabel="Open profile">…</Card>
+```
+
+## Variants
+
+| Value      | Look                                                  |
+| ---------- | ----------------------------------------------------- |
+| `filled`   | `surface` fill, radius 20. Default.                   |
+| `elevated` | `elevated` fill on a soft shadow. Floats on the page. |
+| `outline`  | Screen background with a 1pt border. The quiet one.   |
+
+## Notes
+
+- With `onPress` or `onLongPress` the root becomes a Pressable with a press state. Give it an `accessibilityLabel`; Pressable flattens the children for screen readers.
+- Controls inside a card use `muted`, one step darker than `surface`, so they keep their fill.
+- `elevated` does not clip its children, because `overflow: hidden` would clip the shadow on iOS. Round an image yourself if it touches the edge.
+
+## Source
+
+[`registry/ui/card.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/card.tsx)

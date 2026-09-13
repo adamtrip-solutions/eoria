@@ -1,0 +1,114 @@
+---
+title: CLI and registry
+description: The eoria CLI, what each command touches, and how the registry stays shadcn-compatible.
+sidebar:
+  order: 5
+---
+
+Four commands. All of them are file plumbing over a static registry, so there is nothing to
+log in to and nothing that phones home.
+
+## init
+
+```sh
+npx eoria init
+```
+
+Writes `eoria.json` next to your `package.json`, then sets up what Unistyles needs:
+
+- `src/unistyles.ts`, which registers the light and dark themes. Import it first in your root
+  layout.
+- `babel.config.js` with the Unistyles and Worklets plugins, if you have no Babel config yet.
+  If you do, it prints the two plugin lines for you to paste. An existing `unistyles.ts` is
+  reported and kept.
+- A `@/*` path alias in `tsconfig.json`, if the alias is missing.
+- The peer packages, through `expo install` on Expo projects and your package manager
+  otherwise. Pass `--no-install` to only print the command.
+
+If a shadcn `components.json` exists, `init` reads its `aliases.ui` so the components land in
+the folder you already use.
+
+## add
+
+```sh
+npx eoria add button select
+```
+
+Fetches each item from the registry, follows `registryDependencies` until nothing is missing,
+and writes the files in dependency order. `button` brings `text`. `select` brings `popper`,
+`portal` and `text`. Imports inside the copied files are rewritten from `@/components/ui` to
+your alias.
+
+A file that already exists is left alone and reported. `add` records a hash of every file it
+writes, so it can tell "you changed this" from "it was already there". Files it skipped get no
+hash, so `diff` will not pretend to know what they looked like. Pass `--overwrite` to
+replace either. npm dependencies the items declare are installed unless you pass
+`--no-install`.
+
+## diff
+
+```sh
+npx eoria diff
+npx eoria diff button
+```
+
+Compares each installed item with the registry and prints changed hunks. Every file gets one
+of five labels: up to date, changed in the registry, edited locally, both, or missing. The hash from
+`add` is what makes the distinction possible. `--full` prints whole files.
+
+`diff` also scans your components folder for files that import an item, such as a
+`checkout-button.tsx` that extends `button`. When the base changed upstream, it names those
+files, because they inherit the change through `extendSlotRecipe` the moment you update.
+
+## extend
+
+```sh
+npx eoria extend button checkout-button
+```
+
+Writes `checkout-button.tsx` next to `button.tsx`. The file imports the base recipe, calls
+`extendSlotRecipe` on it with empty slots and variants for you to fill, and exports
+`CheckoutButton` from the base's `createButton` factory. Bases without a factory get a
+comment explaining the two options instead. See [Recipes](/start/recipes/#extending) for the
+merge rules.
+
+## eoria.json
+
+```json title="eoria.json"
+{
+  "registry": "https://eoria.adamtrip.pt/r",
+  "components": "src/components/ui",
+  "alias": "@/components/ui",
+  "installed": {
+    "text": { "src/components/ui/text.tsx": "3f0b…" },
+    "button": { "src/components/ui/button.tsx": "a91c…" }
+  }
+}
+```
+
+Commit it. The `installed` hashes are what `add` and `diff` use to spot local edits, keyed by
+file path, so renaming `components` after installing loses that history. `registry`
+can be a URL or a local folder, which is how the repository tests the CLI against its own
+`registry/dist`.
+
+## shadcn compatibility
+
+The registry is plain shadcn registry JSON. The index is at
+[`/r/index.json`](/r/index.json) and each item at `/r/<name>.json` with its source inlined.
+If your team already runs the shadcn CLI, this works too:
+
+```sh
+npx shadcn@latest add https://eoria.adamtrip.pt/r/button.json
+```
+
+You lose the hash tracking, `diff` and `extend`, but the files are identical.
+
+## Hosting your own
+
+The registry is a folder. `pnpm build:registry` writes `registry/dist`, and the docs build
+copies it into `public/r`. Deploy the docs output to any static host and point `registry` in
+`eoria.json` at it. There is no server.
+
+`registry/registry.json` lists every item with its files, npm dependencies and registry
+dependencies. The build fails if an item names a registry dependency that does not exist, so a
+typo cannot ship.

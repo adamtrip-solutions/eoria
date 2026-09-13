@@ -1,0 +1,13 @@
+node_modules
+dist
+.turbo
+.expo
+ios
+android
+registry/dist
+apps/docs/public/r
+apps/docs/src/styles/tokens.css
+apps/docs/.astro
+pnpm-lock.yaml
+# Managed by release-please.
+CHANGELOG.md

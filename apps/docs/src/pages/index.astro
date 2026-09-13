@@ -1,0 +1,299 @@
+---
+import { getCollection } from 'astro:content'
+import Base from '../layouts/Base.astro'
+import Button from '../components/ui/Button.astro'
+import Card from '../components/ui/Card.astro'
+import Badge from '../components/ui/Badge.astro'
+import Chip from '../components/ui/Chip.astro'
+import Segmented from '../components/ui/Segmented.astro'
+import Input from '../components/ui/Input.astro'
+import Switch from '../components/ui/Switch.astro'
+import Iphone from '../components/ui/Iphone.astro'
+
+const components = (await getCollection('docs')).filter((e) => e.id.startsWith('components/'))
+const categories = ['Layout', 'Forms', 'Display', 'Overlays', 'Primitives'].map((label) => ({
+  label,
+  items: components
+    .filter((e) => e.data.category === label)
+    .sort((a, b) => a.data.title.localeCompare(b.data.title)),
+}))
+
+const features = [
+  {
+    title: 'Copy, then own',
+    body: 'The registry hosts source. `eoria add` copies it into components/ui, and `eoria diff` tells you when upstream moved. No provider to wrap.',
+  },
+  {
+    title: 'Native-first look',
+    body: 'Tall buttons, filled fields, chips, bottom sheets and pill toasts. The patterns people already know from their phone.',
+  },
+  {
+    title: 'One styling construct',
+    body: 'Every component is a slot recipe: slots, variants, defaults. Extend a base recipe and the derived file tracks it.',
+  },
+  {
+    title: 'Snappy by design',
+    body: 'Timings of 90 to 150 ms and no springs. Reduce motion is honoured because Reanimated defaults to it.',
+  },
+  {
+    title: 'Themes that swap in place',
+    body: 'Six colour presets, light and dark. Styles resolve in native code, so a preset change does not remount your screen.',
+  },
+  {
+    title: 'Typed all the way down',
+    body: 'Variants, slot overrides and theme keys are inferred. Add your own tokens and recipes see them.',
+  },
+]
+---
+
+<Base title="eoria" description="Native-first React Native components you copy into your app. Built on Unistyles and Reanimated.">
+  <main>
+    <section class="container hero">
+      <div class="copy">
+        <Badge>Alpha · Expo SDK 57</Badge>
+        <h1>Components that feel like the phone they run on.</h1>
+        <p>
+          eoria is a React Native component library you copy into your project. Built on
+          Unistyles 3 and Reanimated 4, styled after the apps people use every day, and yours
+          to change once the files land in your repo.
+        </p>
+        <div class="actions">
+          <Button href="/start/installation/">Get started</Button>
+          <Button href="/components/accordion/" variant="secondary">Browse components</Button>
+        </div>
+        <pre class="install"><code>npx eoria add button</code></pre>
+      </div>
+
+      <div class="demo">
+        <Iphone class="hero-phone">
+          <div class="mock">
+          <p class="screen-title">Checkout</p>
+          <Segmented items={['Delivery', 'Pickup']} />
+          <Card>
+            <div class="row between">
+              <div>
+                <p class="strong">Bruno Adão</p>
+                <p class="muted">Rua da Prata 12, Lisboa</p>
+              </div>
+              <Badge>Home</Badge>
+            </div>
+          </Card>
+          <Input label="Promo code" placeholder="SUMMER" />
+          <Card>
+            <Switch label="Leave at the door" checked />
+          </Card>
+          <div class="chips">
+            <Chip active>Card</Chip><Chip>MB Way</Chip><Chip>Apple Pay</Chip>
+          </div>
+          <div class="grow"></div>
+          <div class="row between total">
+            <span class="muted">Total</span><span class="strong">€24,90</span>
+          </div>
+          <Button width="full">Place order</Button>
+          </div>
+        </Iphone>
+      </div>
+    </section>
+
+    <section class="container features">
+      {
+        features.map((f) => (
+          <Card>
+            <h2>{f.title}</h2>
+            <p>{f.body}</p>
+          </Card>
+        ))
+      }
+    </section>
+
+    <section class="container catalogue">
+      <div class="catalogue-head">
+        <h2>{components.length} components</h2>
+        <p>Each one a file in your repo, each one a slot recipe.</p>
+      </div>
+      {
+        categories.map((cat) => (
+          <div class="cat">
+            <h3>{cat.label}</h3>
+            <div class="chips wrap">
+              {cat.items.map((c) => (
+                <Chip href={`/${c.id}/`}>{c.data.title}</Chip>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </section>
+
+    <footer class="container footer">
+      <span>MIT · adamtrip-solutions/eoria</span>
+      <a href="https://github.com/adamtrip-solutions/eoria" rel="noopener">GitHub</a>
+    </footer>
+  </main>
+</Base>
+
+<style>
+  .hero {
+    display: grid;
+    gap: var(--space-10);
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-12);
+    align-items: center;
+  }
+  .copy {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+    min-width: 0;
+  }
+  .copy h1 {
+    margin: 0;
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.05;
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.03em;
+    max-width: 14ch;
+  }
+  .copy > p {
+    margin: 0;
+    font-size: var(--text-lg);
+    line-height: var(--leading-lg);
+    color: var(--color-muted-foreground);
+    max-width: 52ch;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .install {
+    margin: 0;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    font-size: var(--text-sm);
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  .demo {
+    display: flex;
+    justify-content: center;
+  }
+  .demo :global(.hero-phone) {
+    width: min(100%, 340px);
+  }
+  .mock {
+    height: 100%;
+    padding: 64px var(--space-4) var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    overflow: hidden;
+  }
+  .screen-title {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .between {
+    justify-content: space-between;
+  }
+  .demo p {
+    margin: 0;
+  }
+  .strong {
+    font-weight: var(--weight-semibold);
+  }
+  .muted {
+    color: var(--color-muted-foreground);
+    font-size: var(--text-sm);
+  }
+  .chips {
+    display: flex;
+    gap: var(--space-2);
+    overflow: hidden;
+  }
+  .wrap {
+    flex-wrap: wrap;
+  }
+  .grow {
+    flex: 1;
+  }
+  .total {
+    font-size: var(--text-lg);
+  }
+  .features {
+    display: grid;
+    gap: var(--space-4);
+    padding-bottom: var(--space-12);
+  }
+  .features h2 {
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    letter-spacing: -0.01em;
+  }
+  .features p {
+    margin: 0;
+    color: var(--color-muted-foreground);
+    font-size: var(--text-sm);
+    line-height: var(--leading-sm);
+  }
+  .catalogue {
+    padding-bottom: var(--space-16);
+  }
+  .catalogue-head {
+    margin-bottom: var(--space-5);
+  }
+  .cat + .cat {
+    margin-top: var(--space-6);
+  }
+  .cat h3 {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-muted-foreground);
+  }
+  .catalogue-head h2 {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+  }
+  .catalogue-head p {
+    margin: 0;
+    color: var(--color-muted-foreground);
+  }
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    padding-top: var(--space-6);
+    padding-bottom: var(--space-10);
+    border-top: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+    color: var(--color-muted-foreground);
+  }
+  @media (min-width: 900px) {
+    .hero {
+      grid-template-columns: 1.1fr 0.9fr;
+      padding-top: var(--space-16);
+      padding-bottom: var(--space-16);
+    }
+    .features {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  @media (min-width: 600px) and (max-width: 899px) {
+    .features {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

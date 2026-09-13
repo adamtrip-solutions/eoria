@@ -1,0 +1,66 @@
+---
+title: Introduction
+description: What eoria is, how it differs from other React Native UI kits, and what it expects from your app.
+sidebar:
+  order: 1
+---
+
+eoria is a set of React Native components you copy into your project. It follows the shadcn
+model: the registry hosts source files, `eoria add` copies them into `components/ui`, and from
+then on the code is yours. There is no component package to upgrade and no theme provider wrapping
+your app. The one package you install is `@eoria/core`, which holds the recipe engine and the
+default tokens.
+
+## Why another one
+
+Most React Native kits are either a port of a web design system or a wrapper around native
+widgets. The first looks like a website on a phone. The second cannot be themed past a colour or
+two. eoria picks a third target. The defaults are the patterns you see in Uber, Stripe and
+Airbnb: tall full-width buttons, filled inputs, sheets from the bottom, chips instead of tab
+bars. You get one look on iOS and Android, and you can change all of it because the files are in
+your repo.
+
+## How a component is built
+
+Every component is a slot recipe. A recipe names the parts of a component (slots), the variants
+that change them, and the defaults.
+
+```tsx
+export const badgeRecipe = defineSlotRecipe((theme) => ({
+  slots: {
+    root: { borderRadius: theme.radius.full, paddingHorizontal: theme.space[2] },
+    label: { fontSize: theme.fontSize.xs, color: theme.colors.foreground },
+  },
+  variants: {
+    variant: {
+      default: { root: { backgroundColor: theme.colors.accent } },
+      solid: { root: { backgroundColor: theme.colors.primary } },
+    },
+  },
+  defaultVariants: { variant: 'default' },
+}))
+```
+
+`useRecipe(badgeRecipe, { variant })` returns one style object per slot, resolved by
+[Unistyles](https://www.unistyl.es) from a single stylesheet. Theme changes are applied in
+native code. `useRecipe` subscribes to theme changes, so a switch to dark mode re-resolves the
+styles without you wiring anything.
+
+## What eoria expects
+
+- Expo SDK 57 or React Native 0.86 with the New Architecture enabled.
+- A development build. Unistyles and Reanimated ship native code, so Expo Go cannot run it.
+- `react-native-unistyles` 3 and `react-native-reanimated` 4 as peer dependencies.
+- A `PortalHost` near the root of your app for overlays, and a `Toaster` if you use toasts.
+
+Web is not a target yet. The recipe engine keeps a web path open, and every component avoids
+native-only APIs where a portable one exists, so it can come later without a rewrite.
+
+## Where things live
+
+| Path            | What                                                                  |
+| --------------- | --------------------------------------------------------------------- |
+| `packages/core` | `@eoria/core`: recipe engine, tokens, colour presets, Jest mock.      |
+| `registry/ui`   | Component sources. What the CLI copies.                               |
+| `apps/example`  | Expo app with a screen per component group and four showcase screens. |
+| `apps/docs`     | This site. Also serves the registry JSON under `/r/`.                 |

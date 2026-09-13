@@ -1,0 +1,23 @@
+name: Feature request
+description: Propose a component, a variant, a CLI command or a token change.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What you are building and what gets in the way today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: The API you would expect. For a component, name the slots and variants. For the CLI, the command and flags.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: How you work around it now, for example with `extendSlotRecipe` or a local edit.

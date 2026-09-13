@@ -1,0 +1,37 @@
+---
+title: Separator
+description: Horizontal or vertical rule, decorative by default.
+category: Layout
+sidebar:
+  order: 11
+---
+
+```sh
+npx eoria add separator
+```
+
+## Usage
+
+```tsx
+import { Separator } from '@/components/ui/separator'
+
+<Separator />
+<HStack gap={3} style={{ height: 24 }}>
+  <Text>Left</Text>
+  <Separator orientation="vertical" />
+  <Text>Right</Text>
+</HStack>
+```
+
+## Props
+
+| Prop          | Values                   | Default      |
+| ------------- | ------------------------ | ------------ |
+| `orientation` | `horizontal`, `vertical` | `horizontal` |
+| `decorative`  | boolean                  | `true`       |
+
+Decorative separators are hidden from assistive technology. Set `decorative={false}` to expose it with the `separator` role. Inside a row, give it `flex: 1` to fill the remaining width.
+
+## Source
+
+[`registry/ui/separator.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/separator.tsx)

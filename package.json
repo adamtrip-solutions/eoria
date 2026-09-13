@@ -1,0 +1,28 @@
+{
+  "name": "eoria-monorepo",
+  "private": true,
+  "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "build:registry": "node scripts/build-registry.mjs",
+    "sync:example": "node scripts/sync-example.mjs",
+    "format": "prettier --write .",
+    "build:docs": "pnpm --filter docs build",
+    "dev:docs": "pnpm --filter docs dev",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.6",
+    "typescript": "^5.9.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adamtrip-solutions/eoria.git"
+  }
+}

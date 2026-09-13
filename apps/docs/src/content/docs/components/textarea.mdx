@@ -1,0 +1,32 @@
+---
+title: Textarea
+description: Multiline input. Extends the Input recipe, so edits to Input flow through.
+category: Forms
+sidebar:
+  order: 6
+---
+
+```sh
+npx eoria add textarea
+```
+
+## Usage
+
+```tsx
+import { Textarea } from '@/components/ui/textarea'
+
+<Textarea placeholder="Tell people about yourself" value={bio} onChangeText={setBio} />
+<Textarea size="lg" />
+```
+
+## Variants
+
+Same as [Input](/components/input/). Sizes map to 80, 96 and 136pt minimum heights.
+
+## Notes
+
+This is the smallest example of `extendSlotRecipe` in the registry. The recipe adds `minHeight`, vertical padding, a line height and `textAlignVertical: 'top'`, and inherits everything else. Change the Input radius and the Textarea follows.
+
+## Source
+
+[`registry/ui/textarea.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/textarea.tsx)

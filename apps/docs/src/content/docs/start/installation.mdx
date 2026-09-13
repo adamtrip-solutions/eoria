@@ -1,0 +1,130 @@
+---
+title: Installation
+description: Add the runtime, configure Unistyles and Reanimated, and copy your first component.
+sidebar:
+  order: 2
+---
+
+import Steps from '../../../components/ui/Steps.astro'
+import CommandTabs from '../../../components/ui/CommandTabs.astro'
+
+Five minutes on an existing Expo project. New projects can start from
+`npx create-expo-app@latest` with the default template.
+
+<Steps>
+
+1.  **Run init.**
+
+    ```sh
+    npx eoria init
+    ```
+
+    It writes `eoria.json`, `src/unistyles.ts`, a Babel config with the Unistyles and Worklets
+    plugins, the `@/*` alias, and installs the peers with `expo install`. Each file it would
+    overwrite is skipped and reported. The [CLI page](/start/cli/#init) lists exactly what it
+    touches.
+
+    Neither `eoria` nor `@eoria/core` is on npm yet. Until they are, build the CLI in a checkout
+    and run it with `--no-install`, then add `@eoria/core` as a workspace or `file:` dependency:
+
+    ```sh
+    pnpm --filter eoria build
+    node ../eoria/packages/cli/dist/index.js init --no-install
+    ```
+
+2.  **Import the themes first.**
+
+    `init` created `src/unistyles.ts`. It has to run before any component renders, so import it
+    at the top of your root layout.
+
+    ```ts title="src/unistyles.ts"
+    import { configureUnistyles, defaultThemes, type EoriaTheme } from '@eoria/core'
+
+    declare module 'react-native-unistyles' {
+      export interface UnistylesThemes {
+        light: EoriaTheme
+        dark: EoriaTheme
+      }
+    }
+
+    configureUnistyles({ themes: defaultThemes })
+    ```
+
+    `configureUnistyles` wraps `StyleSheet.configure` and turns on adaptive themes, so the app
+    follows the OS appearance until you say otherwise. See [Theming](/start/theming/) for presets
+    and manual switching.
+
+3.  **Add your first components.**
+
+          <CommandTabs
+
+    items={[
+    { label: 'eoria CLI', command: 'npx eoria add button portal toast' },
+    {
+    label: 'shadcn CLI',
+    command: 'npx shadcn@latest add https://eoria.adamtrip.pt/r/button.json',
+    },
+    ]}
+    />
+
+    Dependencies resolve transitively. Adding `button` also copies `text`; adding `select` copies
+    `popper`, `portal` and `text`.
+
+4.  **Mount the portal host and toaster.**
+
+    Overlays render through a portal so they sit above navigation. Put the host last in your
+    root layout.
+
+    ```tsx title="src/app/_layout.tsx"
+    import '@/unistyles'
+    import { Stack } from 'expo-router'
+    import { PortalHost } from '@/components/ui/portal'
+    import { Toaster } from '@/components/ui/toast'
+
+    export default function RootLayout() {
+      return (
+        <>
+          <Stack />
+          <PortalHost />
+          <Toaster />
+        </>
+      )
+    }
+    ```
+
+5.  **Rebuild the native app.**
+
+    ```sh
+    npx expo prebuild
+    npx expo run:ios
+    ```
+
+    Expo Go will not work. If you see `Unistyles: StyleSheet.configure was not called`, the
+    themes file is not imported before the first component renders.
+
+</Steps>
+
+## Peer versions
+
+| Package                    | Version |
+| -------------------------- | ------- |
+| react-native               | 0.86    |
+| react-native-unistyles     | 3.3     |
+| react-native-reanimated    | 4.5     |
+| react-native-worklets      | 0.10    |
+| react-native-nitro-modules | 0.37    |
+
+These are what the example app pins. Older Unistyles 3 releases should work; Unistyles 2 will
+not, because the recipe engine uses `useVariants` and the babel plugin's dependency tracking.
+
+## Jest
+
+`@eoria/core/jest` mocks Unistyles with variant resolution. The official mock strips variants,
+which makes every variant test pass for the wrong reason.
+
+```js title="jest.config.js"
+module.exports = {
+  preset: 'jest-expo',
+  setupFiles: ['@eoria/core/jest'],
+}
+```

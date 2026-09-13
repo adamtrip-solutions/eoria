@@ -1,0 +1,83 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: Exact commit to verify
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm build:registry
+      - run: pnpm --filter @eoria/core --filter eoria build
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: Build the docs site and registry output
+        if: runner.os == 'Linux'
+        run: pnpm build:docs
+      - name: Pack publishable packages
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p artifacts
+          pnpm --filter @eoria/core --filter eoria exec pnpm pack --pack-destination "$GITHUB_WORKSPACE/artifacts"
+      - name: Smoke test the packed CLI
+        if: runner.os == 'Linux'
+        run: |
+          set -eu
+          tmp=$(mktemp -d)
+          mkdir -p "$tmp/src"
+          printf '{"name":"smoke","private":true,"dependencies":{}}' > "$tmp/package.json"
+          cd "$tmp"
+          npm install --no-audit --no-fund "$GITHUB_WORKSPACE"/artifacts/eoria-*.tgz
+          npx eoria init --no-install --registry "$GITHUB_WORKSPACE/registry/dist"
+          npx eoria add button select --no-install
+          test -f src/components/ui/button.tsx
+          test -f src/components/ui/popper.tsx
+          npx eoria diff
+          npx eoria extend button checkout-button
+          test -f src/components/ui/checkout-button.tsx
+      - name: Save tested packages
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: npm-packages
+          path: artifacts/*.tgz
+          if-no-files-found: error
+          retention-days: 14
+  complete:
+    name: CI passed
+    if: always()
+    needs: [verify]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every verification job to pass
+        env:
+          VERIFY_RESULT: ${{ needs.verify.result }}
+        run: test "$VERIFY_RESULT" = success

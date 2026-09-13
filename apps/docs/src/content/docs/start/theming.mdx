@@ -1,0 +1,103 @@
+---
+title: Theming
+description: Tokens, colour presets, dark mode, and adding your own keys.
+sidebar:
+  order: 3
+---
+
+A theme is a plain object with five groups: `colors`, `space`, `radius`, `fontSize` with
+`lineHeight`, and `fontWeight`. Every recipe reads from it. Change a value and every component
+that uses it updates.
+
+## Colour keys
+
+The colour keys are fixed so that components can rely on them. Four of them describe depth.
+
+| Key                                    | Used for                                                 |
+| -------------------------------------- | -------------------------------------------------------- |
+| `background`                           | Screens.                                                 |
+| `surface`                              | Cards and tiles. One step above the screen.              |
+| `muted`                                | Controls: fields, chips, secondary buttons. One step up. |
+| `elevated`                             | Floating layers: menus, popovers, sheets.                |
+| `foreground`                           | Default text and the active chip fill.                   |
+| `mutedForeground`                      | Secondary text.                                          |
+| `primary`, `primaryForeground`         | Primary button, checked switch, progress bar.            |
+| `secondary`, `secondaryForeground`     | Reserved. The secondary button uses `muted`.             |
+| `accent`, `accentForeground`           | Tinted badges, pressed menu rows.                        |
+| `destructive`, `destructiveForeground` | Errors, destructive buttons and toasts.                  |
+| `border`                               | Separators and hairlines on floating layers.             |
+| `input`                                | Unchecked switch track.                                  |
+| `ring`                                 | Focus ring on fields and open selects.                   |
+
+Keeping `surface` and `muted` one step apart is what lets a filled input sit inside a filled
+card and still read as a control. If you change one, move the other.
+
+## Presets
+
+`@eoria/core` ships six presets: `zinc` (the default), `blue`, `green`, `rose`, `violet` and
+`orange`. Each is a light and a dark palette. The tinted ones keep zinc's neutrals and change
+`primary`, `ring` and `accent`, the same idea as shadcn base colours. Primary pairs were checked
+against WCAG AA for the 16pt button label.
+
+```ts
+import { colorPresets, createThemes } from '@eoria/core'
+
+configureUnistyles({ themes: createThemes(colorPresets.violet) })
+```
+
+To switch presets while the app runs, update both registered themes in place. Adaptive
+light/dark keeps working and nothing remounts.
+
+```ts
+import { UnistylesRuntime } from 'react-native-unistyles'
+
+UnistylesRuntime.updateTheme('light', (t) => ({ ...t, colors: colorPresets.rose.light }))
+UnistylesRuntime.updateTheme('dark', (t) => ({ ...t, colors: colorPresets.rose.dark }))
+```
+
+## Light, dark, and system
+
+Adaptive themes are on by default. To let the user pick, turn them off first. Calling
+`setTheme` while adaptive themes are on throws.
+
+```ts
+export function setMode(mode: 'system' | 'light' | 'dark') {
+  if (mode === 'system') {
+    UnistylesRuntime.setAdaptiveThemes(true)
+    return
+  }
+  if (UnistylesRuntime.hasAdaptiveThemes) UnistylesRuntime.setAdaptiveThemes(false)
+  UnistylesRuntime.setTheme(mode)
+}
+```
+
+`useUnistyles().rt.themeName` and `rt.hasAdaptiveThemes` re-render when either changes, so a
+segmented control bound to them stays in sync.
+
+## Your own tokens
+
+The core keys are fixed. Extra keys are yours. Augment the interface, add the values, and the
+theme is typed everywhere, including inside recipes.
+
+```ts
+declare module '@eoria/core' {
+  interface EoriaTheme {
+    brand: { coral: string; ink: string }
+  }
+}
+
+const light = { ...lightTheme, brand: { coral: '#ff6b57', ink: '#101828' } }
+```
+
+## Scales
+
+| Group        | Keys                                              |
+| ------------ | ------------------------------------------------- |
+| `space`      | 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16 (4pt grid)     |
+| `radius`     | sm 8, md 12, lg 16, xl 20, 2xl 28, full           |
+| `fontSize`   | xs 12, sm 14, md 16, lg 18, xl 20, 2xl 24, 3xl 30 |
+| `lineHeight` | matched to each font size                         |
+| `fontWeight` | normal, medium, semibold, bold                    |
+
+`Box` exposes the spacing and colour scales as props, so `<Box p={4} bg="surface" rounded="xl">`
+reads the theme without a stylesheet.

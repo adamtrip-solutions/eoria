@@ -1,0 +1,41 @@
+---
+title: Input
+description: Filled single-line text field with focus, invalid and disabled states.
+category: Forms
+sidebar:
+  order: 5
+---
+
+```sh
+npx eoria add input
+```
+
+## Usage
+
+```tsx
+import { Input } from '@/components/ui/input'
+
+<Input placeholder="you@example.com" keyboardType="email-address" value={email} onChangeText={setEmail} />
+<Input invalid placeholder="Required" />
+<Input disabled value="locked" />
+```
+
+## Variants
+
+| Prop       | Values                          | Default |
+| ---------- | ------------------------------- | ------- |
+| `size`     | `sm` 44pt, `md` 52pt, `lg` 56pt | `md`    |
+| `invalid`  | boolean                         | `false` |
+| `disabled` | boolean                         | `false` |
+
+Focus is tracked internally and drives the ring colour. Every `TextInput` prop passes through.
+
+## Notes
+
+- The frame is a 1.5pt transparent border over the `muted` fill, so the focus and error borders appear without a layout shift.
+- `placeholderTextColor` and `selectionColor` come from the theme.
+- Pair with [Field](/components/field/) for a label, description and error message wired for screen readers.
+
+## Source
+
+[`registry/ui/input.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/input.tsx)

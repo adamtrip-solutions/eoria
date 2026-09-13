@@ -1,0 +1,44 @@
+---
+// Mirrors Tabs variant="segmented": pill track, padding 3, elevated thumb.
+interface Props {
+  items: string[]
+  active?: number
+  class?: string
+}
+const { items, active = 0, class: cls } = Astro.props
+---
+
+<div class:list={['segmented', cls]} role="tablist">
+  {
+    items.map((item, i) => (
+      <span role="tab" aria-selected={i === active} class:list={['item', { on: i === active }]}>
+        {item}
+      </span>
+    ))
+  }
+</div>
+
+<style>
+  .segmented {
+    display: flex;
+    padding: 3px;
+    border-radius: var(--radius-full);
+    background: var(--color-muted);
+  }
+  .item {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-muted-foreground);
+  }
+  .on {
+    background: var(--color-elevated);
+    color: var(--color-foreground);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+</style>

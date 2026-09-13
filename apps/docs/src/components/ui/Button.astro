@@ -1,0 +1,123 @@
+---
+// Mirrors registry/ui/button.tsx: 52pt root, radius md, 16pt semibold label,
+// press scale 0.97 with a foreground tint overlay.
+interface Props {
+  variant?: 'default' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'link'
+  size?: 'sm' | 'md' | 'lg'
+  width?: 'auto' | 'full'
+  href?: string
+  class?: string
+  [key: string]: unknown
+}
+const { variant = 'default', size = 'md', width = 'auto', href, class: cls, ...rest } = Astro.props
+const Tag = href ? 'a' : 'button'
+---
+
+<Tag
+  href={href}
+  type={href ? undefined : 'button'}
+  class:list={['btn', `v-${variant}`, `s-${size}`, `w-${width}`, cls]}
+  {...rest}
+>
+  <slot name="icon" />
+  <span class="label"><slot /></span>
+</Tag>
+
+<style>
+  .btn {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 52px;
+    padding: 0 var(--space-5);
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-md);
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    text-decoration: none;
+    transition: transform 90ms var(--ease);
+  }
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    opacity: 0;
+    transition: opacity 90ms var(--ease);
+    pointer-events: none;
+  }
+  .btn:hover::after {
+    opacity: 0.06;
+  }
+  .btn:active {
+    transform: scale(0.97);
+  }
+  .btn:active::after {
+    opacity: 0.08;
+  }
+  .v-default:active::after,
+  .v-destructive:active::after {
+    opacity: 0.16;
+  }
+  .btn :global(svg) {
+    width: 20px;
+    height: 20px;
+  }
+  .v-secondary {
+    background: var(--color-muted);
+    color: var(--color-foreground);
+  }
+  .v-outline {
+    background: transparent;
+    border-color: var(--color-foreground);
+    color: var(--color-foreground);
+  }
+  .v-ghost {
+    background: transparent;
+    color: var(--color-foreground);
+  }
+  .v-destructive {
+    background: var(--color-destructive);
+    color: var(--color-destructive-foreground);
+  }
+  .v-link {
+    background: transparent;
+    color: var(--color-primary);
+    min-height: 0;
+    padding: 0;
+    border-radius: 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .v-link::after {
+    display: none;
+  }
+  .v-link:active {
+    transform: none;
+    opacity: 0.6;
+  }
+  .s-sm {
+    min-height: 40px;
+    padding: 0 var(--space-4);
+    font-size: var(--text-sm);
+    border-radius: var(--radius-sm);
+  }
+  .s-lg {
+    min-height: 56px;
+    padding: 0 var(--space-6);
+    font-size: var(--text-lg);
+    border-radius: var(--radius-lg);
+  }
+  .w-full {
+    width: 100%;
+  }
+</style>

@@ -1,0 +1,47 @@
+---
+title: Popover
+description: Anchored card with a title and description, dismissed by tapping outside.
+category: Overlays
+sidebar:
+  order: 22
+---
+
+```sh
+npx eoria add popover
+```
+
+## Usage
+
+```tsx
+import {
+  Popover,
+  PopoverClose,
+  PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+
+<Popover>
+  <PopoverTrigger asChild>
+    <Button variant="outline">Details</Button>
+  </PopoverTrigger>
+  <PopoverContent side="top" align="end">
+    <PopoverTitle>Dimensions</PopoverTitle>
+    <PopoverDescription>Flips to the bottom when there is no room above.</PopoverDescription>
+    <PopoverClose asChild>
+      <Button size="sm">Done</Button>
+    </PopoverClose>
+  </PopoverContent>
+</Popover>
+```
+
+## Props
+
+`Popover` takes `open`, `defaultOpen` and `onOpenChange`. `PopoverContent` takes the [Popper](/components/popper/) placement props plus `dismissable`. `PopoverTrigger` takes `asChild` and `anchorStyle` for the measured wrapper.
+
+With `asChild` the trigger also injects `accessibilityState.expanded` into the child.
+
+## Source
+
+[`registry/ui/popover.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/popover.tsx)

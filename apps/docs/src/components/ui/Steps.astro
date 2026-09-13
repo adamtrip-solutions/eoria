@@ -1,0 +1,51 @@
+---
+// Numbered steps for guides. Wrap a markdown ordered list.
+---
+
+<div class="steps"><slot /></div>
+
+<style is:global>
+  .steps > ol {
+    list-style: none;
+    counter-reset: step;
+    padding: 0;
+    margin: 0 0 var(--space-6);
+  }
+  .steps > ol > li {
+    counter-increment: step;
+    position: relative;
+    padding-left: var(--space-12);
+    padding-bottom: var(--space-6);
+  }
+  .steps > ol > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: -2px;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: var(--color-foreground);
+    color: var(--color-background);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    display: grid;
+    place-items: center;
+  }
+  .steps > ol > li::after {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 34px;
+    bottom: 4px;
+    width: 2px;
+    background: var(--color-border);
+  }
+  .steps > ol > li:last-child::after {
+    display: none;
+  }
+  .steps > ol > li > p:first-child {
+    font-weight: var(--weight-semibold);
+    margin-bottom: var(--space-2);
+  }
+</style>

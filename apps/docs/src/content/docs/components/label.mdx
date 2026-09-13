@@ -1,0 +1,33 @@
+---
+title: Label
+description: Form label built on Text.
+category: Forms
+sidebar:
+  order: 7
+---
+
+```sh
+npx eoria add label
+```
+
+## Usage
+
+```tsx
+import { Label } from '@/components/ui/label'
+
+<Label nativeID="email-label">Email</Label>
+<Input accessibilityLabelledBy="email-label" accessibilityLabel="Email" />
+```
+
+## Props
+
+| Prop       | Effect                                                        |
+| ---------- | ------------------------------------------------------------- |
+| `disabled` | Dims the label and ignores presses.                           |
+| `onPress`  | Makes it a button, handy for toggling a checkbox by its text. |
+
+Prefer [Field](/components/field/), which sets the ids and the fallback `accessibilityLabel` for you.
+
+## Source
+
+[`registry/ui/label.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/label.tsx)

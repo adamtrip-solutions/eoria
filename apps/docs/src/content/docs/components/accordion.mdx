@@ -1,0 +1,45 @@
+---
+title: Accordion
+description: Single or multiple expanding sections with a fade and layout transition.
+category: Display
+sidebar:
+  order: 20
+---
+
+```sh
+npx eoria add accordion
+```
+
+## Usage
+
+```tsx
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+
+<Accordion defaultValue="shipping">
+  <AccordionItem value="shipping">
+    <AccordionTrigger>How long does shipping take?</AccordionTrigger>
+    <AccordionContent>Two to five business days.</AccordionContent>
+  </AccordionItem>
+</Accordion>
+
+<Accordion type="multiple" variant="contained" value={open} onValueChange={setOpen}>…</Accordion>
+```
+
+## Props
+
+| Prop            | Single                                   | Multiple                    |
+| --------------- | ---------------------------------------- | --------------------------- |
+| `type`          | `'single'` (default)                     | `'multiple'`                |
+| `value`         | `string \| undefined`                    | `string[]`                  |
+| `onValueChange` | `(value: string \| undefined) => void`   | `(value: string[]) => void` |
+| `collapsible`   | close the open item on tap, default true | n/a                         |
+
+`variant` is `default` (hairline between items) or `contained` (a surface tile). The group takes `disabled` to lock every item. Items take `value` and `disabled`.
+
+## Notes
+
+The trigger reports `expanded`. Content mounts only while open, fades in over 150 ms, and items shift with a layout transition. Views below the accordion do not animate unless they also carry `layout={LinearTransition}`.
+
+## Source
+
+[`registry/ui/accordion.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/accordion.tsx)

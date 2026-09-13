@@ -1,0 +1,30 @@
+name: Bug report
+description: A component, the CLI or the docs behaves differently from what the docs say.
+labels: [bug]
+body:
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: The component or command, the props or flags, and the steps. A snippet or a repo link helps.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: eoria and @eoria/core versions, Expo SDK or React Native version, react-native-unistyles and react-native-reanimated versions, platform (iOS, Android, simulator or device).
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: The first useful error and what you already tried. Remove anything private.
+      render: text

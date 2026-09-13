@@ -1,0 +1,47 @@
+name: Release please
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: write
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
+        with:
+          # Supply this token to trigger CI on automated release PRs. See RELEASING.md.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+      - name: Start npm publication for each released package
+        if: steps.release.outputs.releases_created == 'true'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          PATHS_RELEASED: ${{ steps.release.outputs.paths_released }}
+          OUTPUTS: ${{ toJSON(steps.release.outputs) }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const outputs = JSON.parse(process.env.OUTPUTS);
+            const paths = JSON.parse(process.env.PATHS_RELEASED);
+            for (const path of paths) {
+              const tag = outputs[`${path}--tag_name`];
+              if (!/^[a-z]+-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(tag)) {
+                throw new Error(`Expected a stable release tag for ${path}, got ${tag}`);
+              }
+              await github.rest.actions.createWorkflowDispatch({
+                ...context.repo,
+                workflow_id: 'publish.yml',
+                ref: tag,
+              });
+            }

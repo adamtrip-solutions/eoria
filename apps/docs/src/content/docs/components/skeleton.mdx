@@ -1,0 +1,38 @@
+---
+title: Skeleton
+description: Loading placeholder with a pulse that stops under reduce motion.
+category: Display
+sidebar:
+  order: 13
+---
+
+```sh
+npx eoria add skeleton
+```
+
+## Usage
+
+```tsx
+import { Skeleton } from '@/components/ui/skeleton'
+
+<HStack gap={3} accessible accessibilityState={{ busy: true }} accessibilityLabel="Loading post">
+  <Skeleton shape="circle" style={{ width: 40, height: 40 }} />
+  <VStack gap={2} flex={1}>
+    <Skeleton shape="text" style={{ width: '60%' }} />
+    <Skeleton shape="text" />
+  </VStack>
+</HStack>
+```
+
+## Props
+
+| Prop       | Values                   | Default |
+| ---------- | ------------------------ | ------- |
+| `shape`    | `rect`, `circle`, `text` | `rect`  |
+| `animated` | boolean                  | `true`  |
+
+The pulse is a 700 ms opacity loop. `useReducedMotion` turns it off, since a repeating animation under reduce motion would otherwise still run. Skeletons are hidden from assistive technology; announce the loading state on the container.
+
+## Source
+
+[`registry/ui/skeleton.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/skeleton.tsx)

@@ -1,0 +1,41 @@
+---
+title: Box
+description: View with theme token props for spacing, colour and radius.
+category: Layout
+sidebar:
+  order: 2
+---
+
+```sh
+npx eoria add box
+```
+
+## Usage
+
+```tsx
+import { Box } from '@/components/ui/box'
+
+<Box p={4} bg="surface" rounded="xl" gap={2}>
+  <Text>Inside a tile</Text>
+</Box>
+```
+
+## Props
+
+| Prop                                    | Reads           |
+| --------------------------------------- | --------------- |
+| `p`, `px`, `py`, `pt`, `pb`, `pl`, `pr` | `theme.space`   |
+| `m`, `mx`, `my`, `mt`, `mb`, `ml`, `mr` | `theme.space`   |
+| `gap`                                   | `theme.space`   |
+| `bg`, `borderColor`                     | `theme.colors`  |
+| `rounded`                               | `theme.radius`  |
+| `borderWidth`, `flex`                   | raw numbers     |
+| `row`, `center`                         | flex shorthands |
+
+## Notes
+
+Token props resolve inside one Unistyles function style, so Box costs one stylesheet lookup per render. Any other View prop passes through.
+
+## Source
+
+[`registry/ui/box.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/box.tsx)

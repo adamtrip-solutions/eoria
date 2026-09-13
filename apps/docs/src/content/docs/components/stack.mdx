@@ -1,0 +1,42 @@
+---
+title: Stack
+description: Box with direction and alignment shorthands. Exports Stack, HStack and VStack.
+category: Layout
+sidebar:
+  order: 3
+---
+
+```sh
+npx eoria add stack
+```
+
+## Usage
+
+```tsx
+import { HStack, VStack } from '@/components/ui/stack'
+
+<VStack gap={3}>
+  <HStack gap={2} justify="space-between">
+    <Text>Total</Text>
+    <Text weight="semibold">$70.00</Text>
+  </HStack>
+</VStack>
+```
+
+## Props
+
+Everything from [Box](/components/box/) except `row` and `center`, plus:
+
+| Prop        | Values                       |
+| ----------- | ---------------------------- |
+| `direction` | `row`, `column` (Stack only) |
+| `align`     | any `alignItems` value       |
+| `justify`   | any `justifyContent` value   |
+| `wrap`      | boolean                      |
+| `reverse`   | boolean                      |
+
+`HStack` is a row with `align="center"`. `VStack` is a column. Only the keys you set are emitted, so an unset `align` never overrides a Box token.
+
+## Source
+
+[`registry/ui/stack.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/stack.tsx)

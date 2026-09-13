@@ -1,0 +1,80 @@
+---
+// Chip tabs that switch between shell commands. Props instead of nested fences so
+// the MDX survives formatting.
+interface Props {
+  items: { label: string; command: string }[]
+}
+const { items } = Astro.props
+const id = `ctabs-${Math.random().toString(36).slice(2, 8)}`
+---
+
+<div class="tabs" data-ctabs={id}>
+  <div class="list" role="tablist">
+    {
+      items.map((item, i) => (
+        <button type="button" role="tab" aria-selected={i === 0} data-tab-for={item.label}>
+          {item.label}
+        </button>
+      ))
+    }
+  </div>
+  {
+    items.map((item, i) => (
+      <pre class:list={['panel', { on: i === 0 }]} data-tab={item.label}>
+        <code>{item.command}</code>
+      </pre>
+    ))
+  }
+</div>
+
+<style>
+  .list {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+  .list button {
+    height: 40px;
+    padding: 0 var(--space-4);
+    border: 0;
+    border-radius: var(--radius-full);
+    background: var(--color-muted);
+    color: var(--color-foreground);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    cursor: pointer;
+    transition:
+      transform 90ms var(--ease),
+      background-color 120ms var(--ease),
+      color 120ms var(--ease);
+  }
+  .list button:active {
+    transform: scale(0.97);
+  }
+  .list button[aria-selected='true'] {
+    background: var(--color-foreground);
+    color: var(--color-background);
+  }
+  .panel {
+    display: none;
+    white-space: normal;
+  }
+  .panel code {
+    white-space: pre;
+  }
+  .panel.on {
+    display: block;
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-ctabs]').forEach((tabs) => {
+    const buttons = tabs.querySelectorAll<HTMLButtonElement>('[data-tab-for]')
+    const panels = tabs.querySelectorAll<HTMLElement>('[data-tab]')
+    const select = (label: string) => {
+      buttons.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tabFor === label)))
+      panels.forEach((p) => p.classList.toggle('on', p.dataset.tab === label))
+    }
+    buttons.forEach((b) => b.addEventListener('click', () => select(b.dataset.tabFor!)))
+  })
+</script>

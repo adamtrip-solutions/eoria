@@ -1,0 +1,103 @@
+name: Publish npm package
+on:
+  # Release-please dispatches this at a release tag such as core-v0.1.0 or cli-v0.1.0.
+  # Retry with: gh workflow run publish.yml --ref <tag>
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: npm-publish-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.release.outputs.sha }}
+      tag: ${{ steps.release.outputs.tag }}
+      package: ${{ steps.release.outputs.package }}
+      directory: ${{ steps.release.outputs.directory }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - id: release
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const match = /^refs\/tags\/(core|cli)-v((0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*))$/.exec(context.ref);
+            if (!match) throw new Error('Run this workflow at a release tag, such as core-v0.1.0 or cli-v0.1.0.');
+            const tag = context.ref.slice('refs/tags/'.length);
+            const { data: release } = await github.rest.repos.getReleaseByTag({ ...context.repo, tag });
+            if (release.draft || release.prerelease) throw new Error('Only published stable releases can be published to latest.');
+            const { data: commit } = await github.rest.repos.getCommit({ ...context.repo, ref: context.ref });
+            if (commit.sha !== context.sha) throw new Error('Release tag moved after this workflow started.');
+            const packages = { core: '@eoria/core', cli: 'eoria' };
+            core.setOutput('sha', commit.sha);
+            core.setOutput('tag', tag);
+            core.setOutput('package', packages[match[1]]);
+            core.setOutput('directory', `packages/${match[1]}`);
+            core.setOutput('version', match[2]);
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ steps.release.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require release history on main
+        run: git merge-base --is-ancestor HEAD origin/main
+      - name: Require the manifest version to match the tag
+        env:
+          DIRECTORY: ${{ steps.release.outputs.directory }}
+          PACKAGE: ${{ steps.release.outputs.package }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          node --input-type=module <<'JS'
+          import { readFile } from 'node:fs/promises';
+          const pkg = JSON.parse(await readFile(`${process.env.DIRECTORY}/package.json`, 'utf8'));
+          if (pkg.name !== process.env.PACKAGE) throw new Error(`package.json name ${pkg.name} != ${process.env.PACKAGE}`);
+          if (pkg.version !== process.env.VERSION) throw new Error(`package.json version ${pkg.version} != ${process.env.VERSION}`);
+          if (pkg.repository?.url !== `git+https://github.com/${process.env.GITHUB_REPOSITORY}.git`) throw new Error('repository.url must match this repository for provenance');
+          JS
+  verify:
+    needs: release
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.release.outputs.sha }}
+  publish:
+    needs: [release, verify]
+    runs-on: ubuntu-latest
+    environment: npm
+    concurrency:
+      group: npm-registry-publication
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+      - name: Use an OIDC-capable npm CLI
+        run: npm install --global npm@11.13.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: npm-packages
+      - name: Pick the tested tarball for this release
+        id: tarball
+        env:
+          PACKAGE: ${{ needs.release.outputs.package }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          set -eu
+          file="$(echo "$PACKAGE" | sed 's#^@##; s#/#-#')-$VERSION.tgz"
+          test -f "$file"
+          if npm view "$PACKAGE@$VERSION" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "$PACKAGE@$VERSION is already on npm; skipping."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "tarball=$file" >> "$GITHUB_OUTPUT"
+      - name: Publish tested tarball with provenance
+        if: steps.tarball.outputs.published != 'true'
+        env:
+          TARBALL: ${{ steps.tarball.outputs.tarball }}
+        run: npm publish "$TARBALL" --access public --provenance --ignore-scripts

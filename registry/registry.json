@@ -1,0 +1,412 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "eoria",
+  "homepage": "https://github.com/adamtrip-solutions/eoria",
+  "items": [
+    {
+      "name": "text",
+      "type": "registry:ui",
+      "title": "Text",
+      "description": "Themed text with typography variants and capped dynamic type.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/text.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/text.tsx"
+        }
+      ]
+    },
+    {
+      "name": "button",
+      "type": "registry:ui",
+      "title": "Button",
+      "description": "Pressable with variant, size, icon slot and pressed/disabled states.",
+      "dependencies": ["@eoria/core", "react-native-reanimated", "react-native-worklets"],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/button.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/button.tsx"
+        }
+      ]
+    },
+    {
+      "name": "box",
+      "type": "registry:ui",
+      "title": "Box",
+      "description": "View with theme token props for spacing, colour and radius.",
+      "dependencies": ["@eoria/core", "react-native-unistyles"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/box.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/box.tsx"
+        }
+      ]
+    },
+    {
+      "name": "stack",
+      "type": "registry:ui",
+      "title": "Stack",
+      "description": "Box with direction and alignment shorthands. Exports Stack, HStack, VStack.",
+      "dependencies": [],
+      "registryDependencies": ["box"],
+      "files": [
+        {
+          "path": "registry/ui/stack.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/stack.tsx"
+        }
+      ]
+    },
+    {
+      "name": "label",
+      "type": "registry:ui",
+      "title": "Label",
+      "description": "Form label built on Text.",
+      "dependencies": [],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/label.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/label.tsx"
+        }
+      ]
+    },
+    {
+      "name": "input",
+      "type": "registry:ui",
+      "title": "Input",
+      "description": "TextInput with size, focus, invalid and disabled states.",
+      "dependencies": ["@eoria/core", "react-native-unistyles"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/input.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/input.tsx"
+        }
+      ]
+    },
+    {
+      "name": "card",
+      "type": "registry:ui",
+      "title": "Card",
+      "description": "Container with header, title, description, content and footer parts.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/card.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/card.tsx"
+        }
+      ]
+    },
+    {
+      "name": "checkbox",
+      "type": "registry:ui",
+      "title": "Checkbox",
+      "description": "Animated checkbox with checked and size variants.",
+      "dependencies": ["@eoria/core", "react-native-reanimated", "react-native-worklets"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/checkbox.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/checkbox.tsx"
+        }
+      ]
+    },
+    {
+      "name": "switch",
+      "type": "registry:ui",
+      "title": "Switch",
+      "description": "Animated toggle switch.",
+      "dependencies": ["@eoria/core", "react-native-reanimated", "react-native-worklets"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/switch.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/switch.tsx"
+        }
+      ]
+    },
+    {
+      "name": "radio-group",
+      "type": "registry:ui",
+      "title": "Radio Group",
+      "description": "Radio group with context-driven items.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/radio-group.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/radio-group.tsx"
+        }
+      ]
+    },
+    {
+      "name": "portal",
+      "type": "registry:ui",
+      "title": "Portal",
+      "description": "PortalHost and Portal for rendering above the app without a native Modal.",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/portal.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/portal.tsx"
+        }
+      ]
+    },
+    {
+      "name": "dialog",
+      "type": "registry:ui",
+      "title": "Dialog",
+      "description": "Modal dialog with overlay, animated content, trigger and close helpers.",
+      "dependencies": ["@eoria/core", "react-native-reanimated", "react-native-worklets"],
+      "registryDependencies": ["portal", "text"],
+      "files": [
+        {
+          "path": "registry/ui/dialog.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/dialog.tsx"
+        }
+      ]
+    },
+    {
+      "name": "tabs",
+      "type": "registry:ui",
+      "title": "Tabs",
+      "description": "Tabs with list, trigger and content parts.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/tabs.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/tabs.tsx"
+        }
+      ]
+    },
+    {
+      "name": "separator",
+      "type": "registry:ui",
+      "title": "Separator",
+      "description": "Horizontal or vertical rule, decorative by default.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/separator.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/separator.tsx"
+        }
+      ]
+    },
+    {
+      "name": "badge",
+      "type": "registry:ui",
+      "title": "Badge",
+      "description": "Small status pill with variant and size.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/badge.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/badge.tsx"
+        }
+      ]
+    },
+    {
+      "name": "skeleton",
+      "type": "registry:ui",
+      "title": "Skeleton",
+      "description": "Loading placeholder with a pulse that stops under reduce motion.",
+      "dependencies": ["@eoria/core", "react-native-reanimated", "react-native-worklets"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/skeleton.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/skeleton.tsx"
+        }
+      ]
+    },
+    {
+      "name": "progress",
+      "type": "registry:ui",
+      "title": "Progress",
+      "description": "Determinate progress bar with accessibility value.",
+      "dependencies": ["@eoria/core", "react-native-reanimated", "react-native-worklets"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/progress.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/progress.tsx"
+        }
+      ]
+    },
+    {
+      "name": "avatar",
+      "type": "registry:ui",
+      "title": "Avatar",
+      "description": "Image with initials fallback; sizes and shapes.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/avatar.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/avatar.tsx"
+        }
+      ]
+    },
+    {
+      "name": "textarea",
+      "type": "registry:ui",
+      "title": "Textarea",
+      "description": "Multiline input. Extends the Input recipe.",
+      "dependencies": ["@eoria/core", "react-native-unistyles"],
+      "registryDependencies": ["input"],
+      "files": [
+        {
+          "path": "registry/ui/textarea.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/textarea.tsx"
+        }
+      ]
+    },
+    {
+      "name": "field",
+      "type": "registry:ui",
+      "title": "Field",
+      "description": "Label, control, description and error wired for accessibility.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["label", "text"],
+      "files": [
+        {
+          "path": "registry/ui/field.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/field.tsx"
+        }
+      ]
+    },
+    {
+      "name": "accordion",
+      "type": "registry:ui",
+      "title": "Accordion",
+      "description": "Single or multiple expanding sections with layout transitions.",
+      "dependencies": ["@eoria/core", "react-native-reanimated", "react-native-worklets"],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/accordion.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/accordion.tsx"
+        }
+      ]
+    },
+    {
+      "name": "toast",
+      "type": "registry:ui",
+      "title": "Toast",
+      "description": "Imperative toast() store and a Toaster rendered through the portal.",
+      "dependencies": ["@eoria/core", "react-native-reanimated", "react-native-worklets"],
+      "registryDependencies": ["portal", "text"],
+      "files": [
+        {
+          "path": "registry/ui/toast.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/toast.tsx"
+        }
+      ]
+    },
+    {
+      "name": "popper",
+      "type": "registry:ui",
+      "title": "Popper",
+      "description": "Anchored positioning primitive used by Popover, Tooltip, DropdownMenu and Select.",
+      "dependencies": ["react-native-reanimated", "react-native-worklets"],
+      "registryDependencies": ["portal"],
+      "files": [
+        {
+          "path": "registry/ui/popper.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/popper.tsx"
+        }
+      ]
+    },
+    {
+      "name": "popover",
+      "type": "registry:ui",
+      "title": "Popover",
+      "description": "Anchored card with title and description.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["popper", "text"],
+      "files": [
+        {
+          "path": "registry/ui/popover.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/popover.tsx"
+        }
+      ]
+    },
+    {
+      "name": "tooltip",
+      "type": "registry:ui",
+      "title": "Tooltip",
+      "description": "Label shown while the trigger is held; mirrors into accessibilityHint.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["popper", "text"],
+      "files": [
+        {
+          "path": "registry/ui/tooltip.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/tooltip.tsx"
+        }
+      ]
+    },
+    {
+      "name": "dropdown-menu",
+      "type": "registry:ui",
+      "title": "DropdownMenu",
+      "description": "Anchored menu with items, labels, separators and icons.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["popper", "text"],
+      "files": [
+        {
+          "path": "registry/ui/dropdown-menu.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/dropdown-menu.tsx"
+        }
+      ]
+    },
+    {
+      "name": "select",
+      "type": "registry:ui",
+      "title": "Select",
+      "description": "Anchored single-choice list with labelled options.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["popper", "text"],
+      "files": [
+        {
+          "path": "registry/ui/select.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/select.tsx"
+        }
+      ]
+    }
+  ]
+}

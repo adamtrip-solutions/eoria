@@ -1,0 +1,47 @@
+---
+// Real screenshots of the component from the example app, light and dark, inside the
+// iPhone mock. The active one follows the site's data-mode.
+import Iphone from '../ui/Iphone.astro'
+
+interface Props {
+  name: string
+  title: string
+}
+const { name, title } = Astro.props
+---
+
+<figure class="preview">
+  <div class="light">
+    <Iphone src={`/previews/${name}-light.webp`} alt={`${title} rendered on iOS, light mode`} />
+  </div>
+  <div class="dark">
+    <Iphone src={`/previews/${name}-dark.webp`} alt={`${title} rendered on iOS, dark mode`} />
+  </div>
+  <figcaption>iPhone, zinc preset. Captured from the example app.</figcaption>
+</figure>
+
+<style>
+  .preview {
+    margin: 0 0 var(--space-6);
+    display: grid;
+    gap: var(--space-3);
+    justify-items: start;
+  }
+  .light,
+  .dark {
+    width: min(100%, 300px);
+  }
+  .dark {
+    display: none;
+  }
+  :global(:root[data-mode='dark']) .light {
+    display: none;
+  }
+  :global(:root[data-mode='dark']) .dark {
+    display: block;
+  }
+  figcaption {
+    font-size: var(--text-xs);
+    color: var(--color-muted-foreground);
+  }
+</style>

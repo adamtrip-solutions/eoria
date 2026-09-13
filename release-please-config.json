@@ -1,0 +1,20 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "separate-pull-requests": true,
+  "include-v-in-tag": true,
+  "include-component-in-tag": true,
+  "bump-minor-pre-major": false,
+  "bump-patch-for-minor-pre-major": false,
+  "packages": {
+    "packages/core": {
+      "release-type": "node",
+      "package-name": "@eoria/core",
+      "component": "core"
+    },
+    "packages/cli": {
+      "release-type": "node",
+      "package-name": "eoria",
+      "component": "cli"
+    }
+  }
+}

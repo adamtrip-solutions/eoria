@@ -1,0 +1,120 @@
+---
+title: Recipes
+description: How slot recipes work, how they merge, and how to derive a new component from a base.
+sidebar:
+  order: 4
+---
+
+A slot recipe is the only styling construct in eoria. Learn it once and every component reads
+the same way.
+
+## Anatomy
+
+```tsx
+import { defineSlotRecipe } from '@eoria/core'
+
+export const buttonRecipe = defineSlotRecipe((theme) => ({
+  slots: {
+    root: { minHeight: 52, borderRadius: theme.radius.md },
+    label: { fontSize: theme.fontSize.md, fontWeight: theme.fontWeight.semibold },
+    icon: { width: 20, height: 20, color: theme.colors.foreground },
+    rootPressed: { backgroundColor: theme.colors.foreground, opacity: 0.08 },
+  },
+  variants: {
+    variant: {
+      default: { root: { backgroundColor: theme.colors.primary } },
+      outline: { root: { borderWidth: 1.5, borderColor: theme.colors.foreground } },
+    },
+    size: {
+      sm: { root: { minHeight: 40 }, label: { fontSize: theme.fontSize.sm } },
+      md: {},
+    },
+  },
+  compoundVariants: [
+    { when: { variant: 'outline', size: 'sm' }, styles: { root: { borderWidth: 1 } } },
+  ],
+  defaultVariants: { variant: 'default', size: 'md' },
+}))
+```
+
+Rules that the types enforce:
+
+- `slots.root` is required. Every other slot is up to the component.
+- Variants are keyed variant name first, then value, then slot. That order keeps a variant's
+  effect on every slot in one place.
+- Boolean variants use the keys `true` and `false` and accept a boolean at the call site.
+- `defaultVariants` must name real values.
+
+## Resolving
+
+```tsx
+const s = useRecipe(buttonRecipe, { variant, size }, styles)
+return (
+  <Pressable style={s.root}>
+    <Text style={s.label}>…</Text>
+  </Pressable>
+)
+```
+
+`useRecipe` returns one style per slot. Under the hood the recipe becomes a single Unistyles
+stylesheet with one entry per slot and the variants attached, so the whole component costs one
+`StyleSheet.create`. Unknown variant values apply nothing. The optional third argument is a
+per-slot override object, merged last, which is what every component exposes as its `styles`
+prop.
+
+`resolveRecipe` does the same outside React, for tests or for reading a value:
+
+```ts
+const { root } = resolveRecipe(buttonRecipe, { size: 'sm' })
+getStyleValue(root, 'minHeight') // 40
+```
+
+## Merge order
+
+Base slot styles apply first. Variant groups apply in declaration order, and a later group
+wins over an earlier one for the same property. Compound variants apply after all groups.
+Overrides apply last.
+
+The declaration order matters more than it looks. In the button above, `size.md` sets
+`minHeight: 52`. A `link` variant that wants `minHeight: 0` cannot get it from the `variant`
+group, because `size` is declared after it. It needs a compound variant per size, which is
+exactly what the shipped button does.
+
+## Extending
+
+`extendSlotRecipe` derives a recipe from a local base. The derived recipe imports the base
+file, so edits to the base flow through.
+
+```tsx
+import { extendSlotRecipe } from '@eoria/core'
+import { buttonRecipe, createButton } from '@/components/ui/button'
+
+export const checkoutButtonRecipe = extendSlotRecipe(buttonRecipe, (theme) => ({
+  slots: { root: { borderRadius: theme.radius.full } },
+  variants: {
+    variant: { brand: { root: { backgroundColor: '#7c3aed' }, label: { color: '#fff' } } },
+  },
+  defaultVariants: { variant: 'brand', size: 'lg' },
+}))
+
+export const CheckoutButton = createButton(checkoutButtonRecipe)
+```
+
+Merge rules for extensions:
+
+- Slots deep-merge per slot.
+- Variants deep-merge per variant name, then per value, then per slot. New names and values
+  are added; existing ones are extended.
+- Compound variants append.
+- Default variants override.
+- Nothing inherited can be removed. If you need a smaller recipe, copy the file instead.
+
+Components that support this pattern export a `create*` factory next to the recipe. Button has
+`createButton`, which checks in development that the recipe still has the slots the render
+body needs.
+
+## Reading values
+
+Some components need a number out of a style, such as the switch computing how far the thumb
+travels. `getStyleValue(style, key)` walks style arrays and returns the last value set, on
+native and on web.

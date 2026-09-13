@@ -1,0 +1,39 @@
+---
+title: Text
+description: Themed text with typography variants and capped dynamic type.
+category: Layout
+sidebar:
+  order: 1
+---
+
+```sh
+npx eoria add text
+```
+
+## Usage
+
+```tsx
+import { Text } from '@/components/ui/text'
+
+<Text variant="heading">Welcome back</Text>
+<Text variant="muted">Sign in to continue.</Text>
+<Text weight="semibold">12.4k</Text>
+```
+
+## Variants
+
+| Prop      | Values                                                  | Default |
+| --------- | ------------------------------------------------------- | ------- |
+| `variant` | `body`, `muted`, `caption`, `label`, `title`, `heading` | `body`  |
+| `weight`  | `normal`, `medium`, `semibold`, `bold`                  | unset   |
+
+## Notes
+
+- The plain `style` prop is accepted and merged after the recipe, because Text has a single slot.
+- `maxFontSizeMultiplier` defaults to 1.5 so dynamic type cannot break layouts. Raise it where the layout can take it.
+- `suppressHighlighting` defaults to true. Without it iOS draws a grey box behind pressable text.
+- Almost every other component depends on Text, which is why it is the first thing the CLI copies.
+
+## Source
+
+[`registry/ui/text.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/text.tsx)

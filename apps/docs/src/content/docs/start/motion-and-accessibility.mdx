@@ -1,0 +1,48 @@
+---
+title: Motion and accessibility
+description: What animates, how reduce motion is honoured, and the accessibility contract each component keeps.
+sidebar:
+  order: 6
+---
+
+## Motion
+
+Every animation is a short timing, 90 to 150 ms, with an ease-out curve. There are no springs.
+A button press scales to 0.97 in 90 ms. A sheet fades and slides 24pt in 120 ms. A tab
+indicator slides in 150 ms. Anything longer starts to feel like the app is waiting for you.
+
+Reanimated 4 defaults every `withTiming` and layout animation to `ReduceMotion.System`. When
+the OS reduce motion setting is on, transitions jump to their end state and the Skeleton pulse
+stops. Nothing in eoria overrides that default. To force animations on or off for the whole
+app, mount Reanimated's config once at the root.
+
+```tsx
+import { ReducedMotionConfig, ReduceMotion } from 'react-native-reanimated'
+
+<ReducedMotionConfig mode={ReduceMotion.Never} />
+```
+
+Layout animations only move the views that carry them. An Accordion animates its own items;
+a view below it jumps unless it also sets `layout={LinearTransition}`.
+
+## Accessibility
+
+Each component ships with the role, state and label plumbing it needs. The rules the codebase
+follows:
+
+- Interactive components set `accessibilityRole` and `accessibilityState`. Checked, selected,
+  expanded and disabled are always reported.
+- `accessibilityLabelledBy` works on Android only, so `Field` also passes the label text as
+  `accessibilityLabel` on the control. Do the same if you wire labels by hand.
+- Live regions do nothing on iOS, so `Toast` and `FieldError` call
+  `AccessibilityInfo.announceForAccessibility` when they appear.
+- Decorative views such as `Separator`, `Skeleton` and the initials in `Avatar` are hidden from
+  assistive technology. Give the `Avatar` root an `accessibilityLabel` with the person's name.
+- Overlays mark the portal host `accessibilityViewIsModal` while a dialog is open, so VoiceOver
+  cannot wander behind it. Android has no equivalent, which is why the overlay stays in the
+  tree as a "Close" button.
+- `Tooltip` opens on long press and mirrors its text into the trigger's `accessibilityHint`,
+  since screen readers never long press.
+- Icon-only buttons need an `accessibilityLabel`. The type does not force it; a reviewer should.
+- Text caps dynamic type at 1.5x by default through `maxFontSizeMultiplier`. Raise it per
+  component if your layout can take it.

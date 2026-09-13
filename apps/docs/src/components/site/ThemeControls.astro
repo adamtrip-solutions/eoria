@@ -1,0 +1,139 @@
+---
+const presets = ['zinc', 'blue', 'green', 'rose', 'violet', 'orange'] as const
+const modes = [
+  { id: 'system', label: 'Auto' },
+  { id: 'light', label: 'Light' },
+  { id: 'dark', label: 'Dark' },
+] as const
+---
+
+<div class="controls">
+  <div class="segmented" role="radiogroup" aria-label="Appearance">
+    {
+      modes.map((m) => (
+        <button type="button" role="radio" aria-checked="false" data-mode-option={m.id}>
+          {m.label}
+        </button>
+      ))
+    }
+  </div>
+  <div class="presets" role="radiogroup" aria-label="Colour preset">
+    {
+      presets.map((p) => (
+        <button
+          type="button"
+          role="radio"
+          aria-checked="false"
+          aria-label={p}
+          title={p}
+          data-preset-option={p}
+          style={`--swatch-light: var(--swatch-${p}-light); --swatch-dark: var(--swatch-${p}-dark)`}
+        />
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .segmented {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: var(--radius-full);
+    background: var(--color-muted);
+  }
+  .segmented button {
+    border: 0;
+    background: transparent;
+    height: 30px;
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-muted-foreground);
+    cursor: pointer;
+    transition:
+      background-color 120ms var(--ease),
+      color 120ms var(--ease);
+  }
+  .segmented button[aria-checked='true'] {
+    background: var(--color-elevated);
+    color: var(--color-foreground);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+  .presets {
+    display: inline-flex;
+    gap: 6px;
+  }
+  .presets button {
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-full);
+    border: 2px solid transparent;
+    padding: 0;
+    cursor: pointer;
+    background: var(--swatch-light);
+    transition:
+      transform 90ms var(--ease),
+      border-color 120ms var(--ease);
+  }
+  :global(:root[data-mode='dark']) .presets button {
+    background: var(--swatch-dark);
+  }
+  .presets button:active {
+    transform: scale(0.9);
+  }
+  .presets button[aria-checked='true'] {
+    border-color: var(--color-foreground);
+    box-shadow: inset 0 0 0 2px var(--color-background);
+  }
+  @media (max-width: 640px) {
+    .presets {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  const root = document.documentElement
+  const media = window.matchMedia('(prefers-color-scheme: dark)')
+
+  function readMode() {
+    return localStorage.getItem('eoria-mode') ?? 'system'
+  }
+  function applyMode(mode: string) {
+    root.dataset.mode = mode === 'system' ? (media.matches ? 'dark' : 'light') : mode
+    document.querySelectorAll<HTMLButtonElement>('[data-mode-option]').forEach((b) => {
+      b.setAttribute('aria-checked', String(b.dataset.modeOption === mode))
+    })
+  }
+  function applyPreset(preset: string) {
+    root.dataset.preset = preset
+    document.querySelectorAll<HTMLButtonElement>('[data-preset-option]').forEach((b) => {
+      b.setAttribute('aria-checked', String(b.dataset.presetOption === preset))
+    })
+  }
+
+  applyMode(readMode())
+  applyPreset(localStorage.getItem('eoria-preset') ?? 'zinc')
+  media.addEventListener('change', () => applyMode(readMode()))
+
+  document.querySelectorAll<HTMLButtonElement>('[data-mode-option]').forEach((b) => {
+    b.addEventListener('click', () => {
+      const mode = b.dataset.modeOption!
+      localStorage.setItem('eoria-mode', mode)
+      applyMode(mode)
+    })
+  })
+  document.querySelectorAll<HTMLButtonElement>('[data-preset-option]').forEach((b) => {
+    b.addEventListener('click', () => {
+      const preset = b.dataset.presetOption!
+      localStorage.setItem('eoria-preset', preset)
+      applyPreset(preset)
+    })
+  })
+</script>

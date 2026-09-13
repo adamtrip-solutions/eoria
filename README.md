@@ -1,24 +1,70 @@
 # eoria
 
-A React Native component library in the shadcn model. Components are source
-files you copy into your app and own. A small runtime package, `@eoria/core`,
-provides the styling engine on top of [Unistyles 3](https://www.unistyl.es).
+Native-first React Native components you copy into your app and own. Built on
+[Unistyles 3](https://www.unistyl.es) and Reanimated, with a small runtime package
+and a CLI that keeps your copies in step with the registry.
 
-Status: pre-alpha. Nothing is published yet. The API will change.
+Docs, previews and the registry live at **[eoria.adamtrip.pt](https://eoria.adamtrip.pt)**.
 
-## Requirements
+[![@eoria/core](https://img.shields.io/npm/v/%40eoria%2Fcore?label=%40eoria%2Fcore)](https://www.npmjs.com/package/@eoria/core)
+[![@eoria/cli](https://img.shields.io/npm/v/%40eoria%2Fcli?label=%40eoria%2Fcli)](https://www.npmjs.com/package/@eoria/cli)
+[![CI](https://github.com/adamtrip-solutions/eoria/actions/workflows/ci.yml/badge.svg)](https://github.com/adamtrip-solutions/eoria/actions/workflows/ci.yml)
 
-- Expo SDK 57 or React Native 0.86 with the New Architecture.
-- A development build. Expo Go is not supported because Unistyles and
-  Reanimated ship native code.
-- `react-native-unistyles` 3.x and `react-native-reanimated` 4.x as peers.
+Status: pre-alpha. The API may change before 1.0.
+
+## Quick start
+
+```sh
+npx @eoria/cli init
+npx @eoria/cli add button input card
+```
+
+`init` writes `eoria.json`, the Unistyles theme file and the Babel plugins, then installs
+the peers. `add` copies the component sources into `src/components/ui` and pulls in whatever
+they depend on, so `add select` also brings `popper`, `portal` and `text`. From there the
+files are yours. Edit them, rename them, delete what you do not use.
+
+Requirements: React Native with the New Architecture, which Unistyles 3 and Reanimated 4
+need, and a development build, because Expo Go cannot run either. Any Expo SDK from 53 on
+qualifies. The example app and the previews run on SDK 57 and React Native 0.86. The
+[installation guide](https://eoria.adamtrip.pt/start/installation/) walks through the setup.
+
+## The CLI
+
+`@eoria/cli` installs an `eoria` binary. Run it with `npx @eoria/cli`, or add the package as
+a dev dependency and call `pnpm eoria`.
+
+| Command                      | What it does                                                                                       |
+| ---------------------------- | -------------------------------------------------------------------------------------------------- |
+| `eoria init`                 | Writes `eoria.json`, `src/unistyles.ts`, the Babel config and the `@/*` alias. Installs peers.     |
+| `eoria add <name…>`          | Copies components and their registry dependencies. Never overwrites without `--overwrite`.         |
+| `eoria diff [name]`          | Shows what changed between your copies and the registry, and tells local edits from upstream ones. |
+| `eoria extend <base> <name>` | Creates a new component whose recipe extends a local base, so base edits flow into it.             |
+
+`eoria.json` records a hash of every file the CLI wrote. That is how `diff` can say "you
+changed this" instead of just "this differs". Commit it.
+
+The registry is plain shadcn registry JSON, so `npx shadcn@latest add https://eoria.adamtrip.pt/r/button.json`
+works too. You lose the hash tracking, `diff` and `extend`, but the files are identical.
+The [CLI page](https://eoria.adamtrip.pt/start/cli/) covers every flag.
+
+## Components
+
+Each one has a page with simulator screenshots, props and usage.
+
+| Group      | Components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Layout     | [Box](https://eoria.adamtrip.pt/components/box/), [Stack](https://eoria.adamtrip.pt/components/stack/), [Separator](https://eoria.adamtrip.pt/components/separator/), [Text](https://eoria.adamtrip.pt/components/text/)                                                                                                                                                                                                                                                                                                          |
+| Forms      | [Button](https://eoria.adamtrip.pt/components/button/), [Input](https://eoria.adamtrip.pt/components/input/), [Textarea](https://eoria.adamtrip.pt/components/textarea/), [Field](https://eoria.adamtrip.pt/components/field/), [Label](https://eoria.adamtrip.pt/components/label/), [Checkbox](https://eoria.adamtrip.pt/components/checkbox/), [Switch](https://eoria.adamtrip.pt/components/switch/), [RadioGroup](https://eoria.adamtrip.pt/components/radio-group/), [Select](https://eoria.adamtrip.pt/components/select/) |
+| Display    | [Card](https://eoria.adamtrip.pt/components/card/), [Badge](https://eoria.adamtrip.pt/components/badge/), [Avatar](https://eoria.adamtrip.pt/components/avatar/), [Progress](https://eoria.adamtrip.pt/components/progress/), [Skeleton](https://eoria.adamtrip.pt/components/skeleton/), [Accordion](https://eoria.adamtrip.pt/components/accordion/), [Tabs](https://eoria.adamtrip.pt/components/tabs/)                                                                                                                        |
+| Overlays   | [Dialog](https://eoria.adamtrip.pt/components/dialog/), [Popover](https://eoria.adamtrip.pt/components/popover/), [Tooltip](https://eoria.adamtrip.pt/components/tooltip/), [DropdownMenu](https://eoria.adamtrip.pt/components/dropdown-menu/), [Toast](https://eoria.adamtrip.pt/components/toast/)                                                                                                                                                                                                                             |
+| Primitives | [Portal](https://eoria.adamtrip.pt/components/portal/), [Popper](https://eoria.adamtrip.pt/components/popper/)                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ## How it works
 
-Every component is a slot recipe. A recipe declares named parts (slots), the
-variants that change them, and defaults. `useRecipe` resolves it to plain
-React Native styles through one Unistyles stylesheet, so theme and breakpoint
-changes are handled off the JS thread.
+Every component is a slot recipe. A recipe names its parts (slots), the variants that change
+them, and defaults. `useRecipe` turns it into one Unistyles stylesheet, so theme and
+breakpoint changes are handled off the JS thread.
 
 ```tsx
 export const buttonRecipe = defineSlotRecipe((theme) => ({
@@ -36,8 +82,8 @@ export const buttonRecipe = defineSlotRecipe((theme) => ({
 }))
 ```
 
-Recipes extend without touching the base. A derived component imports the
-local base recipe, so edits to the base flow through automatically:
+Recipes extend without touching the base. A derived component imports the local base recipe,
+so edits to the base flow through automatically. This is what `eoria extend` generates:
 
 ```tsx
 export const checkoutButtonRecipe = extendSlotRecipe(buttonRecipe, (theme) => ({
@@ -49,35 +95,20 @@ export const checkoutButtonRecipe = extendSlotRecipe(buttonRecipe, (theme) => ({
 export const CheckoutButton = createButton(checkoutButtonRecipe)
 ```
 
-Merge rules: slots deep-merge per slot, variants deep-merge per name then per
-slot, compound variants append, default variants override. Nothing inherited
-can be removed.
+Slots deep-merge per slot, variants deep-merge per name then per slot, compound variants
+append, default variants override. Nothing inherited can be removed. The
+[recipes page](https://eoria.adamtrip.pt/start/recipes/) has the full merge order.
 
-## Components
+## Look and themes
 
-| Group      | Components                                                                    |
-| ---------- | ----------------------------------------------------------------------------- |
-| Layout     | Box, Stack (HStack, VStack), Separator, Card                                  |
-| Typography | Text, Label, Badge                                                            |
-| Forms      | Button, Input, Textarea, Field, Checkbox, Switch, RadioGroup, Select          |
-| Feedback   | Progress, Skeleton, Avatar, Toast                                             |
-| Disclosure | Accordion, Tabs                                                               |
-| Overlays   | Dialog, Popover, Tooltip, DropdownMenu, plus the Portal and Popper primitives |
+The look is native-first rather than shadcn. Tall full-bleed buttons with a press scale,
+filled fields, surface-tinted cards without hairline borders, chip and segmented tabs, bottom
+sheets with a grabber, dark pill toasts. Three surface steps carry most of it: `background`,
+`surface` for cards and tiles, and `muted` for controls, so a control keeps its fill inside a
+card.
 
-`eoria add <name>` resolves `registryDependencies` transitively, so adding
-`select` also copies `popper`, `portal` and `text`.
-
-## Themes
-
-The look is native-first rather than shadcn: tall full-bleed buttons with a
-press scale, filled fields, surface-tinted cards without hairline borders,
-chip and segmented tabs, bottom sheets with a grabber, and dark pill toasts.
-Three surface steps carry most of it: `background`, `surface` (cards and
-tiles) and `muted` (controls), so a control keeps its fill inside a card.
-
-`@eoria/core` ships one token scale and six colour presets: zinc (default),
-blue, green, rose, violet and orange. Each preset is a light and a dark
-palette for the same semantic keys.
+`@eoria/core` ships one token scale and six colour presets: zinc (default), blue, green, rose,
+violet and orange. Each preset is a light and a dark palette for the same semantic keys.
 
 ```ts
 import { colorPresets, createThemes } from '@eoria/core'
@@ -85,66 +116,52 @@ import { colorPresets, createThemes } from '@eoria/core'
 configureUnistyles({ themes: createThemes(colorPresets.violet) })
 ```
 
-To switch presets at runtime, update the registered themes in place so
-adaptive light/dark keeps working:
+To switch presets at runtime, update the registered themes in place so adaptive light/dark
+keeps working:
 
 ```ts
 UnistylesRuntime.updateTheme('light', (t) => ({ ...t, colors: colorPresets.rose.light }))
 UnistylesRuntime.updateTheme('dark', (t) => ({ ...t, colors: colorPresets.rose.dark }))
 ```
 
-The example app's home screen has a mode and preset picker, and four
-showcase screens (sign in, checkout, profile, settings) built only from
-library components.
+Animations are timings of 120 to 150 ms. No springs. Reanimated defaults every animation to
+`ReduceMotion.System`, so the OS reduce-motion setting makes transitions jump to their end
+state and stops the Skeleton pulse.
 
-## Motion
+## Testing your components
 
-Animations are short timings, 120 to 150 ms, with no springs. Reanimated
-defaults every animation to `ReduceMotion.System`, so when the OS reduce
-motion setting is on, transitions jump to their end state and the Skeleton
-pulse stops. Wrap your app in `<ReducedMotionConfig mode={ReduceMotion.Never}>`
-to force animations on, or `Always` to disable them everywhere.
+`@eoria/core/jest` mocks Unistyles with variant resolution, unlike the official mock which
+strips variants. Add it to `setupFiles` in your Jest config.
 
-## Repository layout
+## This repository
 
-| Path            | Purpose                                                                                                |
-| --------------- | ------------------------------------------------------------------------------------------------------ |
-| `packages/core` | `@eoria/core`: recipe engine, theme tokens, Jest mock.                                                 |
-| `packages/cli`  | `@eoria/cli`: the `eoria` binary with init, add, diff, extend over the registry.                       |
-| `registry/ui`   | Component sources. The source of truth for what users copy.                                            |
-| `registry/dist` | Static, shadcn-compatible registry JSON. Built, not committed.                                         |
-| `apps/example`  | Expo app: a screen per component group, showcase screens, and the /preview routes the docs screenshot. |
-| `apps/docs`     | Astro docs site styled from the core tokens. Serves `/r/`.                                             |
-| `scripts`       | Registry build and example sync.                                                                       |
-
-## Commands
+| Path            | Purpose                                                                                      |
+| --------------- | -------------------------------------------------------------------------------------------- |
+| `registry/ui`   | Component sources. The source of truth for what users copy.                                  |
+| `packages/core` | `@eoria/core`: recipe engine, theme tokens, Jest mock.                                       |
+| `packages/cli`  | `@eoria/cli`: the `eoria` binary.                                                            |
+| `apps/docs`     | Astro docs site styled from the core tokens. Also serves the registry JSON under `/r/`.      |
+| `apps/example`  | Expo app with a screen per component group, showcase screens, and the routes the docs shoot. |
+| `registry/dist` | Static registry JSON. Built, not committed.                                                  |
 
 ```sh
 pnpm install
-pnpm typecheck        # all workspaces
-pnpm test             # core unit tests
-pnpm build            # core package
 pnpm build:registry   # registry/dist
-pnpm sync:example     # copy registry/ui into apps/example/src/components/ui
-pnpm dev:docs         # docs site at http://localhost:4321
-pnpm build:docs       # registry + docs into apps/docs/dist
+pnpm typecheck        # all workspaces
+pnpm test             # core and cli
+pnpm sync:example     # copy registry/ui into the example app
+pnpm dev:docs         # docs at http://localhost:4321
 pnpm --filter docs previews   # screenshot every component on the booted iOS simulator
 ```
 
 Run the example with `pnpm --filter example ios` after `npx expo prebuild`.
 
-The docs deploy to Cloudflare Pages as a static site at https://eoria.adamtrip.pt, from the
-release workflow so the site never documents an unpublished package. See [RELEASING.md](RELEASING.md).
+The docs site deploys to Cloudflare Pages from the release workflow, so it never documents a
+package version that is not on npm. Green pushes to `main` deploy a preview instead.
 
-## Testing components
-
-`@eoria/core/jest` mocks Unistyles with variant resolution, unlike the official
-mock which strips variants. Add it to `setupFiles` in your Jest config.
+[CONTRIBUTING.md](CONTRIBUTING.md) has the PR flow and review rules. [RELEASING.md](RELEASING.md)
+covers release-please, npm provenance and the docs deploy.
 
 ## License
 
 MIT
-
-## Contributing and releases
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and [RELEASING.md](RELEASING.md) for how `@eoria/core` and `eoria` reach npm.

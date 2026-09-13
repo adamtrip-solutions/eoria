@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://eoria.adamtrip.pt/sitemap-index.xml

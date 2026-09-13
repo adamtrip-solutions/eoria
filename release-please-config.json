@@ -13,7 +13,7 @@
     },
     "packages/cli": {
       "release-type": "node",
-      "package-name": "eoria",
+      "package-name": "@eoria/cli",
       "component": "cli"
     }
   }

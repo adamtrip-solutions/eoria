@@ -55,4 +55,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/docs/dist --project-name=eoria --branch=${{ inputs.branch }} --commit-hash=${{ inputs.ref || github.sha }} --commit-dirty=false
+          # wrangler is a devDependency of apps/docs, so the action finds it there instead of installing one.
+          workingDirectory: apps/docs
+          packageManager: pnpm
+          command: pages deploy dist --project-name=eoria --branch=${{ inputs.branch }} --commit-hash=${{ inputs.ref || github.sha }} --commit-dirty=false

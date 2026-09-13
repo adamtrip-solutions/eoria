@@ -42,6 +42,8 @@ CI packs both packages after tests pass and uploads the tarballs. The publish jo
   no force pushes or deletion, pushes restricted to `adamtrip`.
 - A `Preserve release tags` ruleset that blocks updating or deleting `core-v*` and `cli-v*`.
 - An `npm` environment restricted to those tags.
+- A `cloudflare` environment allowed from `main` and those tags. It holds the two Cloudflare
+  secrets and gets a deployment record per docs deploy.
 - Actions: workflow approval for all outside contributors, default token read-only, Actions
   may create pull requests.
 
@@ -79,6 +81,26 @@ having to close and reopen the release PR. Everything else works without it.
 
 ## Docs site
 
-`apps/docs` deploys separately through Cloudflare Pages connected to this repository:
-build command `pnpm build:docs`, output directory `apps/docs/dist`, `NODE_VERSION=22`.
-Every merge to `main` redeploys. No workflow is involved.
+The docs site serves the registry JSON, so it deploys from `publish.yml` after a package is
+on npm, not on every merge. That keeps the published pages and copied components in step with
+what `npm install` gives people. Every green push to `main` also deploys a preview to the
+`next` branch of the Pages project, which lives at `next.eoria.pages.dev`.
+
+Set it up once:
+
+1. Create the Pages project with `npx wrangler pages project create eoria --production-branch main`,
+   then add `eoria.adamtrip.pt` as its custom domain in the Cloudflare dashboard.
+2. Create an API token from the "Edit Cloudflare Workers" template, or a custom one with
+   `Account > Cloudflare Pages > Edit`.
+3. Store it as `CLOUDFLARE_API_TOKEN` and the account id as `CLOUDFLARE_ACCOUNT_ID` in the
+   `cloudflare` environment of the GitHub repository. The environment, not repository secrets,
+   so fork workflows never see them.
+
+Redeploy production by hand at any release tag:
+
+```sh
+gh workflow run deploy-docs.yml --repo adamtrip-solutions/eoria --ref cli-v0.1.0 -f branch=main
+```
+
+The workflow refuses `branch=main` from anything that is not a tag. Do not connect the
+repository through Cloudflare's Git integration as well, or both will deploy.

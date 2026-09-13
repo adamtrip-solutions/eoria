@@ -82,6 +82,17 @@ for pattern in 'core-v*' 'cli-v*'; do
     -f name="$pattern" -f type=tag >/dev/null 2>&1 || true
 done
 
+echo "› cloudflare environment"
+gh api -X PUT "repos/$REPO/environments/cloudflare" --input - >/dev/null <<'JSON'
+{ "deployment_branch_policy": { "protected_branches": false, "custom_branch_policies": true } }
+JSON
+gh api -X POST "repos/$REPO/environments/cloudflare/deployment-branch-policies" \
+  -f name=main -f type=branch >/dev/null 2>&1 || true
+for pattern in 'core-v*' 'cli-v*'; do
+  gh api -X POST "repos/$REPO/environments/cloudflare/deployment-branch-policies" \
+    -f name="$pattern" -f type=tag >/dev/null 2>&1 || true
+done
+
 echo "› Labels"
 gh label create bug --color d73a4a --description "Something isn't working" -R "$REPO" --force >/dev/null
 gh label create enhancement --color a2eeef --description "New feature or request" -R "$REPO" --force >/dev/null
@@ -97,4 +108,4 @@ gh api -X PATCH "repos/$REPO" --input - >/dev/null <<'JSON'
 JSON
 gh api -X PUT "repos/$REPO/vulnerability-alerts" >/dev/null || true
 
-echo "✓ Done. Remaining by hand: npm trusted publishers (RELEASING.md), Cloudflare Pages project."
+echo "✓ Done. Remaining by hand: npm trusted publishers, Cloudflare Pages project and the cloudflare environment secrets (RELEASING.md)."

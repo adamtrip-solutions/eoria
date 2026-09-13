@@ -81,3 +81,14 @@ jobs:
         env:
           VERIFY_RESULT: ${{ needs.verify.result }}
         run: test "$VERIFY_RESULT" = success
+  deploy-preview:
+    # Every green commit on main becomes the preview site. Production deploys only from publish.yml.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [complete]
+    permissions:
+      contents: read
+    uses: ./.github/workflows/deploy-docs.yml
+    with:
+      ref: ${{ github.sha }}
+      branch: next
+    secrets: inherit

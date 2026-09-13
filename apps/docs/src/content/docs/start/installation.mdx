@@ -19,23 +19,17 @@ Five minutes on an existing Expo project. New projects can start from
     npx @eoria/cli init
     ```
 
-    It writes `eoria.json`, `src/unistyles.ts`, a Babel config with the Unistyles and Worklets
-    plugins, the `@/*` alias, and installs the peers with `expo install`. Each file it would
+    It writes `eoria.json` and `src/unistyles.ts`, adds `import '@/unistyles'` as the first line
+    of your root layout, writes a Babel config with the Unistyles and Worklets plugins, adds the
+    `@/*` alias, and installs `@eoria/core` and the peers with `expo install`. Each file it would
     overwrite is skipped and reported. The [CLI page](/start/cli/#init) lists exactly what it
     touches.
 
-    Neither `@eoria/cli` nor `@eoria/core` is on npm yet. Until they are, build the CLI in a checkout
-    and run it with `--no-install`, then add `@eoria/core` as a workspace or `file:` dependency:
+2.  **Check the theme import.**
 
-    ```sh
-    pnpm --filter @eoria/cli build
-    node ../eoria/packages/cli/dist/index.js init --no-install
-    ```
-
-2.  **Import the themes first.**
-
-    `init` created `src/unistyles.ts`. It has to run before any component renders, so import it
-    at the top of your root layout.
+    `src/unistyles.ts` registers the themes and has to run before any component renders. `init`
+    imports it at the top of `app/_layout.tsx`, `App.tsx` or `index.js`, whichever it finds. If
+    your entry file lives somewhere else, add the import yourself and keep it first.
 
     ```ts title="src/unistyles.ts"
     import { configureUnistyles, defaultThemes, type EoriaTheme } from '@eoria/core'
@@ -94,13 +88,15 @@ Five minutes on an existing Expo project. New projects can start from
 
 5.  **Rebuild the native app.**
 
-    ```sh
-    npx expo prebuild
-    npx expo run:ios
-    ```
+        ```sh
+        npx expo prebuild
+        npx expo run:ios
+        ```
 
-    Expo Go will not work. If you see `Unistyles: StyleSheet.configure was not called`, the
-    themes file is not imported before the first component renders.
+        Expo Go will not work. If the app throws `Unistyles: One of your stylesheets is trying to
+
+    get the theme, but no theme has been selected yet`, the themes file is not imported before
+    the first component renders. Check step 2.
 
 </Steps>
 

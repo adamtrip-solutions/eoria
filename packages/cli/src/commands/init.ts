@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
+import { dirname, relative, resolve } from 'node:path'
 import {
   aliasToDirectory,
   configFromShadcn,
@@ -78,10 +78,11 @@ export async function init(root: string, options: InitOptions): Promise<void> {
   if (!existsSync(unistyles)) {
     await mkdir(dirname(unistyles), { recursive: true })
     await writeFile(unistyles, UNISTYLES_FILE)
-    log.ok(`Wrote ${srcRoot}/unistyles.ts. Import it first in your root layout.`)
+    log.ok(`Wrote ${srcRoot}/unistyles.ts.`)
   } else {
     log.step(`${srcRoot}/unistyles.ts exists, left as is.`)
   }
+  await ensureThemeImport(root, srcRoot, config)
 
   const babel = resolve(root, 'babel.config.js')
   if (!existsSync(babel)) {
@@ -116,6 +117,61 @@ export async function init(root: string, options: InitOptions): Promise<void> {
     `Next: ${log.bold('npx @eoria/cli add button')}, then mount <PortalHost /> and <Toaster /> in your root layout.`,
   )
   log.info(log.dim('Full steps: https://eoria.adamtrip.pt/start/installation/'))
+}
+
+/** Entry files, in the order Expo Router and bare React Native look for them. */
+const ENTRY_FILES = [
+  'app/_layout.tsx',
+  'app/_layout.jsx',
+  'app/_layout.js',
+  'App.tsx',
+  'App.jsx',
+  'App.js',
+  'index.tsx',
+  'index.js',
+]
+
+/**
+ * Prepends `import '@/unistyles'` to the root layout so the themes register
+ * before any stylesheet is created. Without it Unistyles throws on the first
+ * component. Reports when no entry file can be found.
+ */
+export async function ensureThemeImport(
+  root: string,
+  srcRoot: string,
+  config: EoriaConfig,
+): Promise<void> {
+  const prefix = /^(@[^/]*|~)\//.exec(config.alias)?.[1]
+  const candidates = ENTRY_FILES.flatMap((f) => (srcRoot === '.' ? [f] : [`${srcRoot}/${f}`, f]))
+  const entry = candidates.find((f) => existsSync(resolve(root, f)))
+  if (!entry) {
+    log.warn(
+      `Could not find your root layout. Add ${log.bold(`import '${prefix ? `${prefix}/unistyles` : './unistyles'}'`)} as the first import of your entry file.`,
+    )
+    return
+  }
+  const file = resolve(root, entry)
+  const text = await readFile(file, 'utf8')
+  if (
+    /^\s*import\s+['"][^'"]*\/unistyles['"]/m.test(text) ||
+    /from\s+['"][^'"]*\/unistyles['"]/.test(text)
+  ) {
+    log.step(`${entry} already imports unistyles.`)
+    return
+  }
+  let specifier: string
+  if (prefix) {
+    specifier = `${prefix}/unistyles`
+  } else {
+    const rel = relative(dirname(file), resolve(root, srcRoot, 'unistyles'))
+      .split('\\')
+      .join('/')
+    specifier = rel.startsWith('.') ? rel : `./${rel}`
+  }
+  const quote = text.includes('"') && !text.includes("'") ? '"' : "'"
+  const semi = /;\s*$/m.test(text) ? ';' : ''
+  await writeFile(file, `import ${quote}${specifier}${quote}${semi}\n${text}`)
+  log.ok(`Added import '${specifier}' to ${entry}. It must stay the first import.`)
 }
 
 /**

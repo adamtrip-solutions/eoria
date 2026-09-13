@@ -1,6 +1,6 @@
 # Releasing
 
-Two packages ship from this repository: `@eoria/core` from `packages/core` and `eoria` from
+Two packages ship from this repository: `@eoria/core` from `packages/core` and `@eoria/cli` from
 `packages/cli`. Components are not versioned; users copy them and `eoria diff` tells them when
 the registry moved.
 
@@ -30,7 +30,10 @@ match the tag and this repository, then runs the full CI workflow at the release
 
 CI packs both packages after tests pass and uploads the tarballs. The publish job, in the
 `npm` environment, downloads that artifact and publishes the one matching the tag with
-`npm publish --provenance`. It does not rebuild. If npm already has that version, it skips.
+`npm publish --provenance`. It does not rebuild.
+
+The CLI is scoped because npm rejects the bare name `eoria` as too close to `ora`. The
+binary is still `eoria`, so `npx @eoria/cli add button` and `pnpm eoria add button` both work. If npm already has that version, it skips.
 
 ## GitHub configuration
 

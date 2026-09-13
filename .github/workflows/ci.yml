@@ -36,7 +36,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
       - run: pnpm build:registry
-      - run: pnpm --filter @eoria/core --filter eoria build
+      - run: pnpm --filter @eoria/core --filter @eoria/cli build
       - run: pnpm typecheck
       - run: pnpm test
       - name: Build the docs site and registry output
@@ -46,7 +46,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           mkdir -p artifacts
-          pnpm --filter @eoria/core --filter eoria exec pnpm pack --pack-destination "$GITHUB_WORKSPACE/artifacts"
+          pnpm --filter @eoria/core --filter @eoria/cli exec pnpm pack --pack-destination "$GITHUB_WORKSPACE/artifacts"
       - name: Smoke test the packed CLI
         if: runner.os == 'Linux'
         run: |
@@ -55,7 +55,7 @@ jobs:
           mkdir -p "$tmp/src"
           printf '{"name":"smoke","private":true,"dependencies":{}}' > "$tmp/package.json"
           cd "$tmp"
-          npm install --no-audit --no-fund "$GITHUB_WORKSPACE"/artifacts/eoria-*.tgz
+          npm install --no-audit --no-fund "$GITHUB_WORKSPACE"/artifacts/eoria-cli-*.tgz
           npx eoria init --no-install --registry "$GITHUB_WORKSPACE/registry/dist"
           npx eoria add button select --no-install
           test -f src/components/ui/button.tsx

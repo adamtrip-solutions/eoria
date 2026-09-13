@@ -12,7 +12,7 @@
     "build:registry": "node scripts/build-registry.mjs",
     "sync:example": "node scripts/sync-example.mjs",
     "format": "prettier --write .",
-    "build:docs": "pnpm --filter docs build",
+    "build:docs": "turbo run build --filter=docs",
     "dev:docs": "pnpm --filter docs dev",
     "format:check": "prettier --check ."
   },

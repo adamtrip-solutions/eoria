@@ -10,7 +10,7 @@ Docs, previews and the registry live at **[eoria.adamtrip.pt](https://eoria.adam
 [![@eoria/cli](https://img.shields.io/npm/v/%40eoria%2Fcli?label=%40eoria%2Fcli)](https://www.npmjs.com/package/@eoria/cli)
 [![CI](https://github.com/adamtrip-solutions/eoria/actions/workflows/ci.yml/badge.svg)](https://github.com/adamtrip-solutions/eoria/actions/workflows/ci.yml)
 
-Status: pre-alpha. The API will change before 1.0.
+Status: pre-alpha. The API may change before 1.0.
 
 ## Quick start
 
@@ -24,8 +24,9 @@ the peers. `add` copies the component sources into `src/components/ui` and pulls
 they depend on, so `add select` also brings `popper`, `portal` and `text`. From there the
 files are yours. Edit them, rename them, delete what you do not use.
 
-Requirements: Expo SDK 57 or React Native 0.86 with the New Architecture, and a development
-build. Expo Go cannot run Unistyles or Reanimated. The
+Requirements: React Native with the New Architecture, which Unistyles 3 and Reanimated 4
+need, and a development build, because Expo Go cannot run either. Any Expo SDK from 53 on
+qualifies. The example app and the previews run on SDK 57 and React Native 0.86. The
 [installation guide](https://eoria.adamtrip.pt/start/installation/) walks through the setup.
 
 ## The CLI

@@ -7,6 +7,7 @@ import { rewriteAlias, kebabCase, pascalCase } from '../files'
 import { Registry } from '../registry'
 import { add } from '../commands/add'
 import { extend } from '../commands/extend'
+import { ensureThemeImport } from '../commands/init'
 import { writeConfig, defaultConfig, aliasToDirectory } from '../config'
 
 const registryDir = resolve(__dirname, '../../../../registry/dist')
@@ -92,4 +93,24 @@ test('localPath keeps subfolders under the registry prefix and rejects escapes',
   expect(() => localPath('src/ui', { path: 'x', target: 'components/ui/../../evil.tsx' })).toThrow()
   expect(() => assertPlainName('../../evil', 'name')).toThrow()
   expect(() => assertPlainName('checkout-button', 'name')).not.toThrow()
+})
+
+test('ensureThemeImport prepends the import to the root layout once', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'eoria-'))
+  await mkdir(join(root, 'src/app'), { recursive: true })
+  const layout =
+    "import { Stack } from 'expo-router';\n\nexport default function Layout() {\n  return <Stack />;\n}\n"
+  await writeFile(join(root, 'src/app/_layout.tsx'), layout)
+  const config = { ...defaultConfig, alias: '@/components/ui', components: 'src/components/ui' }
+
+  await ensureThemeImport(root, 'src', config)
+  const once = await readFile(join(root, 'src/app/_layout.tsx'), 'utf8')
+  expect(once).toBe(`import '@/unistyles';\n${layout}`)
+
+  await ensureThemeImport(root, 'src', config)
+  expect(await readFile(join(root, 'src/app/_layout.tsx'), 'utf8')).toBe(once)
+
+  await writeFile(join(root, 'App.tsx'), 'export default function App() {}\n')
+  await ensureThemeImport(root, 'src', { ...config, alias: 'components/ui' })
+  expect(await readFile(join(root, 'src/app/_layout.tsx'), 'utf8')).toBe(once)
 })

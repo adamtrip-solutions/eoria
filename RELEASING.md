@@ -99,11 +99,14 @@ Set it up once:
    `cloudflare` environment of the GitHub repository. The environment, not repository secrets,
    so fork workflows never see them.
 
-Redeploy production by hand at any release tag:
+Docs-only fixes do not need a package release. Deploy production by hand from `main`:
 
 ```sh
-gh workflow run deploy-docs.yml --repo adamtrip-solutions/eoria --ref cli-v0.1.0 -f branch=main
+gh workflow run deploy-docs.yml --repo adamtrip-solutions/eoria --ref main -f branch=main
 ```
 
-The workflow refuses `branch=main` from anything that is not a tag. Do not connect the
-repository through Cloudflare's Git integration as well, or both will deploy.
+Check the preview first, and only do this when the change does not describe an unpublished
+package feature. The same command with `--ref cli-v0.1.0` redeploys a release. Automatic
+production deploys still only come from `publish.yml` at a tag; the workflow refuses
+`branch=main` from any other source. Do not connect the repository through Cloudflare's Git
+integration as well, or both will deploy.

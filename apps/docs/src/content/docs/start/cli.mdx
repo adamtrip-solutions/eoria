@@ -17,8 +17,9 @@ npx @eoria/cli init
 
 Writes `eoria.json` next to your `package.json`, then sets up what Unistyles needs:
 
-- `src/unistyles.ts`, which registers the light and dark themes. Import it first in your root
-  layout.
+- `src/unistyles.ts`, which registers the light and dark themes, and an `import '@/unistyles'`
+  line at the top of your root layout. It looks for `app/_layout.tsx`, `App.tsx` and `index.js`
+  under the source root and the project root, and tells you if it finds none.
 - `babel.config.js` with the Unistyles and Worklets plugins, if you have no Babel config yet.
   If you do, it prints the two plugin lines for you to paste. An existing `unistyles.ts` is
   reported and kept.

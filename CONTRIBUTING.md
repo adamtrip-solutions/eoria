@@ -43,6 +43,13 @@ a prop, a variant or change a default, update the page in the same PR. Screensho
 pages come from `apps/example/src/previews.tsx`; add or adjust the demo and run
 `pnpm --filter docs previews` on a booted iOS simulator when the look changes.
 
+The docs build generates `/llms.txt` and a `.md` version of every documentation page from
+the same collection. Edit the MDX source, not generated Markdown. New MDX widgets need an
+explicit conversion in `apps/docs/src/lib/agent-docs.mjs`; unsupported widgets fail the build
+so instructions cannot disappear from agent references. `pnpm --filter docs test` checks
+conversion, links, and preservation of code examples. Keep `skills/eoria/SKILL.md` aligned
+with changes to the consumer workflow; the docs build serves that file without duplicating it.
+
 ## Changing the CLI
 
 `packages/cli` has no runtime dependency on the rest of the repo. Its tests run against

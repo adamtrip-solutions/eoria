@@ -48,9 +48,12 @@ On press the button scales to 0.97 over 90 ms and a tint layer appears over the 
 
 ## Deriving a button
 
-`createButton(recipe)` builds a new component from any recipe that keeps the `label`, `icon`, `rootPressed` and `rootDisabled` slots. This is what the planned `eoria extend button` command will generate.
+`createButton(recipe)` builds a new component from any recipe that keeps the `label`, `icon`, `rootPressed` and `rootDisabled` slots. Run `npx @eoria/cli extend button checkout-button` to generate the local extension, then fill in its recipe.
 
 ```tsx
+import { extendSlotRecipe } from '@eoria/core'
+import { buttonRecipe, createButton } from '@/components/ui/button'
+
 export const checkoutButtonRecipe = extendSlotRecipe(buttonRecipe, (theme) => ({
   slots: { root: { borderRadius: theme.radius.full } },
   variants: { variant: { brand: { root: { backgroundColor: '#7c3aed' } } } },

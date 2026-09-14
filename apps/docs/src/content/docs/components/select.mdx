@@ -13,17 +13,22 @@ npx @eoria/cli add select
 ## Usage
 
 ```tsx
+import { useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, type SelectOption } from '@/components/ui/select'
 
-const [country, setCountry] = useState<SelectOption | undefined>()
+export function CountrySelect() {
+  const [country, setCountry] = useState<SelectOption | undefined>()
 
-<Select value={country} onValueChange={setCountry}>
-  <SelectTrigger placeholder="Choose a country" />
-  <SelectContent>
-    <SelectItem value="pt" label="Portugal" />
-    <SelectItem value="es" label="Spain" />
-  </SelectContent>
-</Select>
+  return (
+    <Select value={country} onValueChange={setCountry}>
+      <SelectTrigger placeholder="Choose a country" />
+      <SelectContent>
+        <SelectItem value="pt" label="Portugal" />
+        <SelectItem value="es" label="Spain" />
+      </SelectContent>
+    </Select>
+  )
+}
 ```
 
 ## Why options are objects

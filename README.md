@@ -133,6 +133,22 @@ state and stops the Skeleton pulse.
 `@eoria/core/jest` mocks Unistyles with variant resolution, unlike the official mock which
 strips variants. Add it to `setupFiles` in your Jest config.
 
+## Using eoria with agents
+
+Give your agent the docs site's `/llms.txt` URL to find setup guides and component references.
+Every documentation page also has a Markdown version, such as `/components/select.md` and
+`/start/recipes.md`. The docs build generates these from the same MDX used for the website,
+including installation commands and component dependency information.
+
+The [Eoria consumer skill](skills/eoria/SKILL.md) teaches agents to inspect the app's copied
+components and `eoria.json`, follow the setup and recipe conventions, and preserve local edits
+when updating. Copy the `skills/eoria` directory into your agent's supported skills directory.
+The docs build also serves the file at `/skills/eoria/SKILL.md` for download. These instructions
+are for consuming apps; repository contributors should follow [CONTRIBUTING.md](CONTRIBUTING.md).
+
+The references describe the registry in that docs build. An app's edited or older copies may
+have a different API, so the skill treats installed source as authoritative.
+
 ## This repository
 
 | Path            | Purpose                                                                                      |

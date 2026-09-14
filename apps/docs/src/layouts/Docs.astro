@@ -4,6 +4,7 @@ import Base from './Base.astro'
 import { existsSync } from 'node:fs'
 import Badge from '../components/ui/Badge.astro'
 import Preview from '../components/site/Preview.astro'
+import { groupDocs } from '../lib/docs-nav.mjs'
 
 interface Props {
   title: string
@@ -13,23 +14,7 @@ interface Props {
 }
 const { title, description, headings, id } = Astro.props
 
-const all = await getCollection('docs')
-const byOrder = (a: (typeof all)[number], b: (typeof all)[number]) =>
-  (a.data.sidebar?.order ?? 999) - (b.data.sidebar?.order ?? 999) ||
-  a.data.title.localeCompare(b.data.title)
-const CATEGORY_ORDER = ['Layout', 'Forms', 'Display', 'Overlays', 'Primitives']
-const components = all.filter((e) => e.id.startsWith('components/'))
-const groups = [
-  { label: 'Start', items: all.filter((e) => e.id.startsWith('start/')).sort(byOrder) },
-  ...CATEGORY_ORDER.map((label) => ({
-    label,
-    items: components.filter((e) => e.data.category === label).sort(byOrder),
-  })),
-]
-const uncategorised = components.filter((e) => !CATEGORY_ORDER.includes(e.data.category ?? ''))
-if (uncategorised.length > 0) {
-  throw new Error(`Components without a known category: ${uncategorised.map((e) => e.id).join(', ')}`)
-}
+const groups = groupDocs(await getCollection('docs'))
 const flat = groups.flatMap((g) => g.items)
 const index = flat.findIndex((e) => e.id === id)
 const prev = index > 0 ? flat[index - 1] : undefined
@@ -40,7 +25,7 @@ const previewName = id.replace(/^components\//, '')
 const hasPreview = isComponent && existsSync(`public/previews/${previewName}-light.webp`)
 ---
 
-<Base title={title} description={description}>
+<Base title={title} description={description} markdownPath={`/${id}.md`}>
   <div class="container shell">
     <aside class="sidebar">
       <details class="mobile-nav">

@@ -1,7 +1,13 @@
 import { useState } from 'react'
-import { Copy, Pencil, Trash2 } from 'lucide-react-native'
+import { Copy, Pencil, Share, Trash2 } from 'lucide-react-native'
 import { Screen, Section } from '@/components/screen'
 import { Button } from '@/components/ui/button'
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxTrigger,
+  type ComboboxOption,
+} from '@/components/ui/combobox'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,8 +47,22 @@ const fruits = [
   'Honeydew',
 ]
 
+const countries: ComboboxOption[] = [
+  { value: 'pt', label: 'Portugal', keywords: ['lisbon'] },
+  { value: 'es', label: 'Spain', keywords: ['madrid'] },
+  { value: 'fr', label: 'France', keywords: ['paris'] },
+  { value: 'de', label: 'Germany', keywords: ['berlin'] },
+  { value: 'it', label: 'Italy', keywords: ['rome'] },
+  { value: 'nl', label: 'Netherlands', keywords: ['amsterdam'] },
+  { value: 'se', label: 'Sweden', keywords: ['stockholm'] },
+  { value: 'no', label: 'Norway', keywords: ['oslo'] },
+  { value: 'ch', label: 'Switzerland', keywords: ['bern', 'zürich'] },
+  { value: 'xx', label: 'Atlantis', disabled: true },
+]
+
 export default function OverlaysScreen() {
   const [fruit, setFruit] = useState<SelectOption | undefined>()
+  const [country, setCountry] = useState<string | undefined>()
   const [last, setLast] = useState('none')
   return (
     <Screen>
@@ -97,6 +117,16 @@ export default function OverlaysScreen() {
             <DropdownMenuItem icon={<Copy />} onSelect={() => setLast('duplicate')}>
               Duplicate
             </DropdownMenuItem>
+            <DropdownMenuItem
+              icon={<Share />}
+              description="Anyone with the link can view"
+              onSelect={() => setLast('share')}
+            >
+              Share
+            </DropdownMenuItem>
+            <DropdownMenuItem description="Same gutter, no icon" onSelect={() => setLast('move')}>
+              Move to folder
+            </DropdownMenuItem>
             <DropdownMenuItem disabled>Archive</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -109,6 +139,19 @@ export default function OverlaysScreen() {
             >
               Delete
             </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">Long menu</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuLabel>Scrolls past 360pt</DropdownMenuLabel>
+            {fruits.map((f) => (
+              <DropdownMenuItem key={f} onSelect={() => setLast(f.toLowerCase())}>
+                {f}
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
         <Text variant="muted">Last: {last}</Text>
@@ -145,6 +188,17 @@ export default function OverlaysScreen() {
           </SelectContent>
         </Select>
         <Text variant="muted">Selected: {fruit?.label ?? 'none'}</Text>
+      </Section>
+      <Section block title="Combobox">
+        <Combobox options={countries} value={country} onValueChange={setCountry}>
+          <ComboboxTrigger placeholder="Choose a country" />
+          <ComboboxContent searchPlaceholder="Search countries" emptyText="No country found" />
+        </Combobox>
+        <Combobox options={countries} defaultValue="pt" size="sm">
+          <ComboboxTrigger />
+          <ComboboxContent />
+        </Combobox>
+        <Text variant="muted">Selected: {country ?? 'none'}</Text>
       </Section>
     </Screen>
   )

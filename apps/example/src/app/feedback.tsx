@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
+import { AlertCircle, Info } from 'lucide-react-native'
 import { Screen, Section } from '@/components/screen'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
 import { HStack, VStack } from '@/components/ui/stack'
 import { Text } from '@/components/ui/text'
 
@@ -24,6 +27,33 @@ export default function FeedbackScreen() {
         <Badge variant="outline">Outline</Badge>
         <Badge variant="destructive">Destructive</Badge>
         <Badge size="md">Medium</Badge>
+      </Section>
+      <Section block title="Alert">
+        <Alert icon={<Info />}>
+          <AlertTitle>Heads up</AlertTitle>
+          <AlertDescription>You can change this later in Settings.</AlertDescription>
+        </Alert>
+        <Alert variant="primary">
+          <AlertTitle>Backup complete</AlertTitle>
+          <AlertDescription>Last run two minutes ago.</AlertDescription>
+        </Alert>
+        <Alert variant="destructive" icon={<AlertCircle />}>
+          <AlertTitle>Payment failed</AlertTitle>
+          <AlertDescription>Your card was declined. Try another method.</AlertDescription>
+        </Alert>
+        <Alert variant="outline">
+          <AlertTitle>Only a title</AlertTitle>
+        </Alert>
+      </Section>
+      <Section title="Spinner">
+        <Spinner size="sm" />
+        <Spinner />
+        <Spinner size="lg" />
+        <Spinner variant="dots" />
+        <Spinner variant="bars" />
+        <Button disabled icon={<Spinner size="sm" color="white" />}>
+          Saving
+        </Button>
       </Section>
       <Section block title="Separator">
         <VStack gap={3}>

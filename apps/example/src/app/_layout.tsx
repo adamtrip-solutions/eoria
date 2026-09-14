@@ -1,6 +1,7 @@
 import '@/unistyles'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useUnistyles } from 'react-native-unistyles'
 import { PortalHost } from '@/components/ui/portal'
@@ -33,7 +34,7 @@ export default function RootLayout() {
   const insets = useSafeAreaInsets()
   usePreviewDriver()
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style={rt.themeName === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
@@ -51,6 +52,6 @@ export default function RootLayout() {
       <Toaster
         offset={{ top: insets.top + theme.space[2], bottom: insets.bottom + theme.space[4] }}
       />
-    </>
+    </GestureHandlerRootView>
   )
 }

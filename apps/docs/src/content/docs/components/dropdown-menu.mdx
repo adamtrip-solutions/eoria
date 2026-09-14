@@ -1,6 +1,6 @@
 ---
 title: DropdownMenu
-description: Anchored menu with items, labels, separators and icons.
+description: Anchored menu with items, descriptions, labels, separators and icons.
 category: Overlays
 sidebar:
   order: 24
@@ -31,6 +31,10 @@ import {
     <DropdownMenuItem icon={<Pencil />} onSelect={edit}>
       Edit
     </DropdownMenuItem>
+    <DropdownMenuItem icon={<Share />} description="Anyone with the link can view" onSelect={share}>
+      Share
+    </DropdownMenuItem>
+    <DropdownMenuItem onSelect={archive}>Archive</DropdownMenuItem>
     <DropdownMenuSeparator />
     <DropdownMenuItem destructive icon={<Trash2 />} onSelect={remove}>
       Delete
@@ -41,9 +45,11 @@ import {
 
 ## Props
 
-`DropdownMenuItem` takes `onSelect`, `closeOnSelect` (default true), `destructive`, `disabled` and `icon`. The icon adapter reads the `icon` slot the same way Button does. Content accepts the [Popper](/components/popper/) placement props, with `align` defaulting to `start` instead of `center`.
+`DropdownMenuItem` takes `onSelect`, `closeOnSelect` (default true), `destructive`, `disabled`, `icon` and `description`. The title is the item's children and is the only required part; `description` adds a muted second line. The icon adapter reads the `icon` slot the same way Button does. When any item in a menu has an icon, items without one reserve the same gutter, so titles line up and nothing shifts between rows. Content accepts the [Popper](/components/popper/) placement props, with `align` defaulting to `start` instead of `center`.
 
-Rows are 50pt with a 16pt label. The menu sits on the `elevated` colour with a hairline and a soft shadow, and closes on tap outside or Android back.
+`DropdownMenuContent` also takes `scrollProps` for the list inside it.
+
+Rows are 50pt with a 16pt label. The menu sits on the `elevated` colour with a hairline and a soft shadow, scrolls past 360pt (the `list` slot), and closes on tap outside or Android back.
 
 ## Source
 

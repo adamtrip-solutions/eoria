@@ -4,16 +4,19 @@ import {
   isValidElement,
   useCallback,
   useContext,
+  useLayoutEffect,
   useState,
   type ReactElement,
   type ReactNode,
 } from 'react'
 import {
   Pressable,
+  ScrollView,
   StyleSheet,
   View,
   type AccessibilityState,
   type PressableProps,
+  type ScrollViewProps,
   type StyleProp,
   type ViewProps,
   type ViewStyle,
@@ -51,6 +54,8 @@ export const dropdownMenuRecipe = defineSlotRecipe((theme) => ({
       shadowOffset: { width: 0, height: 8 },
       elevation: 6,
     },
+    /** The scrolling list inside `root`. Bound its height here. */
+    list: { maxHeight: 360 },
     item: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -62,13 +67,19 @@ export const dropdownMenuRecipe = defineSlotRecipe((theme) => ({
     },
     itemPressed: { backgroundColor: theme.colors.accent },
     itemDisabled: { opacity: 0.5 },
+    /** Title and description column. */
+    itemBody: { flex: 1, paddingVertical: theme.space[3] },
     itemLabel: {
-      flex: 1,
       fontSize: theme.fontSize.md,
       lineHeight: theme.lineHeight.md,
       color: theme.colors.foreground,
     },
     itemLabelDestructive: { color: theme.colors.destructive },
+    itemDescription: {
+      fontSize: theme.fontSize.sm,
+      lineHeight: theme.lineHeight.sm,
+      color: theme.colors.mutedForeground,
+    },
     /** Read by the icon adapter: `width` becomes `size`, `color` becomes `color`. */
     icon: { width: 16, height: 16, color: theme.colors.mutedForeground },
     iconDestructive: { color: theme.colors.destructive },
@@ -87,16 +98,26 @@ export const dropdownMenuRecipe = defineSlotRecipe((theme) => ({
 }))
 
 type MenuSlots =
+  | 'list'
   | 'item'
   | 'itemPressed'
   | 'itemDisabled'
+  | 'itemBody'
   | 'itemLabel'
   | 'itemLabelDestructive'
+  | 'itemDescription'
   | 'icon'
   | 'iconDestructive'
   | 'label'
   | 'separator'
-type Ctx = { open: boolean; setOpen: (open: boolean) => void; styles: SlotStyles<MenuSlots> }
+type Ctx = {
+  open: boolean
+  setOpen: (open: boolean) => void
+  styles: SlotStyles<MenuSlots>
+  /** True once any mounted item carries an icon; iconless items then reserve the gutter. */
+  hasIcons: boolean
+  registerIcon: () => () => void
+}
 const MenuContext = createContext<Ctx | null>(null)
 
 function useMenu(part: string) {
@@ -130,8 +151,15 @@ export function DropdownMenu({
     [controlled, onOpenChange],
   )
   const s = useRecipe(dropdownMenuRecipe, {}, styles)
+  const [iconCount, setIconCount] = useState(0)
+  const registerIcon = useCallback(() => {
+    setIconCount((n) => n + 1)
+    return () => setIconCount((n) => n - 1)
+  }, [])
   return (
-    <MenuContext.Provider value={{ open, setOpen, styles: s }}>
+    <MenuContext.Provider
+      value={{ open, setOpen, styles: s, hasIcons: iconCount > 0, registerIcon }}
+    >
       <Popper>{children}</Popper>
     </MenuContext.Provider>
   )
@@ -178,10 +206,13 @@ export function DropdownMenuTrigger({
   )
 }
 
-export type DropdownMenuContentProps = Omit<PopperContentProps, 'onDismiss'>
+export type DropdownMenuContentProps = Omit<PopperContentProps, 'onDismiss'> & {
+  scrollProps?: ScrollViewProps
+}
 
 export function DropdownMenuContent({
   align = 'start',
+  scrollProps,
   style,
   children,
   ...rest
@@ -198,13 +229,25 @@ export function DropdownMenuContent({
       style={[styles.root, style]}
       {...rest}
     >
-      <MenuContext.Provider value={ctx}>{children}</MenuContext.Provider>
+      <MenuContext.Provider value={ctx}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+          style={styles.list}
+          {...scrollProps}
+        >
+          {children}
+        </ScrollView>
+      </MenuContext.Provider>
     </PopperContent>
   )
 }
 
 export type DropdownMenuItemProps = Omit<PressableProps, 'style' | 'children' | 'onPress'> & {
+  /** The title. A string gets the label style; anything else renders as is. */
   children: ReactNode
+  /** Secondary line under the title. */
+  description?: string
   /** Any element accepting `size` and `color` props, e.g. a lucide icon. */
   icon?: ReactElement<{ size?: number; color?: string }>
   destructive?: boolean
@@ -215,6 +258,7 @@ export type DropdownMenuItemProps = Omit<PressableProps, 'style' | 'children' | 
 
 export function DropdownMenuItem({
   children,
+  description,
   icon,
   destructive = false,
   disabled,
@@ -222,14 +266,18 @@ export function DropdownMenuItem({
   closeOnSelect = true,
   ...rest
 }: DropdownMenuItemProps) {
-  const { setOpen, styles } = useMenu('DropdownMenuItem')
+  const { setOpen, styles, hasIcons, registerIcon } = useMenu('DropdownMenuItem')
   const iconStyle = destructive ? [styles.icon, styles.iconDestructive] : styles.icon
-  const iconNode = isValidElement(icon)
+  const hasIcon = isValidElement(icon)
+  const iconNode = hasIcon
     ? cloneElement(icon, {
         size: getStyleValue(iconStyle, 'width') as number | undefined,
         color: getStyleValue(iconStyle, 'color') as string | undefined,
       })
     : null
+  // Runs before paint, so mixed menus align on first render.
+  useLayoutEffect(() => (hasIcon ? registerIcon() : undefined), [hasIcon, registerIcon])
+  const gutter = getStyleValue(iconStyle, 'width') as number | undefined
   return (
     <Pressable
       accessibilityRole="menuitem"
@@ -246,14 +294,17 @@ export function DropdownMenuItem({
       ]}
       {...rest}
     >
-      {iconNode}
-      {typeof children === 'string' ? (
-        <Text style={[styles.itemLabel, destructive && styles.itemLabelDestructive]}>
-          {children}
-        </Text>
-      ) : (
-        children
-      )}
+      {iconNode ?? (hasIcons ? <View style={{ width: gutter }} /> : null)}
+      <View style={styles.itemBody}>
+        {typeof children === 'string' ? (
+          <Text style={[styles.itemLabel, destructive && styles.itemLabelDestructive]}>
+            {children}
+          </Text>
+        ) : (
+          children
+        )}
+        {description ? <Text style={styles.itemDescription}>{description}</Text> : null}
+      </View>
     </Pressable>
   )
 }

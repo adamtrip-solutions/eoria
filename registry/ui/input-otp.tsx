@@ -1,5 +1,6 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import {
+  Pressable,
   StyleSheet,
   TextInput,
   View,
@@ -199,10 +200,13 @@ export const InputOTP = forwardRef<TextInput, InputOTPProps>(function InputOTP(
 
   return (
     <View style={[s.root, style]}>
-      <View
-        pointerEvents="none"
-        accessibilityElementsHidden
+      {/* iOS skips views under 1% opacity when hit-testing, so the invisible
+          input cannot take the tap itself; the cells forward it. */}
+      <Pressable
+        accessible={false}
         importantForAccessibility="no-hide-descendants"
+        disabled={disabled}
+        onPress={() => inputRef.current?.focus()}
         style={{ flexDirection: 'row', flexGrow: 1, gap: getStyleValue(s.root, 'gap') ?? 8 }}
       >
         {cells.map((char, i) => (
@@ -221,9 +225,10 @@ export const InputOTP = forwardRef<TextInput, InputOTPProps>(function InputOTP(
             )}
           </View>
         ))}
-      </View>
+      </Pressable>
       <TextInput
         ref={inputRef}
+        pointerEvents="none"
         value={value}
         onChangeText={change}
         editable={!disabled}

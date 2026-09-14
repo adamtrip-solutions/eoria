@@ -141,6 +141,19 @@ export default function OverlaysScreen() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">Long menu</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuLabel>Scrolls past 360pt</DropdownMenuLabel>
+            {fruits.map((f) => (
+              <DropdownMenuItem key={f} onSelect={() => setLast(f.toLowerCase())}>
+                {f}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Text variant="muted">Last: {last}</Text>
       </Section>
       <Section block title="Select">

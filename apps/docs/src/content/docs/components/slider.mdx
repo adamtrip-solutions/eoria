@@ -10,6 +10,8 @@ sidebar:
 npx @eoria/cli add slider
 ```
 
+Needs `react-native-gesture-handler` and a `GestureHandlerRootView` around the app, which Expo Router projects usually already have. The CLI installs the package as a dependency of the item.
+
 ## Usage
 
 ```tsx
@@ -47,7 +49,7 @@ export function Volume() {
 
 ## Notes
 
-The root is the 44pt touch target and stretches to its container. A tap moves the thumb to the finger; a drag follows it, and a scrolling parent cannot steal the gesture once it has started. Programmatic changes animate over 120 ms; the thumb scales up slightly while held. The root has the `adjustable` role with `min`, `max` and `now`, and answers the screen reader's increment and decrement actions by one `step`. The thumb is white on every theme with a soft shadow; change `styles.thumb` if your palette needs otherwise.
+The root is the 44pt touch target and stretches to its container. Grabbing the thumb drags it without a jump; a press anywhere else moves the thumb to the finger and drags from there. The gesture is a gesture-handler Pan recognised natively, which is what keeps it from triggering the stack's swipe-back on iOS 26, where that swipe works from anywhere on the screen. A clear vertical movement fails the pan so a parent ScrollView still scrolls. Programmatic changes animate over 120 ms; the thumb scales up slightly while held. The root has the `adjustable` role with `min`, `max` and `now`, and answers the screen reader's increment and decrement actions by one `step`. The thumb is white on every theme with a soft shadow; change `styles.thumb` if your palette needs otherwise.
 
 ## Source
 

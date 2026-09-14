@@ -448,7 +448,12 @@
       "type": "registry:ui",
       "title": "Slider",
       "description": "Single-thumb slider with step snapping and screen-reader adjust actions.",
-      "dependencies": ["@eoria/core", "react-native-reanimated", "react-native-worklets"],
+      "dependencies": [
+        "@eoria/core",
+        "react-native-reanimated",
+        "react-native-worklets",
+        "react-native-gesture-handler"
+      ],
       "registryDependencies": [],
       "files": [
         {

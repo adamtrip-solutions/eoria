@@ -11,10 +11,12 @@ import {
 } from 'react'
 import {
   Pressable,
+  ScrollView,
   StyleSheet,
   View,
   type AccessibilityState,
   type PressableProps,
+  type ScrollViewProps,
   type StyleProp,
   type ViewProps,
   type ViewStyle,
@@ -52,6 +54,8 @@ export const dropdownMenuRecipe = defineSlotRecipe((theme) => ({
       shadowOffset: { width: 0, height: 8 },
       elevation: 6,
     },
+    /** The scrolling list inside `root`. Bound its height here. */
+    list: { maxHeight: 360 },
     item: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -94,6 +98,7 @@ export const dropdownMenuRecipe = defineSlotRecipe((theme) => ({
 }))
 
 type MenuSlots =
+  | 'list'
   | 'item'
   | 'itemPressed'
   | 'itemDisabled'
@@ -201,10 +206,13 @@ export function DropdownMenuTrigger({
   )
 }
 
-export type DropdownMenuContentProps = Omit<PopperContentProps, 'onDismiss'>
+export type DropdownMenuContentProps = Omit<PopperContentProps, 'onDismiss'> & {
+  scrollProps?: ScrollViewProps
+}
 
 export function DropdownMenuContent({
   align = 'start',
+  scrollProps,
   style,
   children,
   ...rest
@@ -221,7 +229,16 @@ export function DropdownMenuContent({
       style={[styles.root, style]}
       {...rest}
     >
-      <MenuContext.Provider value={ctx}>{children}</MenuContext.Provider>
+      <MenuContext.Provider value={ctx}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+          style={styles.list}
+          {...scrollProps}
+        >
+          {children}
+        </ScrollView>
+      </MenuContext.Provider>
     </PopperContent>
   )
 }

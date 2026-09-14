@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  PanResponder,
   View,
   type AccessibilityActionEvent,
   type LayoutChangeEvent,
@@ -8,8 +7,10 @@ import {
   type ViewProps,
   type ViewStyle,
 } from 'react-native'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   Easing,
+  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -26,6 +27,11 @@ import {
  * Single-thumb slider in the iOS idiom: thin track, filled range, a white
  * thumb with a soft shadow. The root is the touch target and stays 44pt tall
  * whatever the track height.
+ *
+ * The drag is a gesture-handler Pan recognised natively, so it wins against
+ * the stack's swipe-back (full-screen by default on iOS 26) and against a
+ * vertical parent ScrollView once it activates. The thumb moves on the UI
+ * thread; the app needs a `GestureHandlerRootView` at its root.
  */
 export const sliderRecipe = defineSlotRecipe((theme) => ({
   slots: {
@@ -81,7 +87,10 @@ export type SliderProps = Omit<ViewProps, 'style'> &
     style?: StyleProp<ViewStyle>
   }
 
-const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n))
+const clamp = (n: number, lo: number, hi: number) => {
+  'worklet'
+  return Math.min(hi, Math.max(lo, n))
+}
 const decimals = (n: number) => {
   const s = String(n)
   const i = s.indexOf('.')
@@ -112,91 +121,93 @@ export function Slider({
   const [uncontrolled, setUncontrolled] = useState(defaultValue ?? min)
   const value = clamp(controlled ?? uncontrolled, min, max)
   const span = max - min
+  const places = Math.max(decimals(step), decimals(min))
 
   const snap = useCallback(
     (raw: number) => {
       const stepped = Math.round((raw - min) / step) * step + min
-      const places = Math.max(decimals(step), decimals(min))
       return clamp(Number(stepped.toFixed(places)), min, max)
     },
-    [min, max, step],
+    [min, max, step, places],
   )
 
-  // Latest callbacks and value without re-creating the responder.
-  const latest = useRef({ value, controlled, onValueChange, onValueCommit, snap, disabled })
-  latest.current = { value, controlled, onValueChange, onValueCommit, snap, disabled }
+  // Latest callbacks and value for handlers that run outside the render.
+  const latest = useRef({ value, controlled, onValueChange, onValueCommit, snap })
+  latest.current = { value, controlled, onValueChange, onValueCommit, snap }
 
-  const trackRef = useRef<View>(null)
-  /** Track width; the thumb travels exactly this far. */
-  const [width, setWidth] = useState(0)
-  const pageX = useRef(0)
-  const measured = useRef(false)
-  const dragging = useRef(false)
-
+  const trackWidth = useSharedValue(0)
   const progress = useSharedValue(span > 0 ? (value - min) / span : 0)
   const active = useSharedValue(0)
+  /** Where in the thumb the finger landed, so a grab does not jump. */
+  const grab = useSharedValue(0)
+  const dragging = useRef(false)
 
+  // Follow programmatic changes; a drag already moved the thumb itself.
   useEffect(() => {
-    const next = span > 0 ? (value - min) / span : 0
-    // Follow the finger directly; animate only programmatic changes.
-    progress.value = dragging.current ? next : withTiming(next, MOVE)
+    if (dragging.current) return
+    progress.value = withTiming(span > 0 ? (value - min) / span : 0, MOVE)
   }, [value, min, span, progress])
 
-  /** Snaps a track-relative x to a value and reports it as a change. */
-  const changeFromX = useCallback(
-    (x: number) => {
+  const report = useCallback(
+    (fraction: number, kind: 'change' | 'commit') => {
       const l = latest.current
-      const w = Math.max(1, width)
-      const next = l.snap(min + clamp(x / w, 0, 1) * span)
+      const next = l.snap(min + fraction * span)
+      if (kind === 'commit') {
+        dragging.current = false
+        l.onValueCommit?.(next)
+        return
+      }
       if (next === l.value) return
       if (l.controlled === undefined) setUncontrolled(next)
       l.onValueChange?.(next)
     },
-    [width, min, span],
+    [min, span],
   )
-
-  const measureTrack = useCallback((then?: (x: number) => void) => {
-    trackRef.current?.measureInWindow((x) => {
-      pageX.current = x
-      measured.current = true
-      then?.(x)
-    })
+  const setDragging = useCallback((on: boolean) => {
+    dragging.current = on
   }, [])
 
-  const responder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => !latest.current.disabled,
-        onMoveShouldSetPanResponder: () => !latest.current.disabled,
-        onPanResponderTerminationRequest: () => false,
-        onPanResponderGrant: (_e, g) => {
-          dragging.current = true
-          active.value = withTiming(1, PRESS)
-          // Re-measure on every grant: the slider may have scrolled since layout.
-          measureTrack((x) => changeFromX(g.x0 - x))
-        },
-        onPanResponderMove: (_e, g) => {
-          if (measured.current) changeFromX(g.moveX - pageX.current)
-        },
-        onPanResponderRelease: () => {
-          dragging.current = false
-          active.value = withTiming(0, PRESS)
-          // The last change already snapped and stored the value; commit that.
-          latest.current.onValueCommit?.(latest.current.value)
-        },
-        onPanResponderTerminate: () => {
-          dragging.current = false
-          active.value = withTiming(0, PRESS)
-          latest.current.onValueCommit?.(latest.current.value)
-        },
-      }),
-    [changeFromX, measureTrack, active],
-  )
-
-  const handleTrackLayout = (e: LayoutChangeEvent) => {
-    setWidth(e.nativeEvent.layout.width)
-    measureTrack()
+  // Step fraction on the UI thread so the thumb never sits between values.
+  const steps = span > 0 ? span / step : 0
+  const place = (x: number) => {
+    'worklet'
+    const w = trackWidth.value
+    if (w <= 0) return progress.value
+    const fraction = clamp((x - thumbSize / 2) / w, 0, 1)
+    return steps > 0 ? Math.round(fraction * steps) / steps : fraction
   }
+
+  const pan = Gesture.Pan()
+    .enabled(!disabled)
+    // Any horizontal intent activates; clear vertical intent lets a parent scroll.
+    .activeOffsetX([-2, 2])
+    .failOffsetY([-10, 10])
+    .onBegin((e) => {
+      active.value = withTiming(1, PRESS)
+      runOnJS(setDragging)(true)
+      const thumbX = thumbSize / 2 + progress.value * trackWidth.value
+      // Grab the thumb where it is; anywhere else jumps to the finger.
+      grab.value = Math.abs(e.x - thumbX) <= thumbSize / 2 ? e.x - thumbX : 0
+    })
+    .onUpdate((e) => {
+      const next = place(e.x - grab.value)
+      if (next !== progress.value) {
+        progress.value = next
+        runOnJS(report)(next, 'change')
+      }
+    })
+    .onFinalize((e, success) => {
+      active.value = withTiming(0, PRESS)
+      // A tap never activates the pan; treat a still finger as a jump to it.
+      // A pan that failed because it moved vertically is a scroll, not a tap.
+      const still = Math.abs(e.translationX) < 4 && Math.abs(e.translationY) < 4
+      if (!success && still && grab.value === 0) {
+        const next = place(e.x)
+        progress.value = withTiming(next, MOVE)
+        runOnJS(report)(next, 'change')
+      }
+      runOnJS(report)(progress.value, 'commit')
+    })
 
   const onAccessibilityAction = (e: AccessibilityActionEvent) => {
     const l = latest.current
@@ -208,37 +219,36 @@ export function Slider({
     l.onValueCommit?.(next)
   }
 
+  const handleLayout = (e: LayoutChangeEvent) => {
+    trackWidth.value = Math.max(0, e.nativeEvent.layout.width - thumbSize)
+    onLayout?.(e)
+  }
+
   const rangeStyle = useAnimatedStyle(() => ({ width: `${progress.value * 100}%` }))
-  // The track is inset by half a thumb on each side, so a thumb centred on
-  // the track's start sits at `left: 0` of the root.
   const thumbStyle = useAnimatedStyle(() => ({
-    left: progress.value * width,
+    left: progress.value * trackWidth.value,
     transform: [{ scale: 1 + active.value * 0.12 }],
   }))
 
   return (
-    <View
-      accessible
-      accessibilityRole="adjustable"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ disabled }}
-      accessibilityValue={{ min, max, now: value }}
-      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-      onAccessibilityAction={onAccessibilityAction}
-      onLayout={onLayout}
-      style={[s.root, disabled && s.rootDisabled, style]}
-      {...(disabled ? {} : responder.panHandlers)}
-      {...rest}
-    >
+    <GestureDetector gesture={pan}>
       <View
-        ref={trackRef}
-        collapsable={false}
-        onLayout={handleTrackLayout}
-        style={[s.track, { marginHorizontal: thumbSize / 2 }]}
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ disabled }}
+        accessibilityValue={{ min, max, now: value }}
+        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+        onAccessibilityAction={onAccessibilityAction}
+        onLayout={handleLayout}
+        style={[s.root, disabled && s.rootDisabled, style]}
+        {...rest}
       >
-        <Animated.View style={[s.range, rangeStyle]} />
+        <View pointerEvents="none" style={[s.track, { marginHorizontal: thumbSize / 2 }]}>
+          <Animated.View style={[s.range, rangeStyle]} />
+        </View>
+        <Animated.View pointerEvents="none" style={[s.thumb, thumbStyle]} />
       </View>
-      <Animated.View pointerEvents="none" style={[s.thumb, thumbStyle]} />
-    </View>
+    </GestureDetector>
   )
 }

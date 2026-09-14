@@ -53,7 +53,7 @@ Other `TextInput` props pass through to the hidden input, so `autoFocus`, `onSub
 
 ## Notes
 
-One invisible `TextInput` covers the whole row and owns the value. That keeps paste, the iOS one-time-code suggestion and Android SMS autofill working without per-cell focus juggling. Characters outside the mode are dropped and the value is cut at `length`. The active cell shows the focus ring and a blinking caret; the caret stays still under reduce motion. Cells share the Input frame and are hidden from assistive tech; the hidden input reports how many characters are entered in its hint.
+One invisible `TextInput` sits over the row and owns the value; tapping any cell focuses it. That keeps paste, the iOS one-time-code suggestion and Android SMS autofill working without per-cell focus juggling. Characters outside the mode are dropped and the value is cut at `length`. The active cell shows the focus ring and a blinking caret; the caret stays still under reduce motion. Cells share the Input frame and are hidden from assistive tech; the hidden input reports how many characters are entered in its hint.
 
 ## Source
 

@@ -2,13 +2,14 @@
 // simulator (apps/docs/scripts/capture-previews.mjs) via /preview/<name>.
 import { useEffect, useState, type ReactNode } from 'react'
 import { View } from 'react-native'
-import { Check, Copy, Pencil, Plus, Trash2 } from 'lucide-react-native'
+import { AlertCircle, Check, Copy, Info, Pencil, Plus, Share, Trash2 } from 'lucide-react-native'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Box } from '@/components/ui/box'
@@ -22,6 +23,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Combobox, ComboboxContent, ComboboxTrigger } from '@/components/ui/combobox'
 import {
   Dialog,
   DialogClose,
@@ -47,6 +49,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { InputOTP } from '@/components/ui/input-otp'
 import { Label } from '@/components/ui/label'
 import {
   Popover,
@@ -68,6 +71,8 @@ import {
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Slider } from '@/components/ui/slider'
+import { Spinner } from '@/components/ui/spinner'
 import { HStack, VStack } from '@/components/ui/stack'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -116,6 +121,14 @@ function ProgressPreview() {
   )
 }
 
+const countries = [
+  { value: 'pt', label: 'Portugal', keywords: ['lisbon'] },
+  { value: 'es', label: 'Spain', keywords: ['madrid'] },
+  { value: 'fr', label: 'France', keywords: ['paris'] },
+  { value: 'de', label: 'Germany', keywords: ['berlin'] },
+  { value: 'it', label: 'Italy', disabled: true },
+]
+
 export const previews: Record<string, () => ReactNode> = {
   accordion: () => (
     <Accordion type="multiple" variant="contained" defaultValue={['shipping']}>
@@ -126,6 +139,25 @@ export const previews: Record<string, () => ReactNode> = {
         </AccordionItem>
       ))}
     </Accordion>
+  ),
+  alert: () => (
+    <VStack gap={3}>
+      <Alert icon={<Info />}>
+        <AlertTitle>Heads up</AlertTitle>
+        <AlertDescription>You can change this later in Settings.</AlertDescription>
+      </Alert>
+      <Alert variant="primary" icon={<Check />}>
+        <AlertTitle>Backup complete</AlertTitle>
+        <AlertDescription>Last run two minutes ago.</AlertDescription>
+      </Alert>
+      <Alert variant="destructive" icon={<AlertCircle />}>
+        <AlertTitle>Payment failed</AlertTitle>
+        <AlertDescription>Your card was declined. Try another method.</AlertDescription>
+      </Alert>
+      <Alert variant="outline">
+        <AlertTitle>No icon, no description</AlertTitle>
+      </Alert>
+    </VStack>
   ),
   avatar: () => (
     <HStack gap={3}>
@@ -241,6 +273,12 @@ export const previews: Record<string, () => ReactNode> = {
       </HStack>
     </VStack>
   ),
+  combobox: () => (
+    <Combobox open options={countries} value="es">
+      <ComboboxTrigger placeholder="Choose a country" />
+      <ComboboxContent searchPlaceholder="Search countries" />
+    </Combobox>
+  ),
   dialog: () => (
     <Dialog open>
       <DialogContent>
@@ -272,6 +310,9 @@ export const previews: Record<string, () => ReactNode> = {
         <DropdownMenuLabel>Item 42</DropdownMenuLabel>
         <DropdownMenuItem icon={<Pencil />}>Edit</DropdownMenuItem>
         <DropdownMenuItem icon={<Copy />}>Duplicate</DropdownMenuItem>
+        <DropdownMenuItem icon={<Share />} description="Anyone with the link can view">
+          Share
+        </DropdownMenuItem>
         <DropdownMenuItem disabled>Archive</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem destructive icon={<Trash2 />}>
@@ -305,6 +346,13 @@ export const previews: Record<string, () => ReactNode> = {
       <Input invalid value="not an email" />
       <Input disabled placeholder="disabled" />
       <Input size="sm" placeholder="sm" />
+    </VStack>
+  ),
+  'input-otp': () => (
+    <VStack gap={4}>
+      <InputOTP length={6} defaultValue="4821" autoFocus />
+      <InputOTP length={4} mode="alphanumeric" defaultValue="A7" size="sm" />
+      <InputOTP length={6} secure defaultValue="123456" invalid />
     </VStack>
   ),
   label: () => (
@@ -408,6 +456,36 @@ export const previews: Record<string, () => ReactNode> = {
         </VStack>
       </HStack>
       <Skeleton style={{ height: 120 }} />
+    </VStack>
+  ),
+  slider: () => (
+    <VStack gap={5}>
+      <Slider defaultValue={35} accessibilityLabel="Volume" />
+      <Slider size="sm" defaultValue={70} />
+      <Slider size="lg" defaultValue={2.5} min={0} max={5} step={0.5} />
+      <Slider defaultValue={50} disabled />
+    </VStack>
+  ),
+  spinner: () => (
+    <VStack gap={5}>
+      <HStack gap={6}>
+        <Spinner size="sm" />
+        <Spinner />
+        <Spinner size="lg" />
+      </HStack>
+      <HStack gap={6}>
+        <Spinner variant="dots" size="sm" />
+        <Spinner variant="dots" />
+        <Spinner variant="dots" size="lg" />
+      </HStack>
+      <HStack gap={6}>
+        <Spinner variant="bars" size="sm" />
+        <Spinner variant="bars" />
+        <Spinner variant="bars" size="lg" />
+      </HStack>
+      <Button disabled icon={<Spinner size="sm" color="white" />}>
+        Saving
+      </Button>
     </VStack>
   ),
   stack: () => (

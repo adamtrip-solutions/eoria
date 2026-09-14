@@ -1,0 +1,54 @@
+---
+title: Slider
+description: Single-thumb slider with step snapping, drag and tap, and screen-reader increment and decrement.
+category: Forms
+sidebar:
+  order: 18.7
+---
+
+```sh
+npx @eoria/cli add slider
+```
+
+## Usage
+
+```tsx
+import { useState } from 'react'
+import { Slider } from '@/components/ui/slider'
+
+export function Volume() {
+  const [volume, setVolume] = useState(40)
+  return (
+    <Slider
+      value={volume}
+      onValueChange={setVolume}
+      onValueCommit={(v) => save(v)}
+      accessibilityLabel="Volume"
+    />
+  )
+}
+
+<Slider defaultValue={2.5} min={0} max={5} step={0.5} size="lg" />
+```
+
+## Props
+
+| Prop            | Values                                             | Default    |
+| --------------- | -------------------------------------------------- | ---------- |
+| `value`         | number; controlled                                 |            |
+| `defaultValue`  | number                                             | `min`      |
+| `min`, `max`    | number                                             | `0`, `100` |
+| `step`          | snap increment                                     | `1`        |
+| `onValueChange` | fires on every change while dragging               |            |
+| `onValueCommit` | fires once when the finger lifts                   |            |
+| `size`          | `sm`, `md`, `lg`                                   | `md`       |
+| `disabled`      | boolean                                            | `false`    |
+| `styles`        | override `track`, `range`, `thumb`, `rootDisabled` |            |
+
+## Notes
+
+The root is the 44pt touch target and stretches to its container. A tap moves the thumb to the finger; a drag follows it, and a scrolling parent cannot steal the gesture once it has started. Programmatic changes animate over 120 ms; the thumb scales up slightly while held. The root has the `adjustable` role with `min`, `max` and `now`, and answers the screen reader's increment and decrement actions by one `step`. The thumb is white on every theme with a soft shadow; change `styles.thumb` if your palette needs otherwise.
+
+## Source
+
+[`registry/ui/slider.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/slider.tsx)

@@ -47,11 +47,11 @@ const components: Array<{ href: Href; title: string }> = [
   { href: '/selection', title: 'Checkbox, Switch, Radio' },
   { href: '/dialog', title: 'Dialog' },
   { href: '/tabs', title: 'Tabs' },
-  { href: '/feedback', title: 'Badge, Progress, Skeleton, Avatar' },
-  { href: '/form', title: 'Field & Textarea' },
+  { href: '/feedback', title: 'Badge, Alert, Spinner, Progress, Skeleton, Avatar' },
+  { href: '/form', title: 'Field, Textarea, InputOTP, Slider' },
   { href: '/accordion', title: 'Accordion' },
   { href: '/toast', title: 'Toast' },
-  { href: '/overlays', title: 'Popover, Tooltip, Menu, Select' },
+  { href: '/overlays', title: 'Popover, Tooltip, Menu, Select, Combobox' },
 ]
 
 function ModePicker() {

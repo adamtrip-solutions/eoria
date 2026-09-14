@@ -382,7 +382,7 @@
       "name": "dropdown-menu",
       "type": "registry:ui",
       "title": "DropdownMenu",
-      "description": "Anchored menu with items, labels, separators and icons.",
+      "description": "Anchored menu with items, descriptions, labels, separators and icons.",
       "dependencies": ["@eoria/core"],
       "registryDependencies": ["popper", "text"],
       "files": [
@@ -405,6 +405,86 @@
           "path": "registry/ui/select.tsx",
           "type": "registry:ui",
           "target": "components/ui/select.tsx"
+        }
+      ]
+    },
+    {
+      "name": "alert",
+      "type": "registry:ui",
+      "title": "Alert",
+      "description": "Inline banner with icon, title and description; tinted variants.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/alert.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/alert.tsx"
+        }
+      ]
+    },
+    {
+      "name": "spinner",
+      "type": "registry:ui",
+      "title": "Spinner",
+      "description": "Indeterminate loading indicator: ring, dots or bars.",
+      "dependencies": [
+        "@eoria/core",
+        "react-native-reanimated",
+        "react-native-worklets",
+        "react-native-svg"
+      ],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/spinner.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/spinner.tsx"
+        }
+      ]
+    },
+    {
+      "name": "slider",
+      "type": "registry:ui",
+      "title": "Slider",
+      "description": "Single-thumb slider with step snapping and screen-reader adjust actions.",
+      "dependencies": ["@eoria/core", "react-native-reanimated", "react-native-worklets"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/slider.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/slider.tsx"
+        }
+      ]
+    },
+    {
+      "name": "input-otp",
+      "type": "registry:ui",
+      "title": "InputOTP",
+      "description": "One-time code entry with a fixed length, numeric or alphanumeric.",
+      "dependencies": ["@eoria/core", "react-native-reanimated", "react-native-worklets"],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/input-otp.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/input-otp.tsx"
+        }
+      ]
+    },
+    {
+      "name": "combobox",
+      "type": "registry:ui",
+      "title": "Combobox",
+      "description": "Searchable single-choice list. Extends the Select recipe.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["select", "input", "popper", "text"],
+      "files": [
+        {
+          "path": "registry/ui/combobox.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/combobox.tsx"
         }
       ]
     }

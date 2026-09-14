@@ -9,13 +9,20 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { HStack } from '@/components/ui/stack'
+import { InputOTP } from '@/components/ui/input-otp'
+import { Slider } from '@/components/ui/slider'
+import { HStack, VStack } from '@/components/ui/stack'
+import { Text } from '@/components/ui/text'
 import { Textarea } from '@/components/ui/textarea'
 
 export default function FormScreen() {
   const [name, setName] = useState('')
   const [bio, setBio] = useState('')
   const [agree, setAgree] = useState(false)
+  const [code, setCode] = useState('')
+  const [done, setDone] = useState<string | null>(null)
+  const [volume, setVolume] = useState(40)
+  const [committed, setCommitted] = useState(40)
   const nameInvalid = name.length > 0 && name.length < 3
   const bioInvalid = bio.length > 120
   return (
@@ -64,6 +71,39 @@ export default function FormScreen() {
           </FieldControl>
           <FieldDescription>Contact support to change it.</FieldDescription>
         </Field>
+      </Section>
+      <Section block title="InputOTP">
+        <VStack gap={3}>
+          <InputOTP
+            length={6}
+            value={code}
+            onValueChange={(v) => {
+              setCode(v)
+              if (v.length < 6) setDone(null)
+            }}
+            onComplete={setDone}
+          />
+          <Text variant="muted">{done ? `Complete: ${done}` : `${code.length} of 6`}</Text>
+          <InputOTP length={4} mode="alphanumeric" size="sm" />
+          <InputOTP length={6} secure invalid defaultValue="123456" />
+          <InputOTP length={4} disabled defaultValue="12" />
+        </VStack>
+      </Section>
+      <Section block title="Slider">
+        <VStack gap={4}>
+          <Slider
+            value={volume}
+            onValueChange={setVolume}
+            onValueCommit={setCommitted}
+            accessibilityLabel="Volume"
+          />
+          <Text variant="muted">
+            {volume} while dragging, {committed} committed
+          </Text>
+          <Slider size="sm" defaultValue={70} />
+          <Slider size="lg" defaultValue={2.5} min={0} max={5} step={0.5} />
+          <Slider defaultValue={50} disabled />
+        </VStack>
       </Section>
     </Screen>
   )

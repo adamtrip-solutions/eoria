@@ -58,7 +58,7 @@ Before an upstream update, compare the installed source:
 npx @eoria/cli diff button
 ```
 
-Omit the name to compare all tracked components; use `--full` for whole-file output. `diff` reports differences without applying them. Preserve local edits and inspect dependent components before merging upstream changes. `add` keeps existing files by default; `add --overwrite` replaces them, including dependency files, and is not a merge operation.
+Omit the name to compare all tracked components; use `--full` for whole-file output. `diff` reports differences without applying them. `diff` and `extend` fail when `eoria.json` is missing or the component has no `installed` entry, which is the case for files copied manually or through shadcn. For those, compare the local file against the registry source at `/r/<name>.json` yourself; do not run `init` and `add --overwrite` to gain tracking, as that discards the local edits. Preserve local edits and inspect dependent components before merging upstream changes. `add` keeps existing files by default; `add --overwrite` replaces them, including dependency files, resets their hashes, and is not a merge operation. Record the `diff` output before overwriting.
 
 The `installed` entries are content hashes recorded when files were copied. They help distinguish local edits from registry changes, but do not pin a release or retain the original source for a three-way merge. Preserve that history when changing paths, and do not infer an installed API version from a hash.
 

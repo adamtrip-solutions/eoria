@@ -83,7 +83,8 @@ export const buttonRecipe = defineSlotRecipe((theme) => ({
 ```
 
 Recipes extend without touching the base. A derived component imports the local base recipe,
-so edits to the base flow through automatically. This is what `eoria extend` generates:
+so edits to the base flow through automatically. `eoria extend button checkout-button`
+writes this file with an empty recipe for you to fill in:
 
 ```tsx
 export const checkoutButtonRecipe = extendSlotRecipe(buttonRecipe, (theme) => ({

@@ -47,7 +47,8 @@ The docs build generates `/llms.txt` and a `.md` version of every documentation 
 the same collection. Edit the MDX source, not generated Markdown. New MDX widgets need an
 explicit conversion in `apps/docs/src/lib/agent-docs.mjs`; unsupported widgets fail the build
 so instructions cannot disappear from agent references. `pnpm --filter docs test` checks
-conversion, links, and preservation of code examples. Keep `skills/eoria/SKILL.md` aligned
+conversion, links to documentation pages, and preservation of code examples; links to
+assets and external sites are not checked. Keep `skills/eoria/SKILL.md` aligned
 with changes to the consumer workflow; the docs build serves that file without duplicating it.
 
 ## Changing the CLI

@@ -1,17 +1,16 @@
 import assert from 'node:assert/strict'
 import { readFile, readdir } from 'node:fs/promises'
 import { test } from 'node:test'
-import { unified } from 'unified'
-import remarkParse from 'remark-parse'
-import remarkGfm from 'remark-gfm'
-import remarkMdx from 'remark-mdx'
-import { renderAgentDoc, renderAgentIndex } from '../src/lib/agent-docs.mjs'
+import {
+  markdown,
+  parser as mdx,
+  renderAgentDoc,
+  renderAgentIndex,
+} from '../src/lib/agent-docs.mjs'
 
 const site = 'https://eoria.adamtrip.pt/'
 const ids = new Set(['start/installation', 'start/recipes', 'components/button'])
 const doc = (body) => ({ id: 'components/button', title: 'Button', description: 'A button.', body })
-const markdown = unified().use(remarkParse).use(remarkGfm)
-const mdx = unified().use(remarkParse).use(remarkGfm).use(remarkMdx)
 
 function nodes(tree, type) {
   return [tree, ...(tree.children ?? []).flatMap((child) => nodes(child, type))].filter(
@@ -64,26 +63,55 @@ test('rewrites documentation links, preserves fragments, and leaves code untouch
     () => renderAgentDoc(doc('[Missing](/components/missing/)'), ids, site),
     /unknown documentation link/,
   )
+  // Sections come from the page ids, so links outside them pass through untouched.
+  assert.ok(
+    renderAgentDoc(doc('[Index](/r/index.json)'), ids, site).includes(`${site}r/index.json`),
+  )
+})
+
+test('makes assets absolute without validating them as pages', () => {
+  const output = renderAgentDoc(
+    doc('![Shot](./shot.png) [File](/components/button/spec.pdf)'),
+    ids,
+    site,
+  )
+  assert.ok(output.includes(`![Shot](${site}components/button/shot.png)`))
+  assert.ok(output.includes(`${site}components/button/spec.pdf`))
+})
+
+test('keeps autolink text in step with the rewritten target', () => {
+  const output = renderAgentDoc(doc(`See ${site}start/recipes/ now.`), ids, site)
+  assert.ok(output.includes(`${site}start/recipes.md`))
+  assert.ok(!output.includes(`${site}start/recipes/`))
 })
 
 test('fails on unsupported or executable MDX rather than silently dropping content', () => {
-  for (const body of ['<NewWidget />', '{calculate()}', '<CommandTabs items={getCommands()} />']) {
+  const tabs = "<CommandTabs items={[{label: 'a', command: 'b'}]}>\n\nA note.\n\n</CommandTabs>"
+  for (const body of [
+    '<NewWidget />',
+    '{calculate()}',
+    '<CommandTabs items={getCommands()} />',
+    tabs,
+  ]) {
     assert.throws(() => renderAgentDoc(doc(body), ids, site))
   }
 })
 
 test('every repository page converts without losing its fenced examples', async () => {
   const base = new URL('../src/content/docs/', import.meta.url)
-  const paths = (await readdir(base, { recursive: true })).filter((path) => path.endsWith('.mdx'))
-  const allIds = new Set(paths.map((path) => path.replaceAll('\\', '/').replace(/\.mdx$/, '')))
+  const paths = (await readdir(base, { recursive: true }))
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.endsWith('.mdx'))
+  const idOf = (path) => path.replace(/\.mdx$/, '')
+  const allIds = new Set(paths.map(idOf))
   const registry = JSON.parse(
     await readFile(new URL('../../../registry/registry.json', import.meta.url), 'utf8'),
   )
   for (const item of registry.items) assert.ok(allIds.has(`components/${item.name}`), item.name)
   for (const path of paths) {
-    const source = await readFile(new URL(path.replaceAll('\\', '/'), base), 'utf8')
+    const source = await readFile(new URL(path, base), 'utf8')
     const body = source.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')
-    const id = path.replaceAll('\\', '/').replace(/\.mdx$/, '')
+    const id = idOf(path)
     const result = markdown.parse(renderAgentDoc({ ...doc(body), id }, allIds, site))
     const exported = nodes(result, 'code').map(({ lang, value }) => ({ lang, value }))
     for (const { lang, value } of nodes(mdx.parse(body), 'code')) {
@@ -97,11 +125,19 @@ test('every repository page converts without losing its fenced examples', async 
 })
 
 test('the index links every supplied page once, plus the distributed skill and registry', () => {
-  const entries = [...ids].map((id) => ({ id, data: { title: id, description: 'Reference.' } }))
+  const entries = [...ids].map((id) => ({
+    id,
+    data: { title: id, description: 'Reference.', category: 'Forms' },
+  }))
   const links = nodes(markdown.parse(renderAgentIndex(entries, site)), 'link').map(
     (node) => node.url,
   )
   for (const id of ids) assert.equal(links.filter((url) => url === `${site}${id}.md`).length, 1)
   assert.ok(links.includes(`${site}skills/eoria/SKILL.md`))
   assert.ok(links.includes(`${site}r/index.json`))
+})
+
+test('the index rejects pages the sidebar would not show', () => {
+  const entries = [{ id: 'guides/x', data: { title: 'x', description: 'd' } }]
+  assert.throws(() => renderAgentIndex(entries, site), /outside a known section/)
 })

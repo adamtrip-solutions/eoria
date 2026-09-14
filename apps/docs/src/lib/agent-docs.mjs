@@ -3,22 +3,32 @@ import remarkParse from 'remark-parse'
 import remarkMdx from 'remark-mdx'
 import remarkGfm from 'remark-gfm'
 import remarkStringify from 'remark-stringify'
+import { groupDocs } from './docs-nav.mjs'
 
-const parser = unified().use(remarkParse).use(remarkGfm).use(remarkMdx)
+/** Parses documentation MDX. Exported so tests read sources with the same grammar. */
+export const parser = unified().use(remarkParse).use(remarkGfm).use(remarkMdx)
+/** Parses the generated Markdown. */
+export const markdown = unified().use(remarkParse).use(remarkGfm)
 const writer = unified().use(remarkGfm).use(remarkStringify, { bullet: '-', fences: true })
 const text = (value) => ({ type: 'text', value })
 const paragraph = (value) => ({ type: 'paragraph', children: [text(value)] })
 const heading = (depth, value) => ({ type: 'heading', depth, children: [text(value)] })
 const link = (label, url) => ({ type: 'link', url, children: [text(label)] })
 
-/** Convert documentation links to absolute Markdown URLs, preserving query and fragment. */
-function resolveLink(value, id, ids, site) {
+/**
+ * Convert documentation links to absolute Markdown URLs, preserving query and fragment.
+ * Page links into a documented section must exist; assets (images, files with an
+ * extension) are only made absolute.
+ */
+function resolveLink(value, id, ids, site, page = true) {
   if (value.startsWith('#')) return value
   const url = new URL(value, new URL(`${id}/`, site))
   if (url.origin === new URL(site).origin) {
     const target = url.pathname.replace(/^\//, '').replace(/\/$/, '').replace(/\.md$/, '')
+    const sections = new Set([...ids].map((known) => known.split('/')[0]))
+    const isAsset = /\.[a-z0-9]+$/i.test(target)
     if (ids.has(target)) url.pathname = `/${target}.md`
-    else if (/^(start|components)\//.test(target)) {
+    else if (page && !isAsset && sections.has(target.split('/')[0])) {
       throw new Error(`${id}: unknown documentation link ${value}`)
     }
   }
@@ -31,6 +41,9 @@ function commandTabs(node) {
   const expression = attribute?.value?.data?.estree?.body?.[0]?.expression
   if (node.attributes.length !== 1 || expression?.type !== 'ArrayExpression') {
     throw new Error('CommandTabs requires a literal items array for Markdown export')
+  }
+  if (node.children.length > 0) {
+    throw new Error('CommandTabs content is not exported; move it outside the tag')
   }
   return expression.elements.flatMap((item) => {
     if (item?.type !== 'ObjectExpression') throw new Error('Unsupported CommandTabs item')
@@ -76,8 +89,14 @@ export function renderAgentDoc(doc, ids, site, item) {
     if (node.type.startsWith('mdx')) {
       throw new Error(`${doc.id}: unsupported ${node.name ?? node.type} in Markdown export`)
     }
-    if (['link', 'definition', 'image'].includes(node.type)) {
+    if (node.type === 'link' || node.type === 'definition') {
+      const [only] = node.children ?? []
+      const autolink =
+        node.children?.length === 1 && only.type === 'text' && only.value === node.url
       node.url = resolveLink(node.url, doc.id, ids, site)
+      if (autolink) only.value = node.url
+    } else if (node.type === 'image') {
+      node.url = resolveLink(node.url, doc.id, ids, site, false)
     }
     if (node.children) node.children = node.children.flatMap(convert)
     return [node]
@@ -102,8 +121,17 @@ export function renderAgentDoc(doc, ids, site, item) {
   return writer.stringify(tree)
 }
 
+const listItem = (...children) => ({
+  type: 'listItem',
+  spread: false,
+  children: [{ type: 'paragraph', children }],
+})
+const list = (items) => ({ type: 'list', ordered: false, spread: false, children: items })
+
 /**
- * @param {Array<{id: string, data: {title: string, description: string, sidebar?: {order?: number}}}>} entries
+ * Index every page in sidebar order. Grouping and sorting are shared with the sidebar, so
+ * a page outside a known section or category fails the build here as well.
+ * @param {import('./docs-nav.mjs').DocEntry[]} entries
  * @param {string | URL} site
  */
 export function renderAgentIndex(entries, site) {
@@ -121,48 +149,26 @@ export function renderAgentIndex(entries, site) {
       'Read the installation guide before adding components to a new app. Use the configured paths in eoria.json and inspect existing local copies before relying on upstream documentation. These pages describe the registry shipped with this docs build; local copies can differ.',
     ),
   ]
-  for (const [prefix, title] of [
-    ['start/', 'Guides'],
-    ['components/', 'Components'],
-  ]) {
-    children.push(heading(2, title), {
-      type: 'list',
-      ordered: false,
-      spread: false,
-      children: entries
-        .filter((entry) => entry.id.startsWith(prefix))
-        .sort(
-          (a, b) =>
-            (a.data.sidebar?.order ?? 100) - (b.data.sidebar?.order ?? 100) ||
-            a.id.localeCompare(b.id),
-        )
-        .map((entry) => ({
-          type: 'listItem',
-          spread: false,
-          children: [
-            {
-              type: 'paragraph',
-              children: [
-                link(entry.data.title, new URL(`${entry.id}.md`, site).href),
-                text(`: ${entry.data.description}`),
-              ],
-            },
-          ],
-        })),
-    })
+  for (const group of groupDocs(entries)) {
+    if (group.items.length === 0) continue
+    children.push(
+      heading(2, group.label),
+      list(
+        group.items.map((entry) =>
+          listItem(
+            link(entry.data.title, new URL(`${entry.id}.md`, site).href),
+            text(`: ${entry.data.description}`),
+          ),
+        ),
+      ),
+    )
   }
-  children.push(heading(2, 'Resources'), {
-    type: 'list',
-    ordered: false,
-    spread: false,
-    children: [
-      ['Eoria consumer skill', 'skills/eoria/SKILL.md'],
-      ['Registry index', 'r/index.json'],
-    ].map(([label, path]) => ({
-      type: 'listItem',
-      spread: false,
-      children: [{ type: 'paragraph', children: [link(label, new URL(path, site).href)] }],
-    })),
-  })
+  children.push(
+    heading(2, 'Resources'),
+    list([
+      listItem(link('Eoria consumer skill', new URL('skills/eoria/SKILL.md', site).href)),
+      listItem(link('Registry index', new URL('r/index.json', site).href)),
+    ]),
+  )
   return writer.stringify({ type: 'root', children })
 }

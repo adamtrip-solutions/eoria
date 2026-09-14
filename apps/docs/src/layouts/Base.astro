@@ -7,14 +7,14 @@ interface Props {
   description: string
   /** Absolute or site-relative path to the share image. Defaults to the site card. */
   image?: string
+  /** Site-relative path of this page's Markdown twin, when the docs build generates one. */
+  markdownPath?: string
 }
-const { title, description, image = '/og.png' } = Astro.props
+const { title, description, image = '/og.png', markdownPath } = Astro.props
 const fullTitle = title === 'eoria' ? 'eoria' : `${title} · eoria`
 const canonical = new URL(Astro.url.pathname, Astro.site)
 const imageUrl = new URL(image, Astro.site)
-const markdownUrl = /^\/(start|components)\//.test(Astro.url.pathname)
-  ? new URL(`${Astro.url.pathname.replace(/\/$/, '')}.md`, Astro.site)
-  : undefined
+const markdownUrl = markdownPath ? new URL(markdownPath, Astro.site) : undefined
 ---
 
 <!doctype html>
@@ -25,7 +25,6 @@ const markdownUrl = /^\/(start|components)\//.test(Astro.url.pathname)
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <link rel="describedby" href={new URL('/llms.txt', Astro.site)} />
     {markdownUrl && <link rel="alternate" type="text/markdown" href={markdownUrl} />}
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="eoria" />

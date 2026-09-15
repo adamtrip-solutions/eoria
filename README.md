@@ -173,8 +173,9 @@ pnpm --filter docs previews   # screenshot every component on the booted iOS sim
 
 Run the example with `pnpm --filter example ios` after `npx expo prebuild`.
 
-The docs site deploys to Cloudflare Pages from the release workflow, so it never documents a
-package version that is not on npm. Green pushes to `main` deploy a preview instead.
+The docs site deploys to Cloudflare Pages on every green push to `main`. While `packages/core`
+or `packages/cli` has unreleased changes the site holds, and the release workflow deploys it
+once the package is on npm, so it never documents a version nobody can install.
 
 [CONTRIBUTING.md](CONTRIBUTING.md) has the PR flow and review rules. [RELEASING.md](RELEASING.md)
 covers release-please, npm provenance and the docs deploy.

@@ -84,10 +84,12 @@ having to close and reopen the release PR. Everything else works without it.
 
 ## Docs site
 
-The docs site serves the registry JSON, so it deploys from `publish.yml` after a package is
-on npm, not on every merge. That keeps the published pages and copied components in step with
-what `npm install` gives people. Every green push to `main` also deploys a preview to the
-`next` branch of the Pages project, which lives at `next.eoria.pages.dev`.
+The docs site serves the registry JSON, so it deploys to production on every green push to
+`main`: new components, docs fixes and example changes go live within minutes. The exception
+is while `packages/core` or `packages/cli` differs from its last release tag. CI then holds the
+deploy, and `publish.yml` deploys the site once the package is on npm, which keeps the published
+pages and copied components in step with what `npm install` gives people. Merge the pending
+release PR to unblock the site. The site lives at `eoria.adamtrip.pt`.
 
 Set it up once:
 
@@ -99,14 +101,14 @@ Set it up once:
    `cloudflare` environment of the GitHub repository. The environment, not repository secrets,
    so fork workflows never see them.
 
-Docs-only fixes do not need a package release. Deploy production by hand from `main`:
+Redeploy by hand from `main` or from a release tag:
 
 ```sh
-gh workflow run deploy-docs.yml --repo adamtrip-solutions/eoria --ref main -f branch=main
+gh workflow run deploy-docs.yml --repo adamtrip-solutions/eoria --ref main
 ```
 
-Check the preview first, and only do this when the change does not describe an unpublished
-package feature. The same command with `--ref cli-v0.1.0` redeploys a release. Automatic
-production deploys still only come from `publish.yml` at a tag; the workflow refuses
-`branch=main` from any other source. Do not connect the repository through Cloudflare's Git
-integration as well, or both will deploy.
+The workflow refuses any other ref. The CI deploy and the release deploy do not order
+themselves by commit: a docs change merged minutes after a release PR can go live first and
+then be overwritten by the slower release deploy of the older commit. If that happens, run the
+command above once. Do not connect the repository through Cloudflare's Git integration as well,
+or both will deploy.

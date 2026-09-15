@@ -102,12 +102,11 @@ jobs:
           TARBALL: ${{ steps.tarball.outputs.tarball }}
         run: npm publish "$TARBALL" --access public --provenance --ignore-scripts
   deploy-docs:
-    # The docs site also serves the registry, so it only goes live once the package is on npm.
+    # Package changes hold the docs site back until the package is on npm. See ci.yml for the rest.
     needs: [release, publish]
     permissions:
       contents: read
     uses: ./.github/workflows/deploy-docs.yml
     with:
       ref: ${{ needs.release.outputs.sha }}
-      branch: main
     secrets: inherit

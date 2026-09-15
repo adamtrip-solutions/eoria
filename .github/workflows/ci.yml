@@ -81,14 +81,45 @@ jobs:
         env:
           VERIFY_RESULT: ${{ needs.verify.result }}
         run: test "$VERIFY_RESULT" = success
-  deploy-preview:
-    # Every green commit on main becomes the preview site. Production deploys only from publish.yml.
+  unreleased-packages:
+    # Registry, docs and example changes go live as soon as main is green. While packages/core
+    # or packages/cli differ from their last release tag the site holds, so it never documents
+    # a package version that is not on npm; publish.yml deploys it once the release is out.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [complete]
+    runs-on: ubuntu-latest
+    outputs:
+      pending: ${{ steps.check.outputs.pending }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+      - id: check
+        run: |
+          set -euo pipefail
+          pending=false
+          for entry in core:packages/core cli:packages/cli; do
+            component=${entry%%:*}
+            dir=${entry#*:}
+            version=$(node -p "require('./.release-please-manifest.json')['$dir']")
+            tag="$component-v$version"
+            if ! git rev-parse -q --verify "refs/tags/$tag^{commit}" >/dev/null; then
+              echo "Tag $tag does not exist yet; holding the docs deploy." >&2
+              pending=true
+            elif ! git diff --quiet "$tag" HEAD -- "$dir"; then
+              echo "$dir has changes since $tag; holding the docs deploy until they are released." >&2
+              pending=true
+            fi
+          done
+          echo "pending=$pending" >> "$GITHUB_OUTPUT"
+  deploy-docs:
+    if: needs.unreleased-packages.outputs.pending == 'false'
+    needs: [unreleased-packages]
     permissions:
       contents: read
     uses: ./.github/workflows/deploy-docs.yml
     with:
       ref: ${{ github.sha }}
-      branch: next
     secrets: inherit

@@ -559,6 +559,7 @@ const principles = [
   .screens {
     padding: var(--space-16) 0;
     border-top: 1px solid var(--color-border);
+    overflow: hidden;
   }
   .marquee {
     overflow: hidden;
@@ -567,10 +568,10 @@ const principles = [
   }
   .track {
     display: flex;
-    gap: var(--space-8);
+    gap: var(--space-10);
     width: max-content;
-    padding: var(--space-2) 0;
-    animation: reel 80s linear infinite;
+    padding: var(--space-4) 0;
+    animation: reel 110s linear infinite;
   }
   .marquee:hover .track,
   .marquee:focus-within .track {
@@ -578,16 +579,17 @@ const principles = [
   }
   @keyframes reel {
     to {
-      transform: translateX(calc(-50% - var(--space-4)));
+      transform: translateX(calc(-50% - var(--space-5)));
     }
   }
+  /* Near device size, so the captures read as screens rather than thumbnails. */
   .reel-item {
     display: grid;
-    gap: var(--space-3);
+    gap: var(--space-4);
     justify-items: center;
-    width: 220px;
+    width: min(360px, 78vw);
     color: var(--color-muted-foreground);
-    font-size: var(--text-sm);
+    font-size: var(--text-md);
     font-weight: var(--weight-medium);
     transition:
       transform 150ms var(--ease),
@@ -595,7 +597,7 @@ const principles = [
   }
   .reel-item:hover {
     color: var(--color-foreground);
-    transform: translateY(-4px);
+    transform: translateY(-6px);
   }
   .reel-item:focus-visible {
     outline-offset: 6px;

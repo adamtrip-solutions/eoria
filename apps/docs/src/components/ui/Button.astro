@@ -44,7 +44,11 @@ const Tag = href ? 'a' : 'button'
     cursor: pointer;
     user-select: none;
     text-decoration: none;
-    transition: transform 90ms var(--ease);
+    transition:
+      transform 90ms var(--ease),
+      background-color 200ms var(--ease),
+      color 200ms var(--ease),
+      border-color 200ms var(--ease);
   }
   .btn::after {
     content: '';

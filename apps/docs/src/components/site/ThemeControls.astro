@@ -1,5 +1,14 @@
 ---
-const presets = ['zinc', 'blue', 'green', 'rose', 'violet', 'orange'] as const
+// Appearance menu: a trigger showing the active colour, and a panel with the mode
+// switch and the six presets. Opens on hover and on click, closes on Escape or outside.
+const presets = [
+  { id: 'zinc', label: 'Zinc' },
+  { id: 'blue', label: 'Blue' },
+  { id: 'green', label: 'Green' },
+  { id: 'rose', label: 'Rose' },
+  { id: 'violet', label: 'Violet' },
+  { id: 'orange', label: 'Orange' },
+] as const
 const modes = [
   { id: 'system', label: 'Auto' },
   { id: 'light', label: 'Light' },
@@ -7,41 +16,164 @@ const modes = [
 ] as const
 ---
 
-<div class="controls">
-  <div class="segmented" role="radiogroup" aria-label="Appearance">
-    {
-      modes.map((m) => (
-        <button type="button" role="radio" aria-checked="false" data-mode-option={m.id}>
-          {m.label}
-        </button>
-      ))
-    }
-  </div>
-  <div class="presets" role="radiogroup" aria-label="Colour preset">
-    {
-      presets.map((p) => (
-        <button
-          type="button"
-          role="radio"
-          aria-checked="false"
-          aria-label={p}
-          title={p}
-          data-preset-option={p}
-          style={`--swatch-light: var(--swatch-${p}-light); --swatch-dark: var(--swatch-${p}-dark)`}
-        />
-      ))
-    }
+<div class="menu" data-theme-menu>
+  <button
+    type="button"
+    class="trigger"
+    aria-haspopup="true"
+    aria-expanded="false"
+    aria-label="Appearance and colour"
+    data-theme-trigger
+  >
+    <span class="dot" aria-hidden="true"></span>
+    <svg class="mode-icon sun" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+      <circle cx="10" cy="10" r="4.25"></circle>
+      <path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4" stroke-linecap="round"></path>
+    </svg>
+    <svg class="mode-icon moon" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+      <path d="M16.5 12.2A7 7 0 0 1 7.8 3.5a7 7 0 1 0 8.7 8.7Z" stroke-linejoin="round"></path>
+    </svg>
+    <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M3 4.5l3 3 3-3" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+  </button>
+
+  <div class="panel" role="group" aria-label="Appearance">
+    <p class="heading">Appearance</p>
+    <div class="segmented" role="radiogroup" aria-label="Mode">
+      {
+        modes.map((m) => (
+          <button type="button" role="radio" aria-checked="false" data-mode-option={m.id}>
+            {m.label}
+          </button>
+        ))
+      }
+    </div>
+    <p class="heading">Colour</p>
+    <div class="presets" role="radiogroup" aria-label="Colour preset">
+      {
+        presets.map((p) => (
+          <button
+            type="button"
+            role="radio"
+            aria-checked="false"
+            data-preset-option={p.id}
+            style={`--swatch-light: var(--swatch-${p.id}-light); --swatch-dark: var(--swatch-${p.id}-dark)`}
+          >
+            <span class="swatch" aria-hidden="true" />
+            {p.label}
+          </button>
+        ))
+      }
+    </div>
   </div>
 </div>
 
 <style>
-  .controls {
-    display: flex;
+  .menu {
+    position: relative;
+  }
+  .trigger {
+    display: inline-flex;
     align-items: center;
-    gap: var(--space-3);
+    gap: 6px;
+    height: 36px;
+    padding: 0 var(--space-2) 0 var(--space-3);
+    border: 0;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--color-muted-foreground);
+    cursor: pointer;
+    transition:
+      background-color 120ms var(--ease),
+      color 120ms var(--ease);
+  }
+  .trigger:hover,
+  .menu[data-open] .trigger,
+  .menu:focus-within .trigger {
+    background: var(--color-surface);
+    color: var(--color-foreground);
+  }
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+    transition: background-color 200ms var(--ease);
+  }
+  .mode-icon {
+    width: 18px;
+    height: 18px;
+  }
+  .moon {
+    display: none;
+  }
+  :global(:root[data-mode='dark']) .moon {
+    display: block;
+  }
+  :global(:root[data-mode='dark']) .sun {
+    display: none;
+  }
+  .chevron {
+    width: 12px;
+    height: 12px;
+    transition: transform 150ms var(--ease);
+  }
+  .menu[data-open] .chevron,
+  .menu:hover .chevron {
+    transform: rotate(180deg);
+  }
+
+  .panel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: var(--space-2);
+    width: 260px;
+    padding: var(--space-4);
+    border-radius: var(--radius-xl);
+    background: var(--color-elevated);
+    box-shadow:
+      var(--shadow-elevated),
+      0 0 0 1px var(--color-border);
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+    transform-origin: top right;
+    pointer-events: none;
+    transition:
+      opacity 150ms var(--ease),
+      transform 150ms var(--ease);
+  }
+  /* Invisible bridge so the pointer can travel from the trigger to the panel. */
+  .panel::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(-1 * var(--space-2) - 2px);
+    height: calc(var(--space-2) + 2px);
+  }
+  .menu:hover .panel,
+  .menu[data-open] .panel,
+  .menu:focus-within .panel {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+  .heading {
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    color: var(--color-muted-foreground);
+  }
+  .heading + .heading,
+  .segmented + .heading {
+    margin-top: var(--space-4);
   }
   .segmented {
-    display: inline-flex;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     padding: 3px;
     border-radius: var(--radius-full);
     background: var(--color-muted);
@@ -49,8 +181,7 @@ const modes = [
   .segmented button {
     border: 0;
     background: transparent;
-    height: 30px;
-    padding: 0 var(--space-3);
+    height: 32px;
     border-radius: var(--radius-full);
     font-size: var(--text-sm);
     font-weight: var(--weight-medium);
@@ -66,34 +197,50 @@ const modes = [
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   }
   .presets {
-    display: inline-flex;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-1);
   }
   .presets button {
-    width: 22px;
-    height: 22px;
-    border-radius: var(--radius-full);
-    border: 2px solid transparent;
-    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    height: 36px;
+    padding: 0 var(--space-2);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-foreground);
+    font-size: var(--text-sm);
     cursor: pointer;
-    background: var(--swatch-light);
-    transition:
-      transform 90ms var(--ease),
-      border-color 120ms var(--ease);
+    transition: background-color 120ms var(--ease);
   }
-  :global(:root[data-mode='dark']) .presets button {
-    background: var(--swatch-dark);
-  }
-  .presets button:active {
-    transform: scale(0.9);
+  .presets button:hover {
+    background: var(--color-muted);
   }
   .presets button[aria-checked='true'] {
-    border-color: var(--color-foreground);
-    box-shadow: inset 0 0 0 2px var(--color-background);
+    background: var(--color-surface);
+    font-weight: var(--weight-medium);
   }
-  @media (max-width: 640px) {
-    .presets {
-      display: none;
+  .swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-full);
+    background: var(--swatch-light);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+  }
+  :global(:root[data-mode='dark']) .swatch {
+    background: var(--swatch-dark);
+  }
+  .presets button[aria-checked='true'] .swatch {
+    box-shadow:
+      0 0 0 2px var(--color-surface),
+      0 0 0 3.5px var(--color-foreground);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .panel,
+    .chevron {
+      transition: none;
     }
   }
 </style>
@@ -134,6 +281,29 @@ const modes = [
       const preset = b.dataset.presetOption!
       localStorage.setItem('eoria-preset', preset)
       applyPreset(preset)
+    })
+  })
+
+  // Click toggles the menu for touch and keyboard; hover handles the pointer case in CSS.
+  document.querySelectorAll<HTMLElement>('[data-theme-menu]').forEach((menu) => {
+    const trigger = menu.querySelector<HTMLButtonElement>('[data-theme-trigger]')!
+    const setOpen = (open: boolean) => {
+      menu.toggleAttribute('data-open', open)
+      trigger.setAttribute('aria-expanded', String(open))
+    }
+    trigger.addEventListener('click', () => setOpen(!menu.hasAttribute('data-open')))
+    document.addEventListener('click', (e) => {
+      if (!menu.contains(e.target as Node)) setOpen(false)
+    })
+    menu.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        setOpen(false)
+        trigger.focus()
+      }
+    })
+    menu.addEventListener('mouseleave', () => {
+      setOpen(false)
+      if (menu.contains(document.activeElement)) (document.activeElement as HTMLElement).blur()
     })
   })
 </script>

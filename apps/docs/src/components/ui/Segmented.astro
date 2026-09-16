@@ -1,44 +1,91 @@
 ---
-// Mirrors Tabs variant="segmented": pill track, padding 3, elevated thumb.
+// Mirrors Tabs variant="segmented": pill track, padding 3, elevated thumb that slides
+// between items. Set `interactive` to let clicks move the thumb on the docs site.
 interface Props {
   items: string[]
   active?: number
+  interactive?: boolean
   class?: string
 }
-const { items, active = 0, class: cls } = Astro.props
+const { items, active = 0, interactive = false, class: cls } = Astro.props
 ---
 
-<div class:list={['segmented', cls]} role="tablist">
+<div
+  class:list={['segmented', cls]}
+  role="tablist"
+  style={`--count: ${items.length}; --active: ${active}`}
+  data-segmented={interactive ? '' : undefined}
+>
+  <span class="thumb" aria-hidden="true"></span>
   {
     items.map((item, i) => (
-      <span role="tab" aria-selected={i === active} class:list={['item', { on: i === active }]}>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={i === active}
+        tabindex={interactive ? undefined : -1}
+        class="item"
+        data-index={i}
+      >
         {item}
-      </span>
+      </button>
     ))
   }
 </div>
 
 <style>
   .segmented {
-    display: flex;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--count), 1fr);
     padding: 3px;
     border-radius: var(--radius-full);
     background: var(--color-muted);
   }
+  .thumb {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc((100% - 6px) / var(--count));
+    border-radius: var(--radius-full);
+    background: var(--color-elevated);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    transform: translateX(calc(var(--active) * 100%));
+    transition: transform 150ms var(--ease);
+  }
   .item {
-    flex: 1;
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     height: 38px;
+    border: 0;
+    padding: 0;
+    background: transparent;
     border-radius: var(--radius-full);
     font-size: var(--text-sm);
     font-weight: var(--weight-medium);
     color: var(--color-muted-foreground);
+    cursor: default;
+    transition: color 150ms var(--ease);
   }
-  .on {
-    background: var(--color-elevated);
+  [data-segmented] .item {
+    cursor: pointer;
+  }
+  .item[aria-selected='true'] {
     color: var(--color-foreground);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   }
 </style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-segmented]').forEach((group) => {
+    const items = group.querySelectorAll<HTMLButtonElement>('.item')
+    items.forEach((item) => {
+      item.addEventListener('click', () => {
+        group.style.setProperty('--active', item.dataset.index!)
+        items.forEach((i) => i.setAttribute('aria-selected', String(i === item)))
+      })
+    })
+  })
+</script>

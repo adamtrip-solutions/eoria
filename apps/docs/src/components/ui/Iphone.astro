@@ -1,12 +1,14 @@
 ---
 // SVG iPhone mock. Pass `src` for a screenshot, or put content in the default slot.
+// Add `srcDark` to swap the screenshot with the site's data-mode.
 // The screen punch is masked out of the frame so the media sits underneath.
 interface Props {
   src?: string
+  srcDark?: string
   alt?: string
   class?: string
 }
-const { src, alt = '', class: cls } = Astro.props
+const { src, srcDark, alt = '', class: cls } = Astro.props
 
 const W = 433
 const H = 882
@@ -27,7 +29,8 @@ const id = `punch-${Math.random().toString(36).slice(2, 8)}`
 
 <div class:list={['iphone', cls]} style={`aspect-ratio: ${W} / ${H}`}>
   <div class="screen" style={screen}>
-    {src ? <img src={src} alt={alt} loading="lazy" /> : <slot />}
+    {src ? <img class:list={{ light: !!srcDark }} src={src} alt={alt} loading="lazy" /> : <slot />}
+    {srcDark && <img class="dark" src={srcDark} alt={alt} loading="lazy" />}
   </div>
   <svg viewBox={`0 0 ${W} ${H}`} fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <g mask={`url(#${id})`}>
@@ -101,6 +104,7 @@ const id = `punch-${Math.random().toString(36).slice(2, 8)}`
     overflow: hidden;
     background: var(--color-background);
     line-height: normal;
+    transition: background-color 200ms var(--ease);
   }
   .screen img {
     display: block;
@@ -108,6 +112,15 @@ const id = `punch-${Math.random().toString(36).slice(2, 8)}`
     height: 100%;
     object-fit: cover;
     object-position: top;
+  }
+  .screen img.dark {
+    display: none;
+  }
+  :global(:root[data-mode='dark']) .screen img.light {
+    display: none;
+  }
+  :global(:root[data-mode='dark']) .screen img.dark {
+    display: block;
   }
   svg {
     position: absolute;

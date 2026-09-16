@@ -3,13 +3,18 @@
 interface Props {
   active?: boolean
   href?: string
+  /** Render a button so the docs can toggle it. */
+  button?: boolean
   class?: string
+  [key: string]: unknown
 }
-const { active = false, href, class: cls } = Astro.props
-const Tag = href ? 'a' : 'span'
+const { active = false, href, button = false, class: cls, ...rest } = Astro.props
+const Tag = href ? 'a' : button ? 'button' : 'span'
 ---
 
-<Tag href={href} class:list={['chip', { active }, cls]}><slot /></Tag>
+<Tag href={href} type={button ? 'button' : undefined} class:list={['chip', { active }, cls]} {...rest}
+  ><slot /></Tag
+>
 
 <style>
   .chip {
@@ -31,8 +36,14 @@ const Tag = href ? 'a' : 'span'
   a.chip:hover {
     background: var(--color-accent);
   }
-  a.chip:active {
+  a.chip:active,
+  button.chip:active {
     transform: scale(0.97);
+  }
+  button.chip {
+    border: 0;
+    font: inherit;
+    cursor: pointer;
   }
   .active {
     background: var(--color-foreground);

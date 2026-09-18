@@ -1,13 +1,13 @@
 ---
 title: Theming
-description: Tokens, colour presets, dark mode, and adding your own keys.
+description: Tokens, presets, dark mode, and adding your own keys.
 sidebar:
   order: 3
 ---
 
-A theme is a plain object with five groups: `colors`, `space`, `radius`, `fontSize` with
-`lineHeight`, and `fontWeight`. Every recipe reads from it. Change a value and every component
-that uses it updates.
+A theme is a plain object: `colors`, `space`, `radius`, `fontSize` with `lineHeight`,
+`fontWeight`, and four shape groups, `control`, `stroke`, `shadow` and `font`. Every recipe
+reads from it. Change a value and every component that uses it updates.
 
 ## Colour keys
 
@@ -34,15 +34,25 @@ card and still read as a control. If you change one, move the other.
 
 ## Presets
 
-`@eoria/core` ships six presets: `zinc` (the default), `blue`, `green`, `rose`, `violet` and
-`orange`. Each is a light and a dark palette. The tinted ones keep zinc's neutrals and change
-`primary`, `ring` and `accent`, the same idea as shadcn base colours. Primary pairs were checked
-against WCAG AA for the 16pt button label.
+`@eoria/core` ships six presets. Each is a complete look: a light and a dark palette plus
+the shape of the components and a typeface. Switching preset changes how every component is
+built, not only its accent.
+
+| Preset   | Look                                                                                                                                       | Typeface                             |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
+| `zinc`   | Neutral and native. Black primary, filled grey surfaces, 52pt controls with 12pt corners. The default.                                     | System                               |
+| `moss`   | Warm and soft. Paper backgrounds, deep green primary, pill controls at 56pt, big card corners.                                             | System, Georgia headings             |
+| `cobalt` | Cool and sharp. Slate neutrals, cobalt primary, outlined cards and fields, 42pt controls, 6pt corners, heavy type.                         | IBM Plex Sans                        |
+| `iris`   | Product and fintech. Grey canvas with white hairline cards, the inverse of `zinc`, indigo primary, 46pt controls, 10pt corners.            | Geist                                |
+| `tide`   | Tonal and calm. Every neutral carries the petrol hue of the primary, filled surfaces, 16pt control corners and 26pt cards, a step heavier. | Manrope                              |
+| `plum`   | Editorial and spare. Stone neutrals, aubergine primary, 52pt controls with 4pt corners, light weights.                                     | Newsreader headings, Instrument Sans |
+
+Primary pairs were checked against WCAG AA for the 16pt button label.
 
 ```ts
-import { colorPresets, createThemes } from '@eoria/core'
+import { presets, createThemes } from '@eoria/core'
 
-configureUnistyles({ themes: createThemes(colorPresets.violet) })
+configureUnistyles({ themes: createThemes(presets.moss) })
 ```
 
 To switch presets while the app runs, update both registered themes in place. Adaptive
@@ -51,8 +61,91 @@ light/dark keeps working and nothing remounts.
 ```ts
 import { UnistylesRuntime } from 'react-native-unistyles'
 
-UnistylesRuntime.updateTheme('light', (t) => ({ ...t, colors: colorPresets.rose.light }))
-UnistylesRuntime.updateTheme('dark', (t) => ({ ...t, colors: colorPresets.rose.dark }))
+const themes = createThemes(presets.cobalt)
+UnistylesRuntime.updateTheme('light', (t) => ({ ...t, ...themes.light }))
+UnistylesRuntime.updateTheme('dark', (t) => ({ ...t, ...themes.dark }))
+```
+
+A preset of your own is the same object. Start from one of the shipped ones and change what
+you need; `createThemes` fills in the shared space and type scales.
+
+```ts
+const brand = {
+  ...presets.zinc,
+  radius: { ...presets.zinc.radius, control: 9999 },
+  control: { sm: 36, md: 44, lg: 52 },
+  stroke: 1,
+}
+```
+
+## Shape
+
+| Group     | What it drives                                                                                                                                                                                  |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `radius`  | `sm` to `2xl` and `full` are steps. `control` shapes buttons, fields, chips and segmented tabs; `card` shapes cards, contained accordions and alerts.                                           |
+| `control` | Heights for the `sm`, `md` and `lg` sizes of buttons, fields, selects and OTP cells.                                                                                                            |
+| `stroke`  | Border width on cards, contained accordions, alerts and filled fields. 0 is a filled look, 1 outlined.                                                                                          |
+| `shadow`  | Opacity, blur and offset under elevated cards, menus, popovers and toasts.                                                                                                                      |
+| `font`    | Optional `body` and `heading` families, one name per platform. Headings cover the title and heading text variants and card, dialog, alert and popover titles, and fall back to the body family. |
+
+## Fonts
+
+`zinc` and `moss` use fonts the platform ships. `cobalt`, `iris`, `tide` and `plum` name a
+family that your app has to embed. A theme names one family per platform and the recipes set
+`fontWeight`, so you have to register every weight under one family name. The `expo-font`
+config plugin does that on both platforms:
+
+```json
+[
+  "expo-font",
+  {
+    "ios": {
+      "fonts": [
+        "node_modules/@expo-google-fonts/geist/400Regular/Geist_400Regular.ttf",
+        "node_modules/@expo-google-fonts/geist/600SemiBold/Geist_600SemiBold.ttf"
+      ]
+    },
+    "android": {
+      "fonts": [
+        {
+          "fontFamily": "Geist",
+          "fontDefinitions": [
+            {
+              "path": "node_modules/@expo-google-fonts/geist/400Regular/Geist_400Regular.ttf",
+              "weight": 400
+            },
+            {
+              "path": "node_modules/@expo-google-fonts/geist/600SemiBold/Geist_600SemiBold.ttf",
+              "weight": 600
+            }
+          ]
+        }
+      ]
+    }
+  }
+]
+```
+
+List one file per weight the preset maps in `fontWeight`, then rebuild the native app. On
+iOS the family name comes from the font file; on Android it is the `fontFamily` you give.
+Loading with `useFonts` at runtime is not enough on Android. Each file becomes its own family
+there, and `fontWeight` has nothing to choose from.
+
+| Preset   | Packages                                                              | Weights                 |
+| -------- | --------------------------------------------------------------------- | ----------------------- |
+| `cobalt` | `@expo-google-fonts/ibm-plex-sans`                                    | 400, 600, 700           |
+| `iris`   | `@expo-google-fonts/geist`                                            | 400, 500, 600, 700      |
+| `tide`   | `@expo-google-fonts/manrope`                                          | 500, 600, 700           |
+| `plum`   | `@expo-google-fonts/instrument-sans`, `@expo-google-fonts/newsreader` | 400, 500, 600; 500, 600 |
+
+A family that is not installed falls back to the system font, so a preset still works
+before you embed anything. To use your own typeface, set `font` on a preset:
+
+```ts
+const brand = {
+  ...presets.iris,
+  font: { body: { ios: 'Satoshi', android: 'Satoshi', web: "'Satoshi', sans-serif" } },
+}
 ```
 
 ## Light, dark, and system
@@ -91,13 +184,13 @@ const light = { ...lightTheme, brand: { coral: '#ff6b57', ink: '#101828' } }
 
 ## Scales
 
-| Group        | Keys                                              |
-| ------------ | ------------------------------------------------- |
-| `space`      | 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16 (4pt grid)     |
-| `radius`     | sm 8, md 12, lg 16, xl 20, 2xl 28, full           |
-| `fontSize`   | xs 12, sm 14, md 16, lg 18, xl 20, 2xl 24, 3xl 30 |
-| `lineHeight` | matched to each font size                         |
-| `fontWeight` | normal, medium, semibold, bold                    |
+| Group        | Keys                                                       |
+| ------------ | ---------------------------------------------------------- |
+| `space`      | 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16 (4pt grid)              |
+| `radius`     | sm, md, lg, xl, 2xl, full, control, card. From the preset. |
+| `fontSize`   | xs 12, sm 14, md 16, lg 18, xl 20, 2xl 24, 3xl 30          |
+| `lineHeight` | matched to each font size                                  |
+| `fontWeight` | normal, medium, semibold, bold. Mapped by the preset.      |
 
 `Box` exposes the spacing and colour scales as props, so `<Box p={4} bg="surface" rounded="xl">`
 reads the theme without a stylesheet.

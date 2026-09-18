@@ -49,9 +49,9 @@ export const dropdownMenuRecipe = defineSlotRecipe((theme) => ({
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.border,
       shadowColor: '#000',
-      shadowOpacity: 0.14,
-      shadowRadius: 20,
-      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: theme.shadow.opacity,
+      shadowRadius: theme.shadow.radius,
+      shadowOffset: { width: 0, height: theme.shadow.offset },
       elevation: 6,
     },
     /** The scrolling list inside `root`. Bound its height here. */

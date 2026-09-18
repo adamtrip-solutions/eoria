@@ -30,7 +30,7 @@ import { Switch } from '@/components/ui/switch'
 import { Text } from '@/components/ui/text'
 import { toast } from '@/components/ui/toast'
 import { applyPreset, presetNames, usePreset, type Mode, setMode } from '@/theme'
-import type { ColorPresetName } from '@eoria/core'
+import type { PresetName } from '@eoria/core'
 
 const languages: SelectOption[] = [
   { value: 'en', label: 'English' },
@@ -132,7 +132,7 @@ export default function SettingsScreen() {
         </CardHeader>
         <CardContent style={styles.gap}>
           <VStack gap={2}>
-            <Text variant="label">Theme</Text>
+            <Text variant="label">Mode</Text>
             <Select
               value={modes.find((m) => m.value === mode)}
               onValueChange={(o) => setMode(o.value as Mode)}
@@ -146,10 +146,10 @@ export default function SettingsScreen() {
             </Select>
           </VStack>
           <VStack gap={2}>
-            <Text variant="label">Accent</Text>
+            <Text variant="label">Theme</Text>
             <Select
               value={presets.find((p) => p.value === preset)}
-              onValueChange={(o) => applyPreset(o.value as ColorPresetName)}
+              onValueChange={(o) => applyPreset(o.value as PresetName)}
             >
               <SelectTrigger />
               <SelectContent>

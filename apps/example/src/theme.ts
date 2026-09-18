@@ -1,15 +1,15 @@
 import { useSyncExternalStore } from 'react'
 import { UnistylesRuntime } from 'react-native-unistyles'
-import { colorPresets, type ColorPresetName } from '@eoria/core'
+import { createThemes, presets, type PresetName } from '@eoria/core'
 
 /**
- * Appearance store for the example app. Presets swap the colour palette of
- * both registered themes in place, so adaptive light/dark keeps working and
+ * Appearance store for the example app. Presets swap colours, radii and weights
+ * of both registered themes in place, so adaptive light/dark keeps working and
  * no component re-mounts.
  */
 export type Mode = 'system' | 'light' | 'dark'
 
-let preset: ColorPresetName = 'zinc'
+let preset: PresetName = 'zinc'
 const listeners = new Set<() => void>()
 const emit = () => listeners.forEach((l) => l())
 const subscribe = (l: () => void) => {
@@ -17,13 +17,13 @@ const subscribe = (l: () => void) => {
   return () => listeners.delete(l)
 }
 
-export const presetNames = Object.keys(colorPresets) as ColorPresetName[]
+export const presetNames = Object.keys(presets) as PresetName[]
 
-export function applyPreset(name: ColorPresetName) {
+export function applyPreset(name: PresetName) {
   preset = name
-  const colors = colorPresets[name]
-  UnistylesRuntime.updateTheme('light', (t) => ({ ...t, colors: colors.light }))
-  UnistylesRuntime.updateTheme('dark', (t) => ({ ...t, colors: colors.dark }))
+  const themes = createThemes(presets[name])
+  UnistylesRuntime.updateTheme('light', (t) => ({ ...t, ...themes.light }))
+  UnistylesRuntime.updateTheme('dark', (t) => ({ ...t, ...themes.dark }))
   emit()
 }
 

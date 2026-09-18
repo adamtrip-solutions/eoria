@@ -13,7 +13,7 @@ import {
   type SlotOverrides,
   type SlotStyles,
 } from '@eoria/core'
-import { Text, type TextProps } from '@/components/ui/text'
+import { Text, headingFont, type TextProps } from '@/components/ui/text'
 
 /**
  * Surface tile. No hairline border: the default variant sits on the muted
@@ -25,7 +25,7 @@ import { Text, type TextProps } from '@/components/ui/text'
 export const cardRecipe = defineSlotRecipe((theme) => ({
   slots: {
     /** No `overflow: hidden` here: it would clip the elevated shadow on iOS. */
-    root: { borderRadius: theme.radius.xl },
+    root: { borderRadius: theme.radius.card },
     rootPressed: { opacity: 0.9 },
     header: { padding: theme.space[5], paddingBottom: 0, gap: theme.space[1] },
     title: {
@@ -33,6 +33,7 @@ export const cardRecipe = defineSlotRecipe((theme) => ({
       lineHeight: theme.lineHeight.lg,
       fontWeight: theme.fontWeight.semibold,
       letterSpacing: -0.2,
+      ...headingFont(theme),
     },
     description: {
       color: theme.colors.mutedForeground,
@@ -50,14 +51,21 @@ export const cardRecipe = defineSlotRecipe((theme) => ({
   },
   variants: {
     variant: {
-      filled: { root: { backgroundColor: theme.colors.surface, overflow: 'hidden' } },
+      filled: {
+        root: {
+          backgroundColor: theme.colors.surface,
+          borderWidth: theme.stroke,
+          borderColor: theme.colors.border,
+          overflow: 'hidden',
+        },
+      },
       elevated: {
         root: {
           backgroundColor: theme.colors.elevated,
           shadowColor: '#000',
-          shadowOpacity: 0.1,
-          shadowRadius: 16,
-          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: theme.shadow.opacity,
+          shadowRadius: theme.shadow.radius,
+          shadowOffset: { width: 0, height: theme.shadow.offset },
           elevation: 4,
         },
       },

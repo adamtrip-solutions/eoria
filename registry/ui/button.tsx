@@ -29,7 +29,7 @@ export const buttonRecipe = defineSlotRecipe((theme) => ({
       alignItems: 'center',
       justifyContent: 'center',
       gap: theme.space[2],
-      borderRadius: theme.radius.md,
+      borderRadius: theme.radius.control,
       overflow: 'hidden',
     },
     label: {
@@ -75,20 +75,20 @@ export const buttonRecipe = defineSlotRecipe((theme) => ({
     },
     size: {
       sm: {
-        root: { minHeight: 40, paddingHorizontal: theme.space[4] },
+        root: { minHeight: theme.control.sm, paddingHorizontal: theme.space[4] },
         label: { fontSize: theme.fontSize.sm, lineHeight: theme.lineHeight.sm },
         icon: { width: 16, height: 16 },
       },
-      md: { root: { minHeight: 52, paddingHorizontal: theme.space[5] } },
+      md: { root: { minHeight: theme.control.md, paddingHorizontal: theme.space[5] } },
       lg: {
-        root: { minHeight: 56, paddingHorizontal: theme.space[6] },
+        root: { minHeight: theme.control.lg, paddingHorizontal: theme.space[6] },
         label: { fontSize: theme.fontSize.lg, lineHeight: theme.lineHeight.lg },
         icon: { width: 22, height: 22 },
       },
       icon: {
         root: {
-          minHeight: 48,
-          minWidth: 48,
+          minHeight: theme.control.md - 4,
+          minWidth: theme.control.md - 4,
           paddingHorizontal: 0,
           borderRadius: theme.radius.full,
         },

@@ -31,7 +31,7 @@ import {
   type PopperContentProps,
   type PressChildProps,
 } from '@/components/ui/popper'
-import { Text, type TextProps } from '@/components/ui/text'
+import { Text, headingFont, type TextProps } from '@/components/ui/text'
 
 export const popoverRecipe = defineSlotRecipe((theme) => ({
   slots: {
@@ -44,15 +44,16 @@ export const popoverRecipe = defineSlotRecipe((theme) => ({
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.border,
       shadowColor: '#000',
-      shadowOpacity: 0.14,
-      shadowRadius: 20,
-      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: theme.shadow.opacity,
+      shadowRadius: theme.shadow.radius,
+      shadowOffset: { width: 0, height: theme.shadow.offset },
       elevation: 6,
     },
     title: {
       fontSize: theme.fontSize.md,
       lineHeight: theme.lineHeight.md,
       fontWeight: theme.fontWeight.semibold,
+      ...headingFont(theme),
     },
     description: {
       fontSize: theme.fontSize.sm,

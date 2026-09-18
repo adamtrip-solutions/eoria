@@ -37,12 +37,12 @@ export const inputOtpRecipe = defineSlotRecipe((theme) => ({
     cell: {
       flex: 1,
       minWidth: 44,
-      height: 56,
+      height: theme.control.md + 4,
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 1.5,
-      borderColor: 'transparent',
-      borderRadius: theme.radius.md,
+      borderColor: theme.stroke ? theme.colors.input : 'transparent',
+      borderRadius: theme.radius.control,
       backgroundColor: theme.colors.muted,
     },
     cellActive: { borderColor: theme.colors.ring },
@@ -66,13 +66,13 @@ export const inputOtpRecipe = defineSlotRecipe((theme) => ({
   variants: {
     size: {
       sm: {
-        cell: { minWidth: 36, height: 44, borderRadius: theme.radius.sm },
+        cell: { minWidth: 36, height: theme.control.sm },
         char: { fontSize: theme.fontSize.lg, lineHeight: theme.lineHeight.lg },
         caret: { height: 18 },
       },
       md: {},
       lg: {
-        cell: { minWidth: 52, height: 64 },
+        cell: { minWidth: 52, height: theme.control.lg + 8 },
         char: { fontSize: theme.fontSize['3xl'], lineHeight: theme.lineHeight['3xl'] },
         caret: { height: 28 },
       },

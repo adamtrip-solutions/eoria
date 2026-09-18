@@ -108,21 +108,23 @@ sheets with a grabber, dark pill toasts. Three surface steps carry most of it: `
 `surface` for cards and tiles, and `muted` for controls, so a control keeps its fill inside a
 card.
 
-`@eoria/core` ships one token scale and six colour presets: zinc (default), blue, green, rose,
-violet and orange. Each preset is a light and a dark palette for the same semantic keys.
+`@eoria/core` ships six presets, each a complete look rather than an accent swap: palettes,
+corner radii, control heights, stroke, shadow, weights and fonts. `zinc` is neutral and native,
+`moss` is warm with pill controls and serif headings, `cobalt` is cool, outlined and compact.
 
 ```ts
-import { colorPresets, createThemes } from '@eoria/core'
+import { presets, createThemes } from '@eoria/core'
 
-configureUnistyles({ themes: createThemes(colorPresets.violet) })
+configureUnistyles({ themes: createThemes(presets.moss) })
 ```
 
 To switch presets at runtime, update the registered themes in place so adaptive light/dark
 keeps working:
 
 ```ts
-UnistylesRuntime.updateTheme('light', (t) => ({ ...t, colors: colorPresets.rose.light }))
-UnistylesRuntime.updateTheme('dark', (t) => ({ ...t, colors: colorPresets.rose.dark }))
+const themes = createThemes(presets.cobalt)
+UnistylesRuntime.updateTheme('light', (t) => ({ ...t, ...themes.light }))
+UnistylesRuntime.updateTheme('dark', (t) => ({ ...t, ...themes.dark }))
 ```
 
 Animations are timings of 120 to 150 ms. No springs. Reanimated defaults every animation to

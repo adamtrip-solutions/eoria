@@ -2,29 +2,39 @@ import { forwardRef, useState } from 'react'
 import { TextInput, type TextInputProps } from 'react-native'
 import { useUnistyles } from 'react-native-unistyles'
 import { defineSlotRecipe, useRecipe, type RecipeVariants, type SlotOverrides } from '@eoria/core'
+import { bodyFont } from '@/components/ui/text'
 
 export const inputRecipe = defineSlotRecipe((theme) => ({
   slots: {
     /** Filled field, same frame as the Select trigger. */
     root: {
-      minHeight: 52,
+      minHeight: theme.control.md,
       paddingHorizontal: theme.space[4],
       borderWidth: 1.5,
-      borderColor: 'transparent',
-      borderRadius: theme.radius.md,
+      borderColor: theme.stroke ? theme.colors.input : 'transparent',
+      borderRadius: theme.radius.control,
       backgroundColor: theme.colors.muted,
       color: theme.colors.foreground,
       fontSize: theme.fontSize.md,
+      ...bodyFont(theme),
     },
   },
   variants: {
     size: {
       sm: {
-        root: { minHeight: 44, fontSize: theme.fontSize.sm, paddingHorizontal: theme.space[3] },
+        root: {
+          minHeight: theme.control.sm,
+          fontSize: theme.fontSize.sm,
+          paddingHorizontal: theme.space[3],
+        },
       },
       md: {},
       lg: {
-        root: { minHeight: 56, fontSize: theme.fontSize.lg, paddingHorizontal: theme.space[5] },
+        root: {
+          minHeight: theme.control.lg,
+          fontSize: theme.fontSize.lg,
+          paddingHorizontal: theme.space[5],
+        },
       },
     },
     focused: {

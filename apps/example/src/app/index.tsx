@@ -1,7 +1,7 @@
 import { Link, router, type Href } from 'expo-router'
 import { Pressable, View } from 'react-native'
 import { StyleSheet, useUnistyles } from 'react-native-unistyles'
-import { colorPresets } from '@eoria/core'
+import { presets } from '@eoria/core'
 import { Screen, Section } from '@/components/screen'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,25 @@ import { Text } from '@/components/ui/text'
 import { applyPreset, presetNames, setMode, usePreset, type Mode } from '@/theme'
 
 const showcase: Array<{ href: Href; title: string; description: string; tag: string }> = [
+  {
+    href: '/showcase/wallet',
+    title: 'Wallet',
+    description:
+      'Balance on a primary card, budgets with Progress, transactions in a bottom sheet.',
+    tag: 'App',
+  },
+  {
+    href: '/showcase/home',
+    title: 'Home',
+    description: 'Room chips, a climate Slider, device tiles with Switch and scene buttons.',
+    tag: 'App',
+  },
+  {
+    href: '/showcase/delivery',
+    title: 'Your order',
+    description: 'Stepped Progress rail, courier card, Alert, Accordion and a tip sheet.',
+    tag: 'App',
+  },
   {
     href: '/showcase/login',
     title: 'Sign in',
@@ -73,7 +92,7 @@ function PresetPicker() {
   const { rt } = useUnistyles()
   const scheme = rt.themeName === 'dark' ? 'dark' : 'light'
   return (
-    <HStack gap={3} wrap accessibilityRole="radiogroup" accessibilityLabel="Colour preset">
+    <HStack gap={3} wrap accessibilityRole="radiogroup" accessibilityLabel="Theme preset">
       {presetNames.map((name) => {
         const selected = name === current
         return (
@@ -86,7 +105,13 @@ function PresetPicker() {
             style={[styles.swatchRing, selected && styles.swatchRingSelected]}
           >
             <View
-              style={[styles.swatch, { backgroundColor: colorPresets[name][scheme].primary }]}
+              style={[
+                styles.swatch,
+                {
+                  backgroundColor: presets[name][scheme].primary,
+                  borderRadius: presets[name].radius.md,
+                },
+              ]}
             />
           </Pressable>
         )
@@ -113,7 +138,7 @@ export default function Index() {
         <CardHeader>
           <CardTitle>Appearance</CardTitle>
           <CardDescription>
-            Presets swap the palette live. Mode follows the OS by default.
+            Presets swap colours, radii and weights live. Mode follows the OS by default.
           </CardDescription>
         </CardHeader>
         <CardContent style={styles.appearance}>
@@ -158,11 +183,11 @@ const styles = StyleSheet.create((theme) => ({
   appearance: { gap: theme.space[4] },
   swatchRing: {
     padding: 3,
-    borderRadius: theme.radius.full,
+    borderRadius: theme.radius.md + 3,
     borderWidth: 2,
     borderColor: 'transparent',
   },
   swatchRingSelected: { borderColor: theme.colors.foreground },
-  swatch: { width: 28, height: 28, borderRadius: theme.radius.full },
+  swatch: { width: 28, height: 28 },
   cardHeader: { paddingBottom: theme.space[5] },
 }))

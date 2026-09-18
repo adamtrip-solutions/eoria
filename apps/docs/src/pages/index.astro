@@ -2,14 +2,11 @@
 import { getCollection } from 'astro:content'
 import Base from '../layouts/Base.astro'
 import Button from '../components/ui/Button.astro'
-import Card from '../components/ui/Card.astro'
 import Badge from '../components/ui/Badge.astro'
-import Chip from '../components/ui/Chip.astro'
-import Segmented from '../components/ui/Segmented.astro'
-import Input from '../components/ui/Input.astro'
-import Switch from '../components/ui/Switch.astro'
 import Iphone from '../components/ui/Iphone.astro'
 import { CATEGORY_ORDER, byOrder } from '../lib/docs-nav.mjs'
+import { screens } from '../lib/screens'
+import { presetNames } from '../lib/presets'
 
 const components = (await getCollection('docs')).filter((e) => e.id.startsWith('components/'))
 const categories = CATEGORY_ORDER.map((label) => ({
@@ -31,7 +28,7 @@ const focus: Record<string, string> = {
   portal: '50% 32%',
   tooltip: '50% 18%',
 }
-const presets = ['zinc', 'blue', 'green', 'rose', 'violet', 'orange'] as const
+const presets = presetNames
 
 const steps = [
   {
@@ -65,7 +62,7 @@ const principles = [
   },
   {
     title: 'Themes that swap in place',
-    body: 'Six colour presets, light and dark. Styles resolve in native code, so a preset change does not remount your screen.',
+    body: 'Six presets, each a full look: palette, corner radii, type weights and typeface, in light and dark. Styles resolve in native code, so a preset change does not remount your screen.',
   },
   {
     title: 'One construct, typed all the way down',
@@ -100,8 +97,8 @@ const principles = [
           </button>
         </div>
         <div class="picker">
-          <p>Pick a colour. The page and the phone follow it.</p>
-          <div class="swatches" role="radiogroup" aria-label="Colour preset">
+          <p>Pick a theme. Colours, corners, weights and typeface change together, here and in the app.</p>
+          <div class="swatches" role="radiogroup" aria-label="Theme preset">
             {
               presets.map((p) => (
                 <button
@@ -111,7 +108,7 @@ const principles = [
                   aria-label={p}
                   title={p}
                   data-preset-option={p}
-                  style={`--swatch-light: var(--swatch-${p}-light); --swatch-dark: var(--swatch-${p}-dark)`}
+                  style={`--swatch-light: var(--swatch-${p}-light); --swatch-dark: var(--swatch-${p}-dark); --swatch-radius: var(--swatch-${p}-radius)`}
                 />
               ))
             }
@@ -119,47 +116,20 @@ const principles = [
         </div>
       </div>
 
-      <div class="demo">
-        <Iphone class="hero-phone">
-          <div class="mock">
-            <p class="screen-title">Checkout</p>
-            <Segmented items={['Delivery', 'Pickup']} interactive />
-            <Card>
-              <div class="row between">
-                <div>
-                  <p class="strong">Bruno Adão</p>
-                  <p class="muted">Rua da Prata 12, Lisboa</p>
-                </div>
-                <Badge>Home</Badge>
-              </div>
-            </Card>
-            <Input label="Promo code" placeholder="SUMMER" />
-            <Card>
-              <Switch label="Leave at the door" checked />
-            </Card>
-            <div class="chips" data-chip-group>
-              <Chip button active aria-pressed="true">Card</Chip>
-              <Chip button aria-pressed="false">MB Way</Chip>
-              <Chip button aria-pressed="false">Apple Pay</Chip>
-            </div>
-            <Card>
-              <div class="row between line">
-                <span>Margherita <span class="muted">× 1</span></span><span>€12,90</span>
-              </div>
-              <div class="row between line">
-                <span>Tiramisù <span class="muted">× 1</span></span><span>€12,00</span>
-              </div>
-            </Card>
-            <div class="grow"></div>
-            <div class="row between total">
-              <span class="muted">Total</span><span class="strong">€24,90</span>
-            </div>
-            <Button width="full" data-order>
-              <span data-order-label>Place order</span>
-            </Button>
-          </div>
-        </Iphone>
-      </div>
+      <a class="demo" href="/demos/" aria-label="See the demo screens">
+        {
+          [screens[1], screens[0], screens[2]].map((sc, i) => (
+            <span class:list={['phone', i === 1 ? 'front' : 'back']}>
+              <Iphone
+                src={`/screens/${sc.name}-light.webp`}
+                srcDark={`/screens/${sc.name}-dark.webp`}
+                alt={`${sc.title} screen on an iPhone`}
+              />
+            </span>
+          ))
+        }
+        <span class="demo-caption">Wallet, Home and Your order. Registry files only.</span>
+      </a>
     </section>
 
     <section class="screens" aria-labelledby="screens-title">
@@ -401,7 +371,7 @@ const principles = [
     height: 36px;
     padding: 0;
     border: 2px solid transparent;
-    border-radius: var(--radius-full);
+    border-radius: calc(var(--swatch-radius) + 2px);
     background: var(--swatch-light);
     cursor: pointer;
     transition:
@@ -422,78 +392,56 @@ const principles = [
     box-shadow: inset 0 0 0 3px var(--color-background);
   }
 
-  .demo {
-    display: flex;
-    justify-content: center;
-  }
   /*
-    The mock is laid out at iPhone point size (393 x 852) so every control keeps the proportions
-    it has on a device, then scaled to the frame. Screen width = phone width * 389.5 / 433, so
-    a 380px phone has a 341.8px screen and a scale of 341.8 / 393.
+    Three captures from the example app. The front phone is near device size; the two behind
+    sit lower and smaller, so the cluster reads as one app rather than a gallery.
   */
-  .demo :global(.hero-phone) {
-    --phone-scale: 0.87;
-    width: 380px;
-    max-width: 100%;
+  .demo {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1.42fr 1fr;
+    align-items: start;
+    justify-self: center;
+    width: min(100%, 560px);
+    padding-bottom: var(--space-8);
+  }
+  .phone {
+    display: block;
+    min-width: 0;
+    transition: transform 200ms var(--ease);
+  }
+  .phone :global(.iphone) {
     filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.18));
   }
-  :global(:root[data-mode='dark']) .demo :global(.hero-phone) {
+  :global(:root[data-mode='dark']) .phone :global(.iphone) {
     filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.6));
   }
-  .mock {
-    width: 393px;
-    height: 852px;
-    transform: scale(var(--phone-scale));
-    transform-origin: top left;
-    padding: 62px var(--space-4) 34px;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    overflow: hidden;
+  .front {
+    position: relative;
+    z-index: 1;
+    margin: 0 -8%;
   }
-  @media (max-width: 420px) {
-    .demo :global(.hero-phone) {
-      --phone-scale: 0.687;
-      width: 300px;
-    }
+  .back {
+    margin-top: 16%;
   }
-  .screen-title {
-    margin: 0 0 var(--space-1);
-    font-size: var(--text-2xl);
-    font-weight: var(--weight-bold);
-    letter-spacing: -0.02em;
+  .demo:hover .front {
+    transform: translateY(-6px);
   }
-  .row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
+  .demo:hover .back {
+    transform: translateY(-2px);
   }
-  .between {
-    justify-content: space-between;
+  .demo:focus-visible {
+    outline-offset: 8px;
+    border-radius: var(--radius-2xl);
   }
-  .mock p {
-    margin: 0;
-  }
-  .strong {
-    font-weight: var(--weight-semibold);
-  }
-  .muted {
-    color: var(--color-muted-foreground);
+  .demo-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    text-align: center;
     font-size: var(--text-sm);
-  }
-  .chips {
-    display: flex;
-    gap: var(--space-2);
-    overflow: hidden;
-  }
-  .grow {
-    flex: 1;
-  }
-  .total {
-    font-size: var(--text-lg);
-  }
-  .line + .line {
-    margin-top: var(--space-2);
+    color: var(--color-muted-foreground);
   }
 
   /* Load reveal: one sequence, copy first, then the phone, then the screen mounts. */
@@ -525,34 +473,18 @@ const principles = [
   .copy > :nth-child(6) {
     animation-delay: 300ms;
   }
-  .demo {
-    animation: rise 800ms var(--ease) 160ms both;
+  .phone,
+  .demo-caption {
+    animation: rise 720ms var(--ease) both;
   }
-  .mock > * {
-    animation: rise 420ms var(--ease) both;
-    animation-delay: calc(520ms + var(--i, 0) * 45ms);
+  .front {
+    animation-delay: 160ms;
   }
-  .mock > :nth-child(2) {
-    --i: 1;
+  .back {
+    animation-delay: 320ms;
   }
-  .mock > :nth-child(3) {
-    --i: 2;
-  }
-  .mock > :nth-child(4) {
-    --i: 3;
-  }
-  .mock > :nth-child(5) {
-    --i: 4;
-  }
-  .mock > :nth-child(6) {
-    --i: 5;
-  }
-  .mock > :nth-child(7) {
-    --i: 6;
-  }
-  .mock > :nth-child(9),
-  .mock > :nth-child(10) {
-    --i: 7;
+  .demo-caption {
+    animation-delay: 520ms;
   }
 
   /* Screens */
@@ -832,9 +764,13 @@ const principles = [
 
   @media (prefers-reduced-motion: reduce) {
     .copy > *,
-    .demo,
-    .mock > * {
+    .phone,
+    .demo-caption {
       animation: none;
+    }
+    .demo:hover .front,
+    .demo:hover .back {
+      transform: none;
     }
     .track {
       animation: none;
@@ -862,31 +798,6 @@ const principles = [
       } catch {
         label.textContent = 'Select it'
       }
-    })
-  })
-
-  // Payment chips in the hero mock behave like a single-select group.
-  document.querySelectorAll<HTMLElement>('[data-chip-group]').forEach((group) => {
-    const chips = group.querySelectorAll<HTMLButtonElement>('button')
-    chips.forEach((chip) => {
-      chip.addEventListener('click', () => {
-        chips.forEach((c) => {
-          const on = c === chip
-          c.classList.toggle('active', on)
-          c.setAttribute('aria-pressed', String(on))
-        })
-      })
-    })
-  })
-
-  // Place order confirms, then resets, so the mock answers a press.
-  document.querySelectorAll<HTMLButtonElement>('[data-order]').forEach((b) => {
-    const label = b.querySelector<HTMLElement>('[data-order-label]')!
-    let timer: ReturnType<typeof setTimeout> | undefined
-    b.addEventListener('click', () => {
-      label.textContent = 'Order placed'
-      clearTimeout(timer)
-      timer = setTimeout(() => (label.textContent = 'Place order'), 1800)
     })
   })
 </script>

@@ -20,7 +20,14 @@ export {
   type MergeVariants,
 } from './recipe'
 export { configureUnistyles, type ConfigureOptions } from './configure'
-export { colorPresets, type ColorPreset, type ColorPresetName } from './presets'
+export {
+  presets,
+  colorPresets,
+  type Preset,
+  type PresetName,
+  type ColorPreset,
+  type ColorPresetName,
+} from './presets'
 export {
   lightTheme,
   darkTheme,
@@ -32,4 +39,6 @@ export {
   type RadiusKey,
   type FontSizeKey,
   type FontWeightKey,
+  type ControlSizeKey,
+  type PlatformFont,
 } from './theme'

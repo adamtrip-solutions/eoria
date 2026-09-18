@@ -60,7 +60,9 @@ export const accordionRecipe = defineSlotRecipe((theme) => ({
       contained: {
         root: {
           backgroundColor: theme.colors.surface,
-          borderRadius: theme.radius.xl,
+          borderRadius: theme.radius.card,
+          borderWidth: theme.stroke,
+          borderColor: theme.colors.border,
           overflow: 'hidden',
         },
         item: { paddingHorizontal: theme.space[5] },

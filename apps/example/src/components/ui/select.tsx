@@ -30,11 +30,11 @@ export const selectRecipe = defineSlotRecipe((theme) => ({
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: theme.space[2],
-      minHeight: 52,
+      minHeight: theme.control.md,
       paddingHorizontal: theme.space[4],
       borderWidth: 1.5,
-      borderColor: 'transparent',
-      borderRadius: theme.radius.md,
+      borderColor: theme.stroke ? theme.colors.input : 'transparent',
+      borderRadius: theme.radius.control,
       backgroundColor: theme.colors.muted,
     },
     value: {
@@ -61,9 +61,9 @@ export const selectRecipe = defineSlotRecipe((theme) => ({
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.border,
       shadowColor: '#000',
-      shadowOpacity: 0.14,
-      shadowRadius: 20,
-      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: theme.shadow.opacity,
+      shadowRadius: theme.shadow.radius,
+      shadowOffset: { width: 0, height: theme.shadow.offset },
       elevation: 6,
     },
     /** The scrolling list inside `content`. Bound its height here. */
@@ -107,9 +107,9 @@ export const selectRecipe = defineSlotRecipe((theme) => ({
   },
   variants: {
     size: {
-      sm: { root: { minHeight: 44 }, value: { fontSize: theme.fontSize.sm } },
+      sm: { root: { minHeight: theme.control.sm }, value: { fontSize: theme.fontSize.sm } },
       md: {},
-      lg: { root: { minHeight: 56 }, value: { fontSize: theme.fontSize.lg } },
+      lg: { root: { minHeight: theme.control.lg }, value: { fontSize: theme.fontSize.lg } },
     },
     open: {
       true: { root: { borderColor: theme.colors.ring } },

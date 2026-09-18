@@ -1,9 +1,13 @@
 // Screenshots every /preview/<name> route of the example app on the booted iOS
 // simulator, in light and dark, and writes compressed images to public/previews.
+// Names with a slash (showcase/wallet) are full app routes, captured with their
+// header and written to public/screens by their last segment.
 // Needs: a booted simulator with the example dev build open and Metro running.
 // The app polls http://localhost:8765/ (see apps/example/src/preview-driver.ts)
 // and navigates to whatever this script names.
-//   node scripts/capture-previews.mjs [name...]
+//   node scripts/capture-previews.mjs [name...] [--preset=<name>] [--out=<dir>]
+// --preset captures in another preset (default zinc). --out writes every image to one
+// directory instead of public/, for review shots that should not land in the site.
 import { execFileSync } from 'node:child_process'
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
@@ -13,7 +17,18 @@ import { createServer } from 'node:http'
 import sharp from 'sharp'
 
 const docs = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const out = resolve(docs, 'public/previews')
+const flag = (key) =>
+  process.argv
+    .slice(2)
+    .find((a) => a.startsWith(`--${key}=`))
+    ?.slice(key.length + 3)
+const preset = flag('preset') ?? 'zinc'
+const outDir = flag('out')
+const outFor = (name) =>
+  outDir
+    ? resolve(outDir)
+    : resolve(docs, name.includes('/') ? 'public/screens' : 'public/previews')
+const fileFor = (name) => name.slice(name.lastIndexOf('/') + 1)
 const wanted = process.argv.slice(2).filter((a) => !a.startsWith('--'))
 
 const contentDir = resolve(docs, 'src/content/docs/components')
@@ -25,7 +40,7 @@ const names =
 const simctl = (...a) => execFileSync('xcrun', ['simctl', ...a], { stdio: 'pipe' })
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
-let current = { name: '', seq: 0 }
+let current = { name: '', seq: 0, preset }
 const server = createServer((_req, res) => {
   res.setHeader('content-type', 'application/json')
   res.end(JSON.stringify(current))
@@ -56,15 +71,15 @@ simctl(
 )
 await sleep(10000)
 
-await mkdir(out, { recursive: true })
+for (const name of names) await mkdir(outFor(name), { recursive: true })
 try {
   for (const mode of ['light', 'dark']) {
     simctl('ui', 'booted', 'appearance', mode)
     await sleep(400)
     for (const name of names) {
-      current = { name, seq: current.seq + 1 }
+      current = { name, seq: current.seq + 1, preset }
       await sleep(name === 'toast' || name === 'progress' ? 2200 : 1600)
-      const raw = resolve(tmpdir(), `eoria-${name}-${mode}.png`)
+      const raw = resolve(tmpdir(), `eoria-${fileFor(name)}-${mode}.png`)
       simctl('io', 'booted', 'screenshot', raw)
       const png = await readFile(raw)
       const image = sharp(png)
@@ -80,7 +95,8 @@ try {
       const patch = await sharp({
         create: {
           width: Math.round(width * 0.16),
-          height: Math.round(height * 0.08),
+          // Full routes start their content right under the button, so the patch stops there.
+          height: Math.round(height * (name.includes('/') ? 0.066 : 0.08)),
           channels: 3,
           background: bg,
         },
@@ -95,8 +111,10 @@ try {
         .png()
         .toBuffer()
       const webp = await sharp(patched).resize({ width: 640 }).webp({ quality: 82 }).toBuffer()
-      await writeFile(resolve(out, `${name}-${mode}.webp`), webp)
-      console.log(`${name}-${mode}.webp ${Math.round(webp.length / 1024)}kB (${width}x${height})`)
+      await writeFile(resolve(outFor(name), `${fileFor(name)}-${mode}.webp`), webp)
+      console.log(
+        `${fileFor(name)}-${mode}.webp ${Math.round(webp.length / 1024)}kB (${width}x${height})`,
+      )
     }
   }
 } finally {

@@ -8,7 +8,7 @@ import {
   type SlotOverrides,
   type SlotStyles,
 } from '@eoria/core'
-import { Text, type TextProps } from '@/components/ui/text'
+import { Text, headingFont, type TextProps } from '@/components/ui/text'
 
 /**
  * Inline banner. Tinted variants layer a translucent wash of the accent
@@ -21,7 +21,9 @@ export const alertRecipe = defineSlotRecipe((theme) => ({
       alignItems: 'flex-start',
       gap: theme.space[3],
       padding: theme.space[4],
-      borderRadius: theme.radius.lg,
+      borderRadius: theme.radius.card,
+      borderWidth: theme.stroke,
+      borderColor: theme.colors.border,
       backgroundColor: theme.colors.surface,
       overflow: 'hidden',
     },
@@ -35,6 +37,7 @@ export const alertRecipe = defineSlotRecipe((theme) => ({
       lineHeight: theme.lineHeight.md,
       fontWeight: theme.fontWeight.semibold,
       color: theme.colors.foreground,
+      ...headingFont(theme),
     },
     description: {
       fontSize: theme.fontSize.sm,

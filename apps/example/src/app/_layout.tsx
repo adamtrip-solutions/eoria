@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useUnistyles } from 'react-native-unistyles'
 import { PortalHost } from '@/components/ui/portal'
 import { Toaster } from '@/components/ui/toast'
+import { usePresetFonts } from '@/fonts'
 import { usePreviewDriver } from '@/preview-driver'
 
 const screens = [
@@ -23,6 +24,9 @@ const screens = [
   ['accordion', 'Accordion'],
   ['toast', 'Toast'],
   ['overlays', 'Popover, Tooltip, Menu, Select'],
+  ['showcase/wallet', 'Wallet'],
+  ['showcase/home', 'Home'],
+  ['showcase/delivery', 'Your order'],
   ['showcase/login', 'Sign in'],
   ['showcase/checkout', 'Checkout'],
   ['showcase/profile', 'Profile'],
@@ -33,6 +37,8 @@ export default function RootLayout() {
   const { theme, rt } = useUnistyles()
   const insets = useSafeAreaInsets()
   usePreviewDriver()
+  const fontsReady = usePresetFonts()
+  if (!fontsReady) return null
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style={rt.themeName === 'dark' ? 'light' : 'dark'} />

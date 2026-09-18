@@ -1,0 +1,209 @@
+---
+import { getCollection } from 'astro:content'
+import Base from '../layouts/Base.astro'
+import Button from '../components/ui/Button.astro'
+import Chip from '../components/ui/Chip.astro'
+import Iphone from '../components/ui/Iphone.astro'
+import { screens, screenSource } from '../lib/screens'
+
+const docs = await getCollection('docs')
+const titleOf = (name: string) =>
+  docs.find((e) => e.id === `components/${name}`)?.data.title ?? name
+---
+
+<Base
+  title="Demos"
+  description="Three app screens built from the eoria registry alone, captured from the example app on an iPhone in light and dark."
+>
+  <main class="container">
+    <header class="head">
+      <h1>Screens, not samples.</h1>
+      <p>
+        Three screens people already know from their phone, built from registry files and nothing
+        else. Each one runs in the example app, in light and dark, and follows the colour preset.
+      </p>
+      <div class="actions">
+        <Button href="https://github.com/adamtrip-solutions/eoria/tree/main/apps/example" variant="secondary">
+          Run the example app
+        </Button>
+      </div>
+    </header>
+
+    <div class="list">
+      {
+        screens.map((s, i) => (
+          <article class:list={['screen', { flip: i % 2 === 1 }]} id={s.name}>
+            <div class="phones" aria-hidden="true">
+              <Iphone src={`/screens/${s.name}-light.webp`} alt="" class="light" />
+              <Iphone src={`/screens/${s.name}-dark.webp`} alt="" class="dark" />
+            </div>
+            <div class="copy">
+              <h2>{s.title}</h2>
+              <p class="tagline">{s.tagline}</p>
+              <p class="body">{s.body}</p>
+              <ul class="parts" aria-label={`Components in ${s.title}`}>
+                {s.components.map((c) => (
+                  <li>
+                    <Chip href={`/components/${c}/`}>{titleOf(c)}</Chip>
+                  </li>
+                ))}
+              </ul>
+              <a class="source" href={screenSource(s.name)} rel="noopener">
+                <code>showcase/{s.name}.tsx</code> on GitHub
+              </a>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+
+    <footer class="foot">
+      <p>Want one of these in your app? Copy the file. Every import resolves to a registry item.</p>
+      <div class="actions">
+        <Button href="/start/installation/">Get started</Button>
+        <Button href="/components/accordion/" variant="secondary">Browse components</Button>
+      </div>
+    </footer>
+  </main>
+</Base>
+
+<style>
+  main {
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-16);
+  }
+  .head {
+    display: grid;
+    gap: var(--space-4);
+    justify-items: start;
+    max-width: 60ch;
+    margin-bottom: var(--space-16);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(40px, 5.6vw, 64px);
+    line-height: 1;
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.04em;
+  }
+  .head p {
+    margin: 0;
+    font-size: var(--text-lg);
+    line-height: var(--leading-lg);
+    color: var(--color-muted-foreground);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding-top: var(--space-2);
+  }
+
+  .list {
+    display: grid;
+    gap: var(--space-16);
+  }
+  .screen {
+    display: grid;
+    gap: var(--space-8);
+    align-items: center;
+    padding-top: var(--space-12);
+    border-top: 1px solid var(--color-border);
+    scroll-margin-top: calc(var(--header-h) + var(--space-6));
+  }
+  /* Both captures side by side. The one matching the site mode leads; the other sits behind, lower. */
+  .phones {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    align-items: start;
+    justify-self: center;
+    width: min(100%, 560px);
+  }
+  .phones :global(.iphone) {
+    filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.16));
+  }
+  :global(:root[data-mode='dark']) .phones :global(.iphone) {
+    filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.55));
+  }
+  .phones :global(.dark) {
+    margin-top: var(--space-10);
+  }
+  :global(:root[data-mode='dark']) .phones :global(.dark) {
+    margin-top: 0;
+  }
+  :global(:root[data-mode='dark']) .phones :global(.light) {
+    margin-top: var(--space-10);
+  }
+
+  .copy {
+    display: grid;
+    gap: var(--space-3);
+    align-content: start;
+    justify-items: start;
+    max-width: 44ch;
+  }
+  h2 {
+    margin: 0;
+    font-size: clamp(28px, 3.4vw, 40px);
+    line-height: 1.1;
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.03em;
+  }
+  .tagline {
+    margin: 0;
+    font-size: var(--text-lg);
+    line-height: var(--leading-lg);
+    font-weight: var(--weight-medium);
+  }
+  .body {
+    margin: 0;
+    color: var(--color-muted-foreground);
+    line-height: var(--leading-md);
+  }
+  .parts {
+    list-style: none;
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .source {
+    margin-top: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--color-muted-foreground);
+  }
+  .source code {
+    color: var(--color-foreground);
+  }
+  .source:hover {
+    color: var(--color-foreground);
+  }
+
+  .foot {
+    display: grid;
+    gap: var(--space-4);
+    justify-items: start;
+    margin-top: var(--space-16);
+    padding-top: var(--space-10);
+    border-top: 1px solid var(--color-border);
+  }
+  .foot p {
+    margin: 0;
+    font-size: var(--text-lg);
+    line-height: var(--leading-lg);
+    max-width: 48ch;
+  }
+
+  @media (min-width: 900px) {
+    .screen {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: var(--space-16);
+    }
+    .screen.flip .phones {
+      order: 2;
+    }
+  }
+</style>

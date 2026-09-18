@@ -84,7 +84,7 @@
       "title": "Input",
       "description": "TextInput with size, focus, invalid and disabled states.",
       "dependencies": ["@eoria/core", "react-native-unistyles"],
-      "registryDependencies": [],
+      "registryDependencies": ["text"],
       "files": [
         {
           "path": "registry/ui/input.tsx",

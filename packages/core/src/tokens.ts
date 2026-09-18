@@ -13,5 +13,14 @@ export {
   type RadiusKey,
   type FontSizeKey,
   type FontWeightKey,
+  type ControlSizeKey,
+  type PlatformFont,
 } from './theme'
-export { colorPresets, type ColorPreset, type ColorPresetName } from './presets'
+export {
+  presets,
+  colorPresets,
+  type Preset,
+  type PresetName,
+  type ColorPreset,
+  type ColorPresetName,
+} from './presets'

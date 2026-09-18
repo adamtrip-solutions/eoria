@@ -34,7 +34,7 @@ import {
   type SlotStyles,
 } from '@eoria/core'
 import { Portal } from '@/components/ui/portal'
-import { Text, type TextProps } from '@/components/ui/text'
+import { Text, headingFont, type TextProps } from '@/components/ui/text'
 
 export const dialogRecipe = defineSlotRecipe((theme) => ({
   slots: {
@@ -66,6 +66,7 @@ export const dialogRecipe = defineSlotRecipe((theme) => ({
       lineHeight: theme.lineHeight.xl,
       fontWeight: theme.fontWeight.semibold,
       letterSpacing: -0.3,
+      ...headingFont(theme),
     },
     description: {
       color: theme.colors.mutedForeground,

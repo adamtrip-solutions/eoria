@@ -3,7 +3,13 @@
  * survives `JSON.stringify`, and throws `CliError` or `RegistryError` on a problem the user
  * can fix.
  */
-export { planAdd, type AddPlan, type PlannedFile } from './commands/add'
+export {
+  planAdd,
+  writePlan,
+  type AddPlan,
+  type PlannedFile,
+  type WrittenPlan,
+} from './commands/add'
 export { docsBaseUrl, docsPaths, fetchDocs, type FetchedDocs } from './commands/docs'
 export {
   runDoctor,
@@ -20,9 +26,17 @@ export {
   type ProjectInfo,
 } from './commands/info'
 export { listItems, type ItemList, type ListedItem } from './commands/list'
+export { initMcpClient, type McpClient, type McpInitResult } from './commands/mcp'
 export { searchItems, type SearchResult } from './commands/search'
 export { viewItem, type ViewedFile, type ViewedItem } from './commands/view'
 export { findProjectRoot, readConfig, type EoriaConfig } from './config'
 export { CliError } from './log'
+export {
+  PROTOCOL_VERSIONS,
+  createMcpServer,
+  type McpServer,
+  type McpServerOptions,
+} from './mcp/server'
+export { type ToolContext, type ToolDefinition, type ToolResult } from './mcp/tools'
 export { reserveStdout } from './print'
 export { RegistryError } from './registry'

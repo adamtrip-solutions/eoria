@@ -5,12 +5,13 @@ sidebar:
   order: 5
 ---
 
-Ten commands, shipped as `@eoria/cli` with an `eoria` binary. Run them with `npx @eoria/cli`,
+Eleven commands, shipped as `@eoria/cli` with an `eoria` binary. Run them with `npx @eoria/cli`,
 or add the package as a dev dependency and call `pnpm eoria`. All of them are file plumbing
 over a static registry, so there is nothing to log in to and nothing that phones home.
 
 `init`, `add` and `extend` write files. `diff`, `list`, `search`, `view`, `info`, `docs` and
-`doctor` only read, unless you pass `doctor --fix`. Every command that talks to the registry
+`doctor` only read, unless you pass `doctor --fix`. `mcp` hands the read commands and `add` to an
+agent as tools, and `mcp init` writes one config file. Every command that talks to the registry
 takes `--registry <url or folder>` to use another one for a single run. `list`, `search`, `view`,
 `info` and `doctor` take `--json`, which prints one JSON object to stdout and nothing else.
 
@@ -260,6 +261,68 @@ and the remedy line tells you what to paste.
 The example shows one of the eleven checks. `ok` is false when any check failed. `remedy` is `null` on a pass. `fixable` marks the checks
 `--fix` can repair, and `fixed` lists the ids it did repair in this run. With `--json`, progress
 lines and installer output go to stderr, so stdout stays parseable.
+
+## mcp
+
+```sh
+npx @eoria/cli mcp
+```
+
+Starts a [Model Context Protocol](https://modelcontextprotocol.io) server on stdin and stdout,
+so an agent can call the CLI as tools without a shell. Your editor or agent starts it as a child
+process on your machine and stops it when the session ends. There is nothing to host and no
+account to make, and it reads the same static registry as every other command.
+
+You rarely type that command yourself. The client runs it from an entry like this one:
+
+```json title=".mcp.json"
+{
+  "mcpServers": {
+    "eoria": { "command": "npx", "args": ["-y", "@eoria/cli@latest", "mcp"] }
+  }
+}
+```
+
+`mcp init` writes the entry for you:
+
+```sh
+npx @eoria/cli mcp init --client claude
+```
+
+`--client` takes `claude`, `cursor`, `vscode` or `codex`. Claude Code reads `.mcp.json` at the
+project root and Cursor reads `.cursor/mcp.json`. VS Code reads `.vscode/mcp.json`, where the key
+is `servers` and the entry also has `"type": "stdio"`. An existing file keeps its other servers
+and keys. If it already has an `eoria` entry with other settings, `mcp init` stops until you pass
+`--force`. A file that does not parse as JSON, which includes one with comments, is left as it
+is, and the error prints the entry to paste. Codex keeps its servers in `~/.codex/config.toml`,
+outside the project, so `--client codex` prints the TOML lines and writes nothing. Without
+`--client` you get the four names.
+
+The server has seven tools:
+
+| Tool                | Arguments                      | Returns                                                          |
+| ------------------- | ------------------------------ | ---------------------------------------------------------------- |
+| `list_components`   | none                           | What `list --json` prints                                        |
+| `search_components` | `query`                        | What `search --json` prints                                      |
+| `view_component`    | `name`, `source`               | What `view --json` prints, with file contents under `source`     |
+| `get_docs`          | `topic`                        | The Markdown that `docs` prints, or `/llms.txt` with no topic    |
+| `get_project_info`  | none                           | What `info --json` prints                                        |
+| `run_doctor`        | none                           | What `doctor --json` prints                                      |
+| `add_components`    | `names`, `overwrite`, `dryRun` | The files it wrote, skipped and left alone, and `installCommand` |
+
+`add_components` writes the files `add` would write and records the same hashes in `eoria.json`.
+It takes 1 to 20 names and skips a file that differs from the registry unless `overwrite` is
+true. With `dryRun` it returns the plan, without file contents, and writes nothing. It never runs
+your package manager. The result has an `installCommand`, such as
+`["npx", "expo", "install", "@eoria/core"]`, for the agent to run in its own shell where you can
+see it. `installCommand` is `null` when `package.json` already lists every package. The other six
+tools only read, and no tool runs `doctor --fix`.
+
+The server works on the folder the client starts it in, and walks up to the nearest `eoria.json`
+or `package.json` as the other commands do. If your client starts it somewhere else, add `--cwd`
+and the project folder to `args`. `--registry` and `--docs-url` go in `args` too, and apply to
+every tool. Outside a project the registry tools and `get_docs` still answer, and
+`add_components` returns an error that tells the agent to run `init`.
 
 ## eoria.json
 

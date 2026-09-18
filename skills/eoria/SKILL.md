@@ -13,6 +13,10 @@ Read `eoria.json` for `components`, `alias`, `registry`, and `installed`. Resolv
 
 If `eoria.json` is absent, look for existing copied components and `components.json` before initializing. Files installed manually or through shadcn may exist without Eoria hash tracking. Do not assume `src/components/ui`, `@/components/ui`, or an `@eoria/core` component export.
 
+## Prefer the MCP tools and JSON output
+
+If the `eoria` MCP server is connected, use its tools before fetching pages or parsing terminal output. `get_project_info` and `run_doctor` report the app's setup, `search_components` and `view_component` read the registry, `get_docs` returns a docs page as Markdown, and `add_components` copies files. `add_components` never installs packages; run the `installCommand` it returns. Without the server, `npx @eoria/cli list`, `search`, `view`, `info` and `doctor` take `--json`, and `npx @eoria/cli docs <topic>` prints a page. Neither replaces reading the installed files.
+
 ## Read documentation as needed
 
 Use [the documentation index](https://eoria.adamtrip.pt/llms.txt) to find relevant pages. Fetch only what the task needs:

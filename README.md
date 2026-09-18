@@ -151,6 +151,12 @@ including installation commands and component dependency information.
 An agent with a shell can also ask the CLI. `eoria docs select` prints that page, and `eoria list`,
 `eoria view`, `eoria info` and `eoria doctor` take `--json` with a documented shape.
 
+`eoria mcp` serves the same data over the Model Context Protocol as six read-only tools, plus an
+`add_components` tool that copies files and leaves the package install to the agent. It runs on
+your machine as a child process of your editor, so there is nothing to host. Run
+`npx @eoria/cli mcp init --client claude`, or `cursor`, `vscode` or `codex`, to write the config
+entry.
+
 The [Eoria consumer skill](skills/eoria/SKILL.md) teaches agents to inspect the app's copied
 components and `eoria.json`, follow the setup and recipe conventions, and preserve local edits
 when updating. Copy the `skills/eoria` directory into your agent's supported skills directory.

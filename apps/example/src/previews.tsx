@@ -81,6 +81,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toast'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { actionsPreviews } from '@/previews/actions'
+import { appBlockPreviews } from '@/previews/blocks-app'
+import { authBlockPreviews } from '@/previews/blocks-auth'
 import { listsPreviews } from '@/previews/lists'
 import { nativePreviews } from '@/previews/native'
 
@@ -567,4 +569,10 @@ export const previews: Record<string, () => ReactNode> = {
       <TooltipContent>Shown while pressed</TooltipContent>
     </Tooltip>
   ),
+}
+
+/** Blocks, keyed by registry name. The preview route renders these full screen. */
+export const blockPreviews: Record<string, () => ReactNode> = {
+  ...authBlockPreviews,
+  ...appBlockPreviews,
 }

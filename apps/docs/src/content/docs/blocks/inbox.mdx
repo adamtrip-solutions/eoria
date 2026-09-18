@@ -1,0 +1,83 @@
+---
+title: Inbox
+description: Searchable list of conversations with swipe to archive or delete, unread badges and two empty states.
+sidebar:
+  order: 15
+---
+
+```sh
+npx @eoria/cli add inbox
+```
+
+The command also adds [SearchBar](/components/search-bar/), [Swipeable](/components/swipeable/), [Item](/components/item/), [Avatar](/components/avatar/), [Badge](/components/badge/), [Empty](/components/empty/), [Button](/components/button/), [Separator](/components/separator/) and [Text](/components/text/).
+
+## Usage
+
+```tsx
+import { Inbox, type Conversation } from '@/components/blocks/inbox'
+
+const [conversations, setConversations] = useState<Conversation[]>([
+  {
+    id: '1',
+    name: 'Grace Hopper',
+    preview: 'Found the bug. It was an actual moth this time.',
+    time: '09:41',
+    unread: 2,
+    avatarUri: 'https://i.pravatar.cc/200?img=32',
+  },
+  { id: '2', name: 'Alan Turing', preview: 'Can you look at the draft before Friday?', time: '08:12' },
+])
+
+const remove = (conversation: Conversation) =>
+  setConversations((list) => list.filter((c) => c.id !== conversation.id))
+
+<Inbox
+  title="Messages"
+  conversations={conversations}
+  onPressConversation={openConversation}
+  onArchive={remove}
+  onDelete={remove}
+  onCompose={compose}
+/>
+```
+
+## Props
+
+| Prop                  | Type                                   | Default |
+| --------------------- | -------------------------------------- | ------- |
+| `conversations`       | `Conversation[]`                       |         |
+| `onPressConversation` | `(conversation: Conversation) => void` |         |
+| `onArchive`           | `(conversation: Conversation) => void` |         |
+| `onDelete`            | `(conversation: Conversation) => void` |         |
+| `onCompose`           | `() => void`                           |         |
+| `title`               | string                                 |         |
+| `insetTop`            | boolean                                | `true`  |
+| `style`               | `StyleProp<ViewStyle>`                 |         |
+
+## Data
+
+```ts
+type Conversation = {
+  id: string
+  name: string
+  preview: string // last message, shown on one line
+  time: string // already formatted, e.g. "09:41" or "Tue"
+  unread?: number // 0 or undefined is read
+  avatarUri?: string
+  initials?: string // default comes from `name`
+}
+```
+
+## Notes
+
+- The block keeps the search text and nothing else. Archive and Delete only call you back, and the row stays until you take the conversation out of `conversations`.
+- Search matches the name and the preview, ignoring case, on every keystroke. For a server search, lift `query` into a prop and drop the `useMemo` filter.
+- Delete has no confirm step. If a delete cannot be undone in your app, open an AlertDialog from `onDelete`.
+- An unread row has a semibold name, a preview in the foreground colour and a solid Badge with the count, which stops at "99+". The row label reads the count too, such as "Grace Hopper, 2 unread messages, Found the bug. It was an actual moth this time., 09:41".
+- Swipeable offers Archive and Delete to screen readers as actions on the row, so nobody needs the swipe gesture. It needs a `GestureHandlerRootView` at the root of the app.
+- There are two Empty states. With no conversations the block shows "No messages yet", with a "New message" button when you pass `onCompose`, and it disables the search bar. With a search that matches nothing it shows the query and a "Clear search" button.
+- The root fills the screen and the rows are a `FlatList`. Under a navigation header pass `insetTop={false}` and leave `title` out.
+
+## Source
+
+[`registry/blocks/inbox.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/blocks/inbox.tsx)

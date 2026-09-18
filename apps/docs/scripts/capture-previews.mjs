@@ -31,11 +31,13 @@ const outFor = (name) =>
 const fileFor = (name) => name.slice(name.lastIndexOf('/') + 1)
 const wanted = process.argv.slice(2).filter((a) => !a.startsWith('--'))
 
-const contentDir = resolve(docs, 'src/content/docs/components')
+// Every component and block page has a preview of the same name. The blocks overview has none.
+const pages = async (section) =>
+  (await readdir(resolve(docs, 'src/content/docs', section)))
+    .filter((f) => f.endsWith('.mdx') && f !== 'overview.mdx')
+    .map((f) => f.slice(0, -4))
 const names =
-  wanted.length > 0
-    ? wanted
-    : (await readdir(contentDir)).filter((f) => f.endsWith('.mdx')).map((f) => f.slice(0, -4))
+  wanted.length > 0 ? wanted : [...(await pages('components')), ...(await pages('blocks'))]
 
 const simctl = (...a) => execFileSync('xcrun', ['simctl', ...a], { stdio: 'pipe' })
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -55,17 +57,11 @@ try {
 } catch {
   // Not running.
 }
-// A fresh dev client covers the first screen with its menu's welcome sheet.
-simctl(
-  'spawn',
-  'booted',
-  'defaults',
-  'write',
-  bundleId,
-  'EXDevMenuIsOnboardingFinished',
-  '-bool',
-  'YES',
-)
+// A fresh dev client covers the first screen with its menu's welcome sheet, and every dev
+// client floats a menu button over the top right corner. Both are user defaults.
+const defaults = (...a) => simctl('spawn', 'booted', 'defaults', ...a)
+defaults('write', bundleId, 'EXDevMenuIsOnboardingFinished', '-bool', 'YES')
+defaults('write', bundleId, 'EXDevMenuShowFloatingActionButton', '-bool', 'NO')
 // A dev client opens its launcher unless it is told which server to load. The launch
 // argument does that without the "Open in app?" prompt a deep link brings up.
 const metro = process.env.EORIA_METRO_URL ?? 'http://localhost:8081'
@@ -96,35 +92,8 @@ try {
       const raw = resolve(tmpdir(), `eoria-${fileFor(name)}-${mode}.png`)
       simctl('io', 'booted', 'screenshot', raw)
       const png = await readFile(raw)
-      const image = sharp(png)
-      const { width, height } = await image.metadata()
-      // The dev client draws a floating button top-right. Paint it out with the
-      // background colour sampled from the same row, well inside the padded canvas.
-      const probe = await image
-        .clone()
-        .extract({ left: 8, top: Math.round(height * 0.13), width: 1, height: 1 })
-        .raw()
-        .toBuffer()
-      const bg = { r: probe[0], g: probe[1], b: probe[2] }
-      const patch = await sharp({
-        create: {
-          width: Math.round(width * 0.16),
-          // Full routes start their content right under the button, so the patch stops there.
-          height: Math.round(height * (name.includes('/') ? 0.066 : 0.08)),
-          channels: 3,
-          background: bg,
-        },
-      })
-        .png()
-        .toBuffer()
-      // Composite first, then resize in a second pass: sharp resizes before it composites.
-      const patched = await image
-        .composite([
-          { input: patch, left: Math.round(width * 0.82), top: Math.round(height * 0.085) },
-        ])
-        .png()
-        .toBuffer()
-      const webp = await sharp(patched).resize({ width: 640 }).webp({ quality: 82 }).toBuffer()
+      const { width, height } = await sharp(png).metadata()
+      const webp = await sharp(png).resize({ width: 640 }).webp({ quality: 82 }).toBuffer()
       await writeFile(resolve(outFor(name), `${fileFor(name)}-${mode}.webp`), webp)
       console.log(
         `${fileFor(name)}-${mode}.webp ${Math.round(webp.length / 1024)}kB (${width}x${height})`,
@@ -132,6 +101,7 @@ try {
     }
   }
 } finally {
+  defaults('delete', bundleId, 'EXDevMenuShowFloatingActionButton')
   simctl('status_bar', 'booted', 'clear')
   simctl('ui', 'booted', 'appearance', 'light')
   server.close()

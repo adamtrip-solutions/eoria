@@ -823,6 +823,228 @@
           "target": "components/ui/carousel.tsx"
         }
       ]
+    },
+    {
+      "name": "sign-in",
+      "type": "registry:block",
+      "title": "Sign in",
+      "description": "Email and password screen with validation, a busy state, an error banner and optional Apple and Google buttons.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "button",
+        "field",
+        "input",
+        "keyboard",
+        "password-input",
+        "separator",
+        "stack",
+        "text"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/sign-in.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/sign-in.tsx"
+        }
+      ]
+    },
+    {
+      "name": "sign-up",
+      "type": "registry:block",
+      "title": "Sign up",
+      "description": "Account creation screen with name, email, password and a terms checkbox that must be ticked.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "button",
+        "checkbox",
+        "field",
+        "input",
+        "keyboard",
+        "label",
+        "password-input",
+        "separator",
+        "stack",
+        "text"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/sign-up.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/sign-up.tsx"
+        }
+      ]
+    },
+    {
+      "name": "verify-otp",
+      "type": "registry:block",
+      "title": "Verify OTP",
+      "description": "Six digit code screen that submits on the last digit and has a resend action behind a countdown.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "button",
+        "field",
+        "input-otp",
+        "keyboard",
+        "stack",
+        "text"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/verify-otp.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/verify-otp.tsx"
+        }
+      ]
+    },
+    {
+      "name": "forgot-password",
+      "type": "registry:block",
+      "title": "Forgot password",
+      "description": "Email form that asks for a reset link, then a \"Check your inbox\" confirmation with a way back.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "button",
+        "empty",
+        "field",
+        "input",
+        "keyboard",
+        "stack",
+        "text"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/forgot-password.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/forgot-password.tsx"
+        }
+      ]
+    },
+    {
+      "name": "reset-password",
+      "type": "registry:block",
+      "title": "Reset password",
+      "description": "New password and confirmation fields that must match, for the screen a reset link opens.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "button",
+        "field",
+        "keyboard",
+        "password-input",
+        "stack",
+        "text"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/reset-password.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/reset-password.tsx"
+        }
+      ]
+    },
+    {
+      "name": "settings-screen",
+      "type": "registry:block",
+      "title": "Settings screen",
+      "description": "Grouped settings rows with links, switches and actions, a confirmed sign out and a version footer.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": ["alert-dialog", "item", "switch", "text"],
+      "files": [
+        {
+          "path": "registry/blocks/settings-screen.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/settings-screen.tsx"
+        }
+      ]
+    },
+    {
+      "name": "profile-header",
+      "type": "registry:block",
+      "title": "Profile header",
+      "description": "Avatar, name, handle, bio, up to three stats, a primary action and an icon button.",
+      "dependencies": ["@eoria/core", "react-native-unistyles"],
+      "registryDependencies": ["avatar", "button", "icon-button", "text"],
+      "files": [
+        {
+          "path": "registry/blocks/profile-header.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/profile-header.tsx"
+        }
+      ]
+    },
+    {
+      "name": "onboarding",
+      "type": "registry:block",
+      "title": "Onboarding",
+      "description": "Full screen carousel of slides with page dots, Continue that ends in Get started, and Skip.",
+      "dependencies": ["@eoria/core", "react-native-unistyles"],
+      "registryDependencies": ["button", "carousel", "text"],
+      "files": [
+        {
+          "path": "registry/blocks/onboarding.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/onboarding.tsx"
+        }
+      ]
+    },
+    {
+      "name": "transaction-list",
+      "type": "registry:block",
+      "title": "Transaction list",
+      "description": "Transactions grouped by day in a SectionList, with signed currency amounts and an empty state.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": ["avatar", "empty", "item", "separator", "text"],
+      "files": [
+        {
+          "path": "registry/blocks/transaction-list.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/transaction-list.tsx"
+        }
+      ]
+    },
+    {
+      "name": "checkout-summary",
+      "type": "registry:block",
+      "title": "Checkout summary",
+      "description": "Order lines, totals, a promo code field and a Pay button with a loading state.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": ["alert", "button", "card", "input-group", "separator", "text"],
+      "files": [
+        {
+          "path": "registry/blocks/checkout-summary.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/checkout-summary.tsx"
+        }
+      ]
+    },
+    {
+      "name": "inbox",
+      "type": "registry:block",
+      "title": "Inbox",
+      "description": "Searchable conversations with swipe to archive or delete, unread badges and two empty states.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "avatar",
+        "badge",
+        "button",
+        "empty",
+        "item",
+        "search-bar",
+        "separator",
+        "swipeable",
+        "text"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/inbox.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/inbox.tsx"
+        }
+      ]
     }
   ]
 }

@@ -68,8 +68,8 @@ maybe('list marks installed items and works outside a project', async () => {
   expect(items.find((item) => item.name === 'select')?.installed).toBe(false)
 
   const text = await capture(() => list(root, {}))
-  expect(text).toMatch(/^✓ button\s+Button\s+Pressable/m)
-  expect(text).toMatch(/^ {2}select\s+Select\s+/m)
+  expect(text).toMatch(/^✓ button\s+ui\s+Button\s+Pressable/m)
+  expect(text).toMatch(/^ {2}select\s+ui\s+Select\s+/m)
   expect(text).toContain('2 installed')
 
   const json = JSON.parse(await capture(() => list(root, { json: true })))
@@ -183,6 +183,7 @@ maybe('info labels an edited file and a missing file', async () => {
     'config',
     'registry',
     'components',
+    'blocks',
     'installed',
     'packageManager',
     'expo',

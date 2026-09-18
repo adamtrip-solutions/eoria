@@ -34,8 +34,8 @@ program
 
 program
   .command('add')
-  .description('Copy components and everything they depend on')
-  .argument('<names...>', 'component names, e.g. button select')
+  .description('Copy components and blocks, and everything they depend on')
+  .argument('<names...>', 'item names, e.g. button select sign-in')
   .option('--overwrite', 'replace files that already exist')
   .option('--no-install', 'skip installing npm dependencies')
   .option('--dry-run', 'print what add would write, skip, overwrite and install, and write nothing')
@@ -65,6 +65,7 @@ program
   .command('list')
   .description('Print every item in the registry, marking the installed ones')
   .option('--json', 'print JSON')
+  .option('--type <type>', 'keep one type of item, ui or block')
   .option('--registry <url>', 'registry base URL or local directory')
   .action((options) => wrap(() => list(findProjectRoot(), options)))
 
@@ -73,6 +74,7 @@ program
   .description('Find items by name, title or description')
   .argument('<query>', 'words to look for, e.g. menu')
   .option('--json', 'print JSON')
+  .option('--type <type>', 'keep one type of item, ui or block')
   .option('--registry <url>', 'registry base URL or local directory')
   .action((query: string, options) => wrap(() => search(findProjectRoot(), query, options)))
 

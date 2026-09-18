@@ -42,7 +42,7 @@ export const inputRecipe = defineSlotRecipe((theme) => ({
       false: {},
     },
     invalid: {
-      true: { root: { borderColor: theme.colors.destructive } },
+      true: { root: { borderColor: theme.colors.destructiveText } },
       false: {},
     },
     disabled: {

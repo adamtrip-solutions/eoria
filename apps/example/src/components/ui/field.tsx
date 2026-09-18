@@ -31,14 +31,14 @@ export const fieldRecipe = defineSlotRecipe((theme) => ({
       lineHeight: theme.lineHeight.sm,
     },
     error: {
-      color: theme.colors.destructive,
+      color: theme.colors.destructiveText,
       fontSize: theme.fontSize.sm,
       lineHeight: theme.lineHeight.sm,
     },
   },
   variants: {
     invalid: {
-      true: { label: { color: theme.colors.destructive } },
+      true: { label: { color: theme.colors.destructiveText } },
       false: {},
     },
     disabled: {

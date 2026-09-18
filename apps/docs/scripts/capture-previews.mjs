@@ -55,7 +55,21 @@ try {
 } catch {
   // Not running.
 }
-simctl('launch', 'booted', bundleId)
+// A fresh dev client covers the first screen with its menu's welcome sheet.
+simctl(
+  'spawn',
+  'booted',
+  'defaults',
+  'write',
+  bundleId,
+  'EXDevMenuIsOnboardingFinished',
+  '-bool',
+  'YES',
+)
+// A dev client opens its launcher unless it is told which server to load. The launch
+// argument does that without the "Open in app?" prompt a deep link brings up.
+const metro = process.env.EORIA_METRO_URL ?? 'http://localhost:8081'
+simctl('launch', 'booted', bundleId, '--initialUrl', metro)
 simctl(
   'status_bar',
   'booted',

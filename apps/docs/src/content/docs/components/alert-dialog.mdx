@@ -1,0 +1,70 @@
+---
+title: AlertDialog
+description: Centred dialog that waits for an answer. Overlay taps and Android back only close it when there is a Cancel.
+category: Overlays
+sidebar:
+  order: 21.2
+---
+
+```sh
+npx @eoria/cli add alert-dialog
+```
+
+## Usage
+
+```tsx
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+
+<AlertDialog>
+  <AlertDialogTrigger asChild>
+    <Button variant="destructive">Delete account</Button>
+  </AlertDialogTrigger>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+      <AlertDialogDescription>Your projects and billing history go with it.</AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogAction variant="destructive" onPress={remove}>
+        Delete account
+      </AlertDialogAction>
+      <AlertDialogCancel>Keep account</AlertDialogCancel>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+```
+
+## Props
+
+| Part                 | Props                                                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------- |
+| `AlertDialog`        | `open`, `defaultOpen`, `onOpenChange`, `styles` (the [Dialog](/components/dialog/) slots) |
+| `AlertDialogTrigger` | `asChild` injects `onPress` into a single child                                           |
+| `AlertDialogContent` | any `View` prop. There is no `dismissable`; a mounted Cancel decides it                   |
+| `AlertDialogAction`  | every Button prop, plus `closeOnPress` (default `true`). `width` defaults to `full`       |
+| `AlertDialogCancel`  | every Button prop. `variant` defaults to `ghost`, `width` to `full`                       |
+
+`AlertDialogHeader`, `AlertDialogTitle`, `AlertDialogDescription` and `AlertDialogFooter` take the same props as the Dialog parts.
+
+## Notes
+
+- Use it when the user has to answer before going on, such as a delete confirm or a discard prompt. For anything the user may wave away, use [Dialog](/components/dialog/).
+- With no `AlertDialogCancel` inside, a tap on the overlay does nothing and Android back is swallowed. The only way out is an Action. Once a Cancel is mounted, the overlay and Android back close the alert too, which matches a cancelable alert on Android.
+- Overlay and back close through `onOpenChange(false)`. They do not call the Cancel's `onPress`. Put code that must run on every way out in `onOpenChange`.
+- `AlertDialogAction` is a Button, so `variant="destructive"` is the whole difference between a confirm and a delete confirm. Pass `closeOnPress={false}` to keep the alert open while a request runs, then close it through `open`.
+- The content has the `alert` role. iOS reads nothing out for that role, so the title is announced when the alert opens.
+- The recipe extends the Dialog recipe with centre placement and centred copy. The 120 ms fade and 0.97 scale, the overlay and the portal are Dialog's. Title and description align left again with `styles={{ title: { textAlign: 'left' }, description: { textAlign: 'left' }, header: { alignItems: 'flex-start' } }}`.
+
+## Source
+
+[`registry/ui/alert-dialog.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/alert-dialog.tsx)

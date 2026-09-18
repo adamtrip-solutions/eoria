@@ -1,0 +1,83 @@
+---
+title: Icons
+description: How components take icons, and how to use SF Symbols or any other icon set.
+sidebar:
+  order: 3
+---
+
+Components never import an icon for you to override. They take an element, and they set two props on it, `size` and `color`.
+
+```tsx
+import { Plus } from 'lucide-react-native'
+
+<Button icon={<Plus />}>Add item</Button>
+```
+
+The values come from the recipe's `icon` slot, where `width` becomes `size` and `color` stays `color`. That is how an icon follows the button's size variant, the theme and dark mode without any work from you.
+
+Any component that accepts `size` and `color` fits. lucide does, which is why the docs use it. For another set you write a small adapter once.
+
+## SF Symbols
+
+```sh
+npx expo install expo-symbols
+```
+
+`SymbolView` calls the colour `tintColor`, so the adapter renames one prop.
+
+```tsx
+// components/symbol.tsx
+import { SymbolView, type SymbolViewProps } from 'expo-symbols'
+
+type Props = Pick<SymbolViewProps, 'name' | 'weight' | 'fallback'> & {
+  size?: number
+  color?: string
+}
+
+export function Symbol({ name, size = 24, color, weight, fallback }: Props) {
+  return <SymbolView name={name} size={size} tintColor={color} weight={weight} fallback={fallback} />
+}
+```
+
+```tsx
+<Button icon={<Symbol name="plus" />}>Add item</Button>
+<IconButton icon={<Symbol name="square.and.arrow.up" />} accessibilityLabel="Share" />
+```
+
+A plain string is an SF Symbol name and renders on iOS only. Pass names per platform to cover Android and web, or pass a lucide icon as the `fallback`.
+
+```tsx
+import { Share } from 'lucide-react-native'
+
+<Symbol
+  name={{ ios: 'square.and.arrow.up', android: 'share', web: 'share' }}
+  fallback={<Share />}
+/>
+```
+
+The fallback is your element, so it does not receive `size` and `color` from the component. Give it the same values when the match matters. expo-symbols is in beta, so pin its version.
+
+## Other sets
+
+The same adapter works for `@expo/vector-icons`, Phosphor, or your own SVG components. Map `size` and `color` onto whatever the set calls them.
+
+```tsx
+import Ionicons from '@expo/vector-icons/Ionicons'
+
+// Ionicons already takes `size` and `color`, so no adapter is needed.
+<Button icon={<Ionicons name="add" />}>Add item</Button>
+```
+
+## Change the size or colour
+
+Override the `icon` slot, not the element. A prop set on the element loses to the values the component injects.
+
+```tsx
+<Button icon={<Plus />} styles={{ icon: { width: 22, color: theme.colors.primary } }}>
+  Add item
+</Button>
+```
+
+## Accessibility
+
+An icon inside a labelled control is decoration, and the control's label speaks for it. A control with only an icon needs `accessibilityLabel`. `IconButton` requires one in its types.

@@ -142,6 +142,6 @@ test('the index links every supplied page once, plus the distributed skill and r
 })
 
 test('the index rejects pages the sidebar would not show', () => {
-  const entries = [{ id: 'guides/x', data: { title: 'x', description: 'd' } }]
+  const entries = [{ id: 'misc/x', data: { title: 'x', description: 'd' } }]
   assert.throws(() => renderAgentIndex(entries, site), /outside a known section/)
 })

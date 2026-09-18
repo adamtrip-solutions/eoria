@@ -27,6 +27,7 @@ export function groupDocs(all) {
       items: components.filter((e) => e.data.category === label).sort(byOrder),
     })),
     { label: 'Blocks', items: all.filter((e) => e.id.startsWith('blocks/')).sort(byOrder) },
+    { label: 'Guides', items: all.filter((e) => e.id.startsWith('guides/')).sort(byOrder) },
   ]
   const listed = new Set(groups.flatMap((g) => g.items).map((e) => e.id))
   const missing = all.filter((e) => !listed.has(e.id)).map((e) => e.id)

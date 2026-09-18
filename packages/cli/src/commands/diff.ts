@@ -1,12 +1,13 @@
 import { existsSync } from 'node:fs'
 import { readdir, readFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
-import pc from 'picocolors'
 import { readConfig } from '../config'
 import { diffLines, formatDiff } from '../diff'
-import { hashContent, localPath, rewriteAlias } from '../files'
+import { localPath, rewriteAlias } from '../files'
 import { Registry } from '../registry'
 import { CliError, log } from '../log'
+import { printDiff, printFileStatus } from '../print'
+import { fileStatus, type FileStatus } from '../status'
 
 export interface DiffOptions {
   registry?: string
@@ -15,7 +16,7 @@ export interface DiffOptions {
 
 interface FileReport {
   target: string
-  status: 'unchanged' | 'upstream' | 'local' | 'both' | 'missing'
+  status: FileStatus
   lines: string[]
 }
 
@@ -44,19 +45,7 @@ export async function diff(root: string, name: string | undefined, options: Diff
         continue
       }
       const local = await readFile(abs, 'utf8')
-      const recorded = config.installed[item]?.[target]
-      const localEdited = recorded !== undefined && hashContent(local) !== recorded
-      const upstreamChanged = recorded !== undefined && hashContent(upstream) !== recorded
-      const status =
-        !localEdited && !upstreamChanged
-          ? local === upstream
-            ? 'unchanged'
-            : 'upstream'
-          : localEdited && upstreamChanged
-            ? 'both'
-            : localEdited
-              ? 'local'
-              : 'upstream'
+      const status = fileStatus(local, upstream, config.installed[item]?.[target])
       const lines =
         status === 'unchanged' ? [] : formatDiff(diffLines(local, upstream), options.full ? 1e9 : 2)
       reports.push({ target, status, lines })
@@ -70,22 +59,8 @@ export async function diff(root: string, name: string | undefined, options: Diff
     changed++
     for (const report of reports) {
       if (report.status === 'unchanged') continue
-      const label = {
-        upstream: 'registry changed',
-        local: 'edited locally',
-        both: 'edited locally and changed in the registry',
-        missing: 'file missing',
-      }[report.status]
-      log.warn(`${item} ${log.dim(report.target)} ${pc.yellow(label)}`)
-      for (const line of report.lines) {
-        console.log(
-          line.startsWith('+')
-            ? pc.green(line)
-            : line.startsWith('-')
-              ? pc.red(line)
-              : log.dim(line),
-        )
-      }
+      printFileStatus(item, report.target, report.status)
+      printDiff(report.lines)
     }
     const dependants = derived.get(item)
     if (dependants && dependants.length > 0 && worst.status !== 'local') {

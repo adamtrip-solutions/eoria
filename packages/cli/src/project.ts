@@ -42,10 +42,21 @@ export async function installCommand(root: string, deps: string[]): Promise<stri
   return pm === 'npm' ? ['npm', 'install', ...deps] : [pm, 'add', ...deps]
 }
 
+let childStdout: 'inherit' | 2 = 'inherit'
+
+/** Points the stdout of spawned commands at stderr. `--json` commands call this. */
+export function runToStderr(): void {
+  childStdout = 2
+}
+
 export function run(command: string[], cwd: string): Promise<number> {
   return new Promise((done, fail) => {
     const [bin, ...args] = command
-    const child = spawn(bin!, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32' })
+    const child = spawn(bin!, args, {
+      cwd,
+      stdio: ['inherit', childStdout, 'inherit'],
+      shell: process.platform === 'win32',
+    })
     child.on('error', fail)
     child.on('close', (code) => done(code ?? 1))
   })

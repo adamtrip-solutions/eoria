@@ -11,6 +11,7 @@ export interface RegistryFile {
 export interface RegistryItem {
   name: string
   type: string
+  title?: string
   description?: string
   dependencies?: string[]
   registryDependencies?: string[]
@@ -31,7 +32,7 @@ export class Registry {
 
   constructor(readonly base: string) {}
 
-  private get isRemote(): boolean {
+  get isRemote(): boolean {
     return /^https?:\/\//.test(this.base)
   }
 

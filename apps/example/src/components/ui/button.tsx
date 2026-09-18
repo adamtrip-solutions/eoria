@@ -1,5 +1,5 @@
 import { cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react'
-import { Pressable, StyleSheet, View, type PressableProps } from 'react-native'
+import { ActivityIndicator, Pressable, StyleSheet, View, type PressableProps } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -119,6 +119,11 @@ export type ButtonBaseProps = Omit<PressableProps, 'style' | 'children'> & {
   /** Any element accepting `size` and `color` props, e.g. a lucide icon. */
   icon?: ReactElement<{ size?: number; color?: string }>
   iconPosition?: 'left' | 'right'
+  /**
+   * Work is under way. A spinner takes the icon's place, presses are ignored and screen
+   * readers hear "busy". The button keeps its colours, unlike `disabled`.
+   */
+  loading?: boolean
   /** Per-slot style overrides, merged last. */
   styles?: SlotOverrides<ButtonSlots>
 }
@@ -127,7 +132,14 @@ export type ButtonProps = ButtonBaseProps & ButtonVariants
 
 const REQUIRED_SLOTS: ReadonlyArray<ButtonSlots> = ['label', 'icon', 'rootPressed', 'rootDisabled']
 /** Props the button consumes itself; a recipe cannot use these as variant names. */
-const RESERVED_PROPS = ['icon', 'iconPosition', 'styles', 'children', 'disabled'] as const
+const RESERVED_PROPS = [
+  'icon',
+  'iconPosition',
+  'loading',
+  'styles',
+  'children',
+  'disabled',
+] as const
 
 const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV !== 'production'
 
@@ -163,6 +175,7 @@ export function createButton<S extends string, V>(recipe: SlotRecipe<S, V>) {
     const {
       icon,
       iconPosition = 'left',
+      loading = false,
       styles,
       children,
       disabled,
@@ -181,12 +194,16 @@ export function createButton<S extends string, V>(recipe: SlotRecipe<S, V>) {
     const scale = useSharedValue(1)
     const press = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
 
-    const iconNode = isValidElement(icon)
-      ? cloneElement(icon, {
-          size: getStyleValue(s.icon, 'width') as number | undefined,
-          color: getStyleValue(s.icon, 'color') as string | undefined,
-        })
-      : null
+    const iconColor = getStyleValue(s.icon, 'color') as string | undefined
+    // The platform spinner, so the most used component pulls in nothing extra.
+    const iconNode = loading ? (
+      <ActivityIndicator size="small" color={iconColor} />
+    ) : isValidElement(icon) ? (
+      cloneElement(icon, {
+        size: getStyleValue(s.icon, 'width') as number | undefined,
+        color: iconColor,
+      })
+    ) : null
 
     const label =
       typeof children === 'string' || typeof children === 'number' ? (
@@ -199,8 +216,12 @@ export function createButton<S extends string, V>(recipe: SlotRecipe<S, V>) {
       <AnimatedPressable
         accessibilityRole="button"
         {...pressableProps}
-        accessibilityState={{ ...accessibilityState, disabled: disabled === true }}
-        disabled={disabled}
+        accessibilityState={{
+          ...accessibilityState,
+          busy: loading,
+          disabled: disabled === true || loading,
+        }}
+        disabled={disabled === true || loading}
         onPressIn={(e) => {
           scale.value = withTiming(0.97, PRESS)
           onPressIn?.(e)

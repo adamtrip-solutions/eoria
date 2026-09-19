@@ -1,6 +1,6 @@
 {
   "name": "@eoria/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Slot recipe engine and theme tokens for eoria, built on react-native-unistyles",
   "license": "MIT",
   "type": "module",

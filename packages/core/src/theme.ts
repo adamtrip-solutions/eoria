@@ -1,4 +1,4 @@
-import { presets, type Preset } from './presets'
+import { presets, type Preset, type PresetColors } from './presets'
 
 /**
  * Semantic token schema shared by every registry component.
@@ -29,8 +29,14 @@ export interface EoriaColors {
   mutedForeground: string
   accent: string
   accentForeground: string
+  /** Fill of destructive buttons, badges and toasts. Pairs with `destructiveForeground`. */
   destructive: string
   destructiveForeground: string
+  /**
+   * Destructive as text, icon or border on `background`, `surface` and `elevated`: field
+   * errors, invalid borders, destructive menu rows. The dark fill is too dim to read there.
+   */
+  destructiveText: string
   border: string
   input: string
   ring: string
@@ -77,9 +83,14 @@ const scale = {
 /** Light and dark themes from a preset: its palettes and shape on top of the shared scales. */
 export function createThemes(preset: Preset): { light: EoriaTheme; dark: EoriaTheme } {
   const { light, dark, ...shape } = preset
+  // A preset written before `destructiveText` existed keeps working with the fill colour.
+  const colors = (palette: PresetColors): EoriaColors => ({
+    ...palette,
+    destructiveText: palette.destructiveText ?? palette.destructive,
+  })
   return {
-    light: { colors: light, ...scale, ...shape },
-    dark: { colors: dark, ...scale, ...shape },
+    light: { colors: colors(light), ...scale, ...shape },
+    dark: { colors: colors(dark), ...scale, ...shape },
   }
 }
 

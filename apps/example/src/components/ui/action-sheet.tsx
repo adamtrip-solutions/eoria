@@ -88,10 +88,10 @@ export const actionSheetRecipe = extendSlotRecipe(dialogRecipe, (theme) => ({
       fontWeight: theme.fontWeight.medium,
       color: theme.colors.foreground,
     },
-    itemLabelDestructive: { color: theme.colors.destructive },
+    itemLabelDestructive: { color: theme.colors.destructiveText },
     /** Read by the icon adapter: `width` becomes `size`, `color` becomes `color`. */
     icon: { width: 20, height: 20, color: theme.colors.foreground },
-    iconDestructive: { color: theme.colors.destructive },
+    iconDestructive: { color: theme.colors.destructiveText },
     cancel: {
       alignItems: 'center',
       justifyContent: 'center',

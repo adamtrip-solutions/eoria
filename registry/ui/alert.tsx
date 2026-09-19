@@ -56,8 +56,8 @@ export const alertRecipe = defineSlotRecipe((theme) => ({
       },
       destructive: {
         tint: { backgroundColor: theme.colors.destructive, opacity: 0.12 },
-        icon: { color: theme.colors.destructive },
-        title: { color: theme.colors.destructive },
+        icon: { color: theme.colors.destructiveText },
+        title: { color: theme.colors.destructiveText },
         description: { color: theme.colors.foreground },
       },
       outline: {

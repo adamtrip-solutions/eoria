@@ -22,5 +22,6 @@ export {
   type Preset,
   type PresetName,
   type ColorPreset,
+  type PresetColors,
   type ColorPresetName,
 } from './presets'

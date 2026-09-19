@@ -90,7 +90,7 @@ export const datePickerRecipe = defineSlotRecipe((theme) => ({
       false: {},
     },
     invalid: {
-      true: { root: { borderColor: theme.colors.destructive } },
+      true: { root: { borderColor: theme.colors.destructiveText } },
       false: {},
     },
     disabled: {

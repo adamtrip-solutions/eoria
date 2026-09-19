@@ -1,4 +1,11 @@
-import { cloneElement, isValidElement, useCallback, useState, type ReactElement } from 'react'
+import {
+  cloneElement,
+  isValidElement,
+  useCallback,
+  useEffect,
+  useState,
+  type ReactElement,
+} from 'react'
 import { Platform, Pressable, View, type PressableProps } from 'react-native'
 import { useUnistyles } from 'react-native-unistyles'
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker'
@@ -24,6 +31,13 @@ import { Text } from '@/components/ui/text'
  * a bottom Dialog with a Done button. Android opens the system dialog. No calendar is drawn
  * in JS, so locale, first day of the week and accessibility come from the OS.
  */
+// The iOS calendar sets its month and weekday labels this far in from its own edge, and pads
+// its top and bottom by about as much. Measured on iOS 26.
+const CALENDAR_INSET = 12
+// The calendar measures itself about 330pt wide, whatever the room. A minimum width is the
+// one size it does not override, so this makes it fill the dialog.
+const FILL = { minWidth: '100%' } as const
+
 export const datePickerRecipe = defineSlotRecipe((theme) => ({
   slots: {
     /** Trigger. Mirrors the Input frame. */
@@ -49,8 +63,15 @@ export const datePickerRecipe = defineSlotRecipe((theme) => ({
     placeholder: { color: theme.colors.mutedForeground },
     /** Slot for a trailing icon. `width` becomes `size`, `color` becomes `color`. */
     icon: { width: 18, height: 18, color: theme.colors.mutedForeground },
-    /** Wraps the iOS picker inside the dialog. */
-    picker: { alignItems: 'center' },
+    /**
+     * Wraps the iOS picker inside the dialog. The wrapper pulls the picker out by the margin
+     * it keeps, so its labels line up with the title and the button.
+     */
+    picker: {
+      alignItems: 'center',
+      marginHorizontal: -CALENDAR_INSET,
+      marginVertical: -theme.space[2],
+    },
   },
   variants: {
     size: {
@@ -95,6 +116,10 @@ export type DatePickerProps = Omit<PressableProps, 'style' | 'children' | 'disab
     value?: Date
     defaultValue?: Date
     onValueChange?: (date: Date) => void
+    /** Whether the picker is showing. Leave it out and the field opens itself on press. */
+    open?: boolean
+    defaultOpen?: boolean
+    onOpenChange?: (open: boolean) => void
     /** `date`, `time`, or both. Android asks for the date and then the time. Default `date`. */
     mode?: Mode
     minimumDate?: Date
@@ -116,6 +141,9 @@ export function DatePicker({
   value: controlled,
   defaultValue,
   onValueChange,
+  open: controlledOpen,
+  defaultOpen = false,
+  onOpenChange,
   mode = 'date',
   minimumDate,
   maximumDate,
@@ -133,9 +161,16 @@ export function DatePicker({
 }: DatePickerProps) {
   const [uncontrolled, setUncontrolled] = useState(defaultValue)
   const value = controlled ?? uncontrolled
-  const [open, setOpen] = useState(false)
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen)
+  const open = controlledOpen ?? uncontrolledOpen
   // iOS edits a draft and commits it on Done, so scrolling the wheels does not fire changes.
   const [draft, setDraft] = useState(() => value ?? new Date())
+  // Every opening starts from the value, whatever the last draft was.
+  const [wasOpen, setWasOpen] = useState(open)
+  if (wasOpen !== open) {
+    setWasOpen(open)
+    if (open) setDraft(value ?? new Date())
+  }
   const { theme, rt } = useUnistyles()
   const s = useRecipe(datePickerRecipe, { size, open, invalid, disabled }, styles)
 
@@ -147,26 +182,38 @@ export function DatePicker({
     [controlled, onValueChange],
   )
 
-  const show = () => {
-    const start = value ?? new Date()
-    if (Platform.OS !== 'android') {
-      setDraft(start)
-      setOpen(true)
-      return
-    }
-    const ask = (step: 'date' | 'time', from: Date) =>
+  const setOpen = useCallback(
+    (next: boolean) => {
+      if (controlledOpen === undefined) setUncontrolledOpen(next)
+      onOpenChange?.(next)
+    },
+    [controlledOpen, onOpenChange],
+  )
+
+  // Android has no view to render. Opening shows the system dialog, closing takes it down.
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !open) return
+    let showing: 'date' | 'time' = mode === 'time' ? 'time' : 'date'
+    const ask = (step: 'date' | 'time', from: Date) => {
+      showing = step
       DateTimePickerAndroid.open({
         value: from,
         mode: step,
         minimumDate,
         maximumDate,
         onValueChange: (_event, picked) => {
-          if (mode === 'datetime' && step === 'date') ask('time', picked)
-          else commit(picked)
+          if (mode === 'datetime' && step === 'date') return ask('time', picked)
+          commit(picked)
+          setOpen(false)
         },
+        onDismiss: () => setOpen(false),
       })
-    ask(mode === 'time' ? 'time' : 'date', start)
-  }
+    }
+    ask(showing, value ?? new Date())
+    return () => void DateTimePickerAndroid.dismiss(showing)
+    // Runs when `open` flips. The dialog keeps the props it was opened with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const text = value ? (formatValue ?? ((d: Date) => defaultFormat(d, mode)))(value) : undefined
   return (
@@ -177,7 +224,7 @@ export function DatePicker({
         accessibilityValue={{ text: text ?? placeholder }}
         accessibilityState={{ disabled, expanded: open }}
         disabled={disabled}
-        onPress={show}
+        onPress={() => setOpen(true)}
         style={({ pressed }) => [s.root, pressed && s.rootPressed]}
         {...rest}
       >
@@ -206,6 +253,7 @@ export function DatePicker({
                 themeVariant={rt.themeName === 'dark' ? 'dark' : 'light'}
                 accentColor={theme.colors.primary}
                 textColor={theme.colors.foreground}
+                style={mode === 'date' ? FILL : undefined}
                 onValueChange={(_event, picked) => setDraft(picked)}
               />
             </View>

@@ -28,7 +28,7 @@ function DatePickerPreview() {
     <VStack gap={4}>
       <VStack gap={2}>
         <Label>Check-in</Label>
-        <DatePicker value={date} onValueChange={setDate} icon={<Calendar />} />
+        <DatePicker defaultOpen value={date} onValueChange={setDate} icon={<Calendar />} />
       </VStack>
       <VStack gap={2}>
         <Label>Wake me at</Label>

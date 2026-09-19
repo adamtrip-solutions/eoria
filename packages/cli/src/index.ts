@@ -97,7 +97,7 @@ program
 program
   .command('docs')
   .description('Print a docs page as Markdown, or the page index when no topic is given')
-  .argument('[topic]', 'component name or guide slug, e.g. select or theming')
+  .argument('[topic]', 'component, block or page name, e.g. select, sign-in or theming')
   .option('--docs-url <url>', 'docs site URL or local build folder')
   .option('--registry <url>', 'registry base URL or local directory')
   .action((topic: string | undefined, options) =>

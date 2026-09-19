@@ -40,9 +40,13 @@ export function docsBaseUrl(registry: string, override?: string): string {
   return trimmed.slice(0, -2)
 }
 
+/** The docs folders a bare topic is looked up in, in order. Components come first. */
+const SECTIONS = ['components', 'start', 'blocks', 'guides', 'agents']
+
 /**
- * Paths to try for a topic, in order. A bare name is a component first and a guide second.
- * `start/theming` and `components/select` name the page outright. No topic means `/llms.txt`.
+ * Paths to try for a topic, in order. A bare name is a component first, then a Start page, a
+ * block, a guide and an agents page. `start/theming` and `components/select` name the page
+ * outright. No topic means `/llms.txt`.
  */
 export function docsPaths(topic?: string): string[] {
   if (!topic) return ['/llms.txt']
@@ -51,10 +55,12 @@ export function docsPaths(topic?: string): string[] {
     .replace(/^\/+|\/+$/g, '')
     .replace(/\.mdx?$/, '')
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]*(\/[A-Za-z0-9][A-Za-z0-9._-]*)*$/.test(slug)) {
-    throw new CliError(`"${topic}" is not a docs topic. Try a component name or a guide slug.`)
+    throw new CliError(
+      `"${topic}" is not a docs topic. Try a component, a block or a page such as "theming".`,
+    )
   }
   if (slug.includes('/')) return [`/${slug}.md`]
-  return [`/components/${slug}.md`, `/start/${slug}.md`]
+  return SECTIONS.map((section) => `/${section}/${slug}.md`)
 }
 
 /** Fetches the Markdown twin of a docs page. `fetch` can be swapped out in tests. */

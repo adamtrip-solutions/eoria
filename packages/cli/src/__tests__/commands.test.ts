@@ -220,7 +220,13 @@ test('docs URLs come from the registry URL or the override', () => {
   expect(() => docsBaseUrl('https://example.com/registry')).toThrow('--docs-url')
 
   expect(docsPaths()).toEqual(['/llms.txt'])
-  expect(docsPaths('select')).toEqual(['/components/select.md', '/start/select.md'])
+  expect(docsPaths('select')).toEqual([
+    '/components/select.md',
+    '/start/select.md',
+    '/blocks/select.md',
+    '/guides/select.md',
+    '/agents/select.md',
+  ])
   expect(docsPaths('/start/theming/')).toEqual(['/start/theming.md'])
   expect(() => docsPaths('../secrets')).toThrow('not a docs topic')
 })
@@ -231,6 +237,8 @@ test('fetchDocs tries the component page, then the guide, and names what failed'
     'https://eoria.adamtrip.pt/llms.txt': '# eoria',
     'https://eoria.adamtrip.pt/components/select.md': '# Select',
     'https://eoria.adamtrip.pt/start/theming.md': '# Theming',
+    'https://eoria.adamtrip.pt/blocks/sign-in.md': '# Sign in',
+    'https://eoria.adamtrip.pt/agents/mcp.md': '# MCP server',
   }
   const asked: string[] = []
   const fakeFetch = async (url: string) => {
@@ -255,6 +263,11 @@ test('fetchDocs tries the component page, then the guide, and names what failed'
     'https://eoria.adamtrip.pt/components/theming.md',
     'https://eoria.adamtrip.pt/start/theming.md',
   ])
+  // A bare name reaches a block and an agents page too, after the folders before them miss.
+  expect((await fetchDocs(root, 'sign-in', { fetch: fakeFetch })).url).toBe(
+    'https://eoria.adamtrip.pt/blocks/sign-in.md',
+  )
+  expect((await fetchDocs(root, 'mcp', { fetch: fakeFetch })).markdown).toBe('# MCP server')
   expect((await fetchDocs(root, undefined, { fetch: fakeFetch })).markdown).toBe('# eoria')
 
   await expect(fetchDocs(root, 'nope', { fetch: fakeFetch })).rejects.toThrow(

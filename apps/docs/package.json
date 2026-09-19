@@ -4,12 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node ../../scripts/build-registry.mjs && node ../../scripts/copy-registry.mjs && node scripts/build-tokens.mjs && astro dev",
-    "build": "node ../../scripts/build-registry.mjs && node ../../scripts/copy-registry.mjs && node scripts/build-tokens.mjs && astro build",
+    "dev": "node ../../scripts/build-registry.mjs && node ../../scripts/copy-registry.mjs && node scripts/build-tokens.mjs && node scripts/build-changelog.mjs && astro dev",
+    "build": "node ../../scripts/build-registry.mjs && node ../../scripts/copy-registry.mjs && node scripts/build-tokens.mjs && node scripts/build-changelog.mjs && astro build",
     "preview": "astro preview",
     "typecheck": "astro check",
-    "test": "node --test scripts/agent-docs.test.mjs",
+    "test": "node scripts/build-changelog.mjs && node --test scripts/agent-docs.test.mjs",
     "tokens": "node scripts/build-tokens.mjs",
+    "changelog": "node scripts/build-changelog.mjs",
     "previews": "node scripts/capture-previews.mjs",
     "brand": "node scripts/build-brand.mjs"
   },

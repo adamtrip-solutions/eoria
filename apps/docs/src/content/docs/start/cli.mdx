@@ -307,58 +307,19 @@ so an agent can call the CLI as tools without a shell. Your editor or agent star
 process on your machine and stops it when the session ends. There is nothing to host and no
 account to make, and it reads the same static registry as every other command.
 
-You rarely type that command yourself. The client runs it from an entry like this one:
-
-```json title=".mcp.json"
-{
-  "mcpServers": {
-    "eoria": { "command": "npx", "args": ["-y", "@eoria/cli@latest", "mcp"] }
-  }
-}
-```
-
-`mcp init` writes the entry for you:
+You rarely type that command yourself. The client runs it, and `mcp init` writes the entry the
+client reads:
 
 ```sh
 npx @eoria/cli mcp init --client claude
 ```
 
-`--client` takes `claude`, `cursor`, `vscode` or `codex`. Claude Code reads `.mcp.json` at the
-project root and Cursor reads `.cursor/mcp.json`. VS Code reads `.vscode/mcp.json`, where the key
-is `servers` and the entry also has `"type": "stdio"`. An existing file keeps its other servers
-and keys. If it already has an `eoria` entry with other settings, `mcp init` stops until you pass
-`--force`. A file that does not parse as JSON, which includes one with comments, is left as it
-is, and the error prints the entry to paste. Codex keeps its servers in `~/.codex/config.toml`,
-outside the project, so `--client codex` prints the TOML lines and writes nothing. Without
-`--client` you get the four names.
+`--client` takes `claude`, `cursor`, `vscode` or `codex`. Without it you get the four names.
+`--force` replaces an `eoria` entry that has other settings. `--cwd`, `--registry` and
+`--docs-url` go in the entry's `args` and apply to every tool.
 
-The server has seven tools:
-
-| Tool                | Arguments                      | Returns                                                          |
-| ------------------- | ------------------------------ | ---------------------------------------------------------------- |
-| `list_components`   | `type`                         | What `list --json` prints                                        |
-| `search_components` | `query`, `type`                | What `search --json` prints                                      |
-| `view_component`    | `name`, `source`               | What `view --json` prints, with file contents under `source`     |
-| `get_docs`          | `topic`                        | The Markdown that `docs` prints, or `/llms.txt` with no topic    |
-| `get_project_info`  | none                           | What `info --json` prints                                        |
-| `run_doctor`        | none                           | What `doctor --json` prints                                      |
-| `add_components`    | `names`, `overwrite`, `dryRun` | The files it wrote, skipped and left alone, and `installCommand` |
-
-`type` is `"ui"` or `"block"`, as in `--type`. Leave it out to get both.
-
-`add_components` writes the files `add` would write, blocks included, and records the same hashes in `eoria.json`.
-It takes 1 to 20 names and skips a file that differs from the registry unless `overwrite` is
-true. With `dryRun` it returns the plan, without file contents, and writes nothing. It never runs
-your package manager. The result has an `installCommand`, such as
-`["npx", "expo", "install", "@eoria/core"]`, for the agent to run in its own shell where you can
-see it. `installCommand` is `null` when `package.json` already lists every package. The other six
-tools only read, and no tool runs `doctor --fix`.
-
-The server works on the folder the client starts it in, and walks up to the nearest `eoria.json`
-or `package.json` as the other commands do. If your client starts it somewhere else, add `--cwd`
-and the project folder to `args`. `--registry` and `--docs-url` go in `args` too, and apply to
-every tool. Outside a project the registry tools and `get_docs` still answer, and
-`add_components` returns an error that tells the agent to run `init`.
+[MCP server](/agents/mcp/) has the file each client reads, the seven tools and what they can
+change.
 
 ## eoria.json
 

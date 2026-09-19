@@ -1,0 +1,46 @@
+---
+title: Skill
+description: Instructions that teach an agent how eoria works before it touches your components.
+sidebar:
+  order: 2
+---
+
+A skill is a Markdown file of instructions that an agent loads when a task matches it. The eoria
+skill tells the agent to read `eoria.json` and the installed files first, to use the MCP tools
+when they are connected, and how `init`, `add`, `extend` and `diff` behave. It holds no code and
+runs nothing.
+
+## Install
+
+```sh
+npx skills add adamtrip-solutions/eoria
+```
+
+The [skills CLI](https://github.com/vercel-labs/skills) finds the `eoria` skill in the repo and
+asks which agents to install it for. It supports Claude Code, Cursor, Codex and others.
+
+To install by hand, save the file where your agent looks for skills. For Claude Code in one
+project:
+
+```sh
+mkdir -p .claude/skills/eoria
+curl -o .claude/skills/eoria/SKILL.md https://eoria.adamtrip.pt/skills/eoria/SKILL.md
+```
+
+## What is in it
+
+- Inspect the app first: `eoria.json`, the alias, and the component files as they are now.
+- Prefer the MCP tools and `--json` output over parsing terminal text.
+- Fetch docs as Markdown, and only the pages the task needs.
+- How to set up, add, customise with `styles` and variants, extend a recipe, and compare with
+  the registry before an update.
+
+Read the file itself at [`/skills/eoria/SKILL.md`](https://eoria.adamtrip.pt/skills/eoria/SKILL.md).
+The source is [`skills/eoria/SKILL.md`](https://github.com/adamtrip-solutions/eoria/blob/main/skills/eoria/SKILL.md)
+in the repo.
+
+## Skill or MCP
+
+Use both. The MCP server gives the agent things to do. The skill tells it when to do them and
+what to check first. An agent without MCP support still gets the commands from the skill and
+runs them in its shell.

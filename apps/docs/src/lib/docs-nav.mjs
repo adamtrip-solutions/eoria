@@ -1,6 +1,28 @@
-// Shared ordering for the sidebar and llms.txt so both list pages identically.
+// Shared ordering for the sidebar, the header tabs, the search index and llms.txt, so all
+// four list pages identically.
 
 export const CATEGORY_ORDER = ['Layout', 'Forms', 'Display', 'Overlays', 'Primitives']
+export const BLOCK_CATEGORY_ORDER = ['Auth', 'App']
+
+/**
+ * The header tabs. Each owns the pages under its folders and shows only those in the sidebar.
+ * `home` is the page the tab opens.
+ */
+export const SECTIONS = [
+  { key: 'docs', label: 'Docs', folders: ['start', 'changelog'], home: '/start/introduction/' },
+  {
+    key: 'components',
+    label: 'Components',
+    folders: ['components'],
+    home: '/components/accordion/',
+  },
+  { key: 'blocks', label: 'Blocks', folders: ['blocks'], home: '/blocks/overview/' },
+  { key: 'guides', label: 'Guides', folders: ['guides'], home: '/guides/forms/' },
+  { key: 'agents', label: 'Agents', folders: ['agents'], home: '/agents/overview/' },
+]
+
+/** @param {string} id a collection id or a pathname without its leading slash */
+export const sectionOf = (id) => SECTIONS.find((s) => s.folders.includes(id.split('/')[0]))
 
 /**
  * @typedef {{id: string, data: {title: string, description: string, category?: string, sidebar?: {order?: number}}}} DocEntry
@@ -16,19 +38,33 @@ export const byOrder = (a, b) =>
  * known section or category so it cannot silently vanish from navigation.
  * @template {DocEntry} T
  * @param {T[]} all
- * @returns {{label: string, items: T[]}[]}
+ * @returns {{label: string, section: string, items: T[]}[]}
  */
 export function groupDocs(all) {
-  const components = all.filter((e) => e.id.startsWith('components/'))
+  const under = (folder) => all.filter((e) => e.id.startsWith(`${folder}/`))
+  const components = under('components')
+  const blocks = under('blocks')
   const groups = [
-    { label: 'Start', items: all.filter((e) => e.id.startsWith('start/')).sort(byOrder) },
+    { label: 'Start', section: 'docs', items: under('start').sort(byOrder) },
+    { label: 'Changelog', section: 'docs', items: under('changelog').sort(byOrder) },
     ...CATEGORY_ORDER.map((label) => ({
       label,
+      section: 'components',
       items: components.filter((e) => e.data.category === label).sort(byOrder),
     })),
-    { label: 'Blocks', items: all.filter((e) => e.id.startsWith('blocks/')).sort(byOrder) },
-    { label: 'Guides', items: all.filter((e) => e.id.startsWith('guides/')).sort(byOrder) },
-  ]
+    {
+      label: 'Blocks',
+      section: 'blocks',
+      items: blocks.filter((e) => e.data.category === undefined).sort(byOrder),
+    },
+    ...BLOCK_CATEGORY_ORDER.map((label) => ({
+      label,
+      section: 'blocks',
+      items: blocks.filter((e) => e.data.category === label).sort(byOrder),
+    })),
+    { label: 'Guides', section: 'guides', items: under('guides').sort(byOrder) },
+    { label: 'Agents', section: 'agents', items: under('agents').sort(byOrder) },
+  ].filter((g) => g.items.length > 0)
   const listed = new Set(groups.flatMap((g) => g.items).map((e) => e.id))
   const missing = all.filter((e) => !listed.has(e.id)).map((e) => e.id)
   if (missing.length > 0) {

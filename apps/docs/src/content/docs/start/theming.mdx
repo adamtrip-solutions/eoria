@@ -1,74 +1,51 @@
 ---
 title: Theming
-description: Tokens, presets, dark mode, and adding your own keys.
+description: Pick a preset, change what you need, and handle dark mode.
 sidebar:
   order: 3
 ---
 
-A theme is a plain object: `colors`, `space`, `radius`, `fontSize` with `lineHeight`,
-`fontWeight`, and four shape groups, `control`, `stroke`, `shadow` and `font`. Every recipe
-reads from it. Change a value and every component that uses it updates.
+import PresetTabs from '../../../components/site/PresetTabs.astro'
 
-## Colour keys
+A theme is a plain object of colours, sizes and fonts. Every component reads its styles from
+that object, so one change reaches every component that uses the value. You do not write the
+object from nothing. You start from a preset.
 
-The colour keys are fixed so that components can rely on them. Four of them describe depth.
+## Pick a preset
 
-| Key                                    | Used for                                                 |
-| -------------------------------------- | -------------------------------------------------------- |
-| `background`                           | Screens.                                                 |
-| `surface`                              | Cards and tiles. One step above the screen.              |
-| `muted`                                | Controls: fields, chips, secondary buttons. One step up. |
-| `elevated`                             | Floating layers: menus, popovers, sheets.                |
-| `foreground`                           | Default text and the active chip fill.                   |
-| `mutedForeground`                      | Secondary text.                                          |
-| `primary`, `primaryForeground`         | Primary button, checked switch, progress bar.            |
-| `secondary`, `secondaryForeground`     | Reserved. The secondary button uses `muted`.             |
-| `accent`, `accentForeground`           | Tinted badges, pressed menu rows.                        |
-| `destructive`, `destructiveForeground` | Destructive buttons, badges and toasts.                  |
-| `destructiveText`                      | Error text, invalid borders, destructive menu rows.      |
-| `border`                               | Separators and hairlines on floating layers.             |
-| `input`                                | Unchecked switch track.                                  |
-| `ring`                                 | Focus ring on fields and open selects.                   |
+A preset is a complete look: a light palette, a dark palette, the corner radii, the control
+heights and a typeface. `@eoria/core` ships six. Pick one, then copy the line that uses it or
+the whole object.
 
-Keeping `surface` and `muted` one step apart is what lets a filled input sit inside a filled
-card and still read as a control. If you change one, move the other.
+<PresetTabs />
 
-## Presets
+`createThemes` turns a preset into the `light` and `dark` themes Unistyles needs, and adds the
+spacing and type scales every preset shares. The code goes in the `src/unistyles.ts` file that
+`init` wrote.
 
-`@eoria/core` ships six presets. Each is a complete look: a light and a dark palette plus
-the shape of the components and a typeface. Switching preset changes how every component is
-built, not only its accent.
+`zinc` and `moss` use the system font. `cobalt`, `iris`, `tide` and `plum` name a typeface that
+your app has to embed, and fall back to the system font until it does. [Fonts](/start/fonts/)
+shows how.
 
-| Preset   | Look                                                                                                                                       | Typeface                             |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
-| `zinc`   | Neutral and native. Black primary, filled grey surfaces, 52pt controls with 12pt corners. The default.                                     | System                               |
-| `moss`   | Warm and soft. Paper backgrounds, deep green primary, pill controls at 56pt, big card corners.                                             | System, Georgia headings             |
-| `cobalt` | Cool and sharp. Slate neutrals, cobalt primary, outlined cards and fields, 42pt controls, 6pt corners, heavy type.                         | IBM Plex Sans                        |
-| `iris`   | Product and fintech. Grey canvas with white hairline cards, the inverse of `zinc`, indigo primary, 46pt controls, 10pt corners.            | Geist                                |
-| `tide`   | Tonal and calm. Every neutral carries the petrol hue of the primary, filled surfaces, 16pt control corners and 26pt cards, a step heavier. | Manrope                              |
-| `plum`   | Editorial and spare. Stone neutrals, aubergine primary, 52pt controls with 4pt corners, light weights.                                     | Newsreader headings, Instrument Sans |
+## Change a preset
 
-Primary pairs were checked against WCAG AA for the 16pt button label.
+You rarely need the whole object. Spread a preset and replace the parts you want.
+
+Your brand colour on the main button, in both modes:
 
 ```ts
-import { presets, createThemes } from '@eoria/core'
+import { configureUnistyles, createThemes, presets } from '@eoria/core'
 
-configureUnistyles({ themes: createThemes(presets.moss) })
+const brand = {
+  ...presets.zinc,
+  light: { ...presets.zinc.light, primary: '#0f62fe', primaryForeground: '#ffffff' },
+  dark: { ...presets.zinc.dark, primary: '#78a9ff', primaryForeground: '#0a0a0a' },
+}
+
+configureUnistyles({ themes: createThemes(brand) })
 ```
 
-To switch presets while the app runs, update both registered themes in place. Adaptive
-light/dark keeps working and nothing remounts.
-
-```ts
-import { UnistylesRuntime } from 'react-native-unistyles'
-
-const themes = createThemes(presets.cobalt)
-UnistylesRuntime.updateTheme('light', (t) => ({ ...t, ...themes.light }))
-UnistylesRuntime.updateTheme('dark', (t) => ({ ...t, ...themes.dark }))
-```
-
-A preset of your own is the same object. Start from one of the shipped ones and change what
-you need; `createThemes` fills in the shared space and type scales.
+Pill buttons and fields, shorter controls, outlined cards:
 
 ```ts
 const brand = {
@@ -79,82 +56,17 @@ const brand = {
 }
 ```
 
-## Shape
-
-| Group     | What it drives                                                                                                                                                                                  |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `radius`  | `sm` to `2xl` and `full` are steps. `control` shapes buttons, fields, chips and segmented tabs; `card` shapes cards, contained accordions and alerts.                                           |
-| `control` | Heights for the `sm`, `md` and `lg` sizes of buttons, fields, selects and OTP cells.                                                                                                            |
-| `stroke`  | Border width on cards, contained accordions, alerts and filled fields. 0 is a filled look, 1 outlined.                                                                                          |
-| `shadow`  | Opacity, blur and offset under elevated cards, menus, popovers and toasts.                                                                                                                      |
-| `font`    | Optional `body` and `heading` families, one name per platform. Headings cover the title and heading text variants and card, dialog, alert and popover titles, and fall back to the body family. |
-
-## Fonts
-
-`zinc` and `moss` use fonts the platform ships. `cobalt`, `iris`, `tide` and `plum` name a
-family that your app has to embed. A theme names one family per platform and the recipes set
-`fontWeight`, so you have to register every weight under one family name. The `expo-font`
-config plugin does that on both platforms:
-
-```json
-[
-  "expo-font",
-  {
-    "ios": {
-      "fonts": [
-        "node_modules/@expo-google-fonts/geist/400Regular/Geist_400Regular.ttf",
-        "node_modules/@expo-google-fonts/geist/600SemiBold/Geist_600SemiBold.ttf"
-      ]
-    },
-    "android": {
-      "fonts": [
-        {
-          "fontFamily": "Geist",
-          "fontDefinitions": [
-            {
-              "path": "node_modules/@expo-google-fonts/geist/400Regular/Geist_400Regular.ttf",
-              "weight": 400
-            },
-            {
-              "path": "node_modules/@expo-google-fonts/geist/600SemiBold/Geist_600SemiBold.ttf",
-              "weight": 600
-            }
-          ]
-        }
-      ]
-    }
-  }
-]
-```
-
-List one file per weight the preset maps in `fontWeight`, then rebuild the native app. On
-iOS the family name comes from the font file; on Android it is the `fontFamily` you give.
-Loading with `useFonts` at runtime is not enough on Android. Each file becomes its own family
-there, and `fontWeight` has nothing to choose from.
-
-| Preset   | Packages                                                              | Weights                 |
-| -------- | --------------------------------------------------------------------- | ----------------------- |
-| `cobalt` | `@expo-google-fonts/ibm-plex-sans`                                    | 400, 600, 700           |
-| `iris`   | `@expo-google-fonts/geist`                                            | 400, 500, 600, 700      |
-| `tide`   | `@expo-google-fonts/manrope`                                          | 500, 600, 700           |
-| `plum`   | `@expo-google-fonts/instrument-sans`, `@expo-google-fonts/newsreader` | 400, 500, 600; 500, 600 |
-
-A family that is not installed falls back to the system font, so a preset still works
-before you embed anything. To use your own typeface, set `font` on a preset:
-
-```ts
-const brand = {
-  ...presets.iris,
-  font: { body: { ios: 'Satoshi', android: 'Satoshi', web: "'Satoshi', sans-serif" } },
-}
-```
+Check the contrast of a new `primary` against `primaryForeground`. The shipped pairs pass WCAG AA
+for the 16pt button label. [Tokens](/start/tokens/) lists every key and what it drives.
 
 ## Light, dark, and system
 
-Adaptive themes are on by default. To let the user pick, turn them off first. Calling
-`setTheme` while adaptive themes are on throws.
+The app follows the OS appearance by default. To let the user pick, turn adaptive themes off
+first. Calling `setTheme` while they are on throws.
 
 ```ts
+import { UnistylesRuntime } from 'react-native-unistyles'
+
 export function setMode(mode: 'system' | 'light' | 'dark') {
   if (mode === 'system') {
     UnistylesRuntime.setAdaptiveThemes(true)
@@ -168,30 +80,22 @@ export function setMode(mode: 'system' | 'light' | 'dark') {
 `useUnistyles().rt.themeName` and `rt.hasAdaptiveThemes` re-render when either changes, so a
 segmented control bound to them stays in sync.
 
-## Your own tokens
+## Switch preset while the app runs
 
-The core keys are fixed. Extra keys are yours. Augment the interface, add the values, and the
-theme is typed everywhere, including inside recipes.
+Update both registered themes in place. The light and dark switch keeps working and nothing
+remounts.
 
 ```ts
-declare module '@eoria/core' {
-  interface EoriaTheme {
-    brand: { coral: string; ink: string }
-  }
-}
+import { UnistylesRuntime } from 'react-native-unistyles'
 
-const light = { ...lightTheme, brand: { coral: '#ff6b57', ink: '#101828' } }
+const themes = createThemes(presets.cobalt)
+UnistylesRuntime.updateTheme('light', (t) => ({ ...t, ...themes.light }))
+UnistylesRuntime.updateTheme('dark', (t) => ({ ...t, ...themes.dark }))
 ```
 
-## Scales
+## Next
 
-| Group        | Keys                                                       |
-| ------------ | ---------------------------------------------------------- |
-| `space`      | 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16 (4pt grid)              |
-| `radius`     | sm, md, lg, xl, 2xl, full, control, card. From the preset. |
-| `fontSize`   | xs 12, sm 14, md 16, lg 18, xl 20, 2xl 24, 3xl 30          |
-| `lineHeight` | matched to each font size                                  |
-| `fontWeight` | normal, medium, semibold, bold. Mapped by the preset.      |
-
-`Box` exposes the spacing and colour scales as props, so `<Box p={4} bg="surface" rounded="xl">`
-reads the theme without a stylesheet.
+- [Tokens](/start/tokens/) is the reference: every colour key, the shape groups, the scales
+  and how to add keys of your own.
+- [Fonts](/start/fonts/) covers embedding a preset's typeface or your own.
+- [Recipes](/start/recipes/) shows how a component reads the theme.

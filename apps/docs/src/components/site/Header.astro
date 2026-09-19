@@ -1,9 +1,12 @@
 ---
+import Search from './Search.astro'
 import ThemeControls from './ThemeControls.astro'
+import { SECTIONS, sectionOf } from '../../lib/docs-nav.mjs'
 const { pathname } = Astro.url
+// One tab per docs section, then the pages that live outside the docs.
+const current = sectionOf(pathname.slice(1))
 const nav = [
-  { href: '/start/introduction/', label: 'Docs', active: pathname.startsWith('/start/') },
-  { href: '/components/accordion/', label: 'Components', active: pathname.startsWith('/components/') },
+  ...SECTIONS.map((s) => ({ href: s.home, label: s.label, active: s === current })),
   { href: '/demos/', label: 'Demos', active: pathname.startsWith('/demos') },
 ]
 const repo = 'https://github.com/adamtrip-solutions/eoria'
@@ -26,6 +29,7 @@ const repo = 'https://github.com/adamtrip-solutions/eoria'
     </nav>
     <div class="spacer"></div>
     <div class="tools">
+      <Search />
       <a class="icon-btn" href={repo} rel="noopener" aria-label="eoria on GitHub" title="GitHub">
         <svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
           <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
@@ -216,7 +220,7 @@ const repo = 'https://github.com/adamtrip-solutions/eoria'
     background: var(--color-surface);
     color: var(--color-foreground);
   }
-  @media (max-width: 640px) {
+  @media (max-width: 900px) {
     .nav,
     .tools > a.icon-btn {
       display: none;
@@ -248,7 +252,7 @@ const repo = 'https://github.com/adamtrip-solutions/eoria'
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && mobile.hidden !== true) setOpen(false)
     })
-    window.matchMedia('(min-width: 641px)').addEventListener('change', (e) => {
+    window.matchMedia('(min-width: 901px)').addEventListener('change', (e) => {
       if (e.matches) setOpen(false)
     })
   }

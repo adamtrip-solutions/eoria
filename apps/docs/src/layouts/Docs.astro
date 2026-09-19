@@ -4,7 +4,7 @@ import Base from './Base.astro'
 import { existsSync } from 'node:fs'
 import Badge from '../components/ui/Badge.astro'
 import Preview from '../components/site/Preview.astro'
-import { groupDocs } from '../lib/docs-nav.mjs'
+import { groupDocs, sectionOf } from '../lib/docs-nav.mjs'
 
 interface Props {
   title: string
@@ -14,15 +14,18 @@ interface Props {
 }
 const { title, description, headings, id } = Astro.props
 
-const groups = groupDocs(await getCollection('docs'))
+// The sidebar and the pager stay inside the header tab this page belongs to.
+const section = sectionOf(id)
+const groups = groupDocs(await getCollection('docs')).filter((g) => g.section === section?.key)
 const flat = groups.flatMap((g) => g.items)
 const index = flat.findIndex((e) => e.id === id)
 const prev = index > 0 ? flat[index - 1] : undefined
 const next = index >= 0 && index < flat.length - 1 ? flat[index + 1] : undefined
 const toc = headings.filter((h) => h.depth === 2)
 // Component and block pages show their simulator capture when one exists.
-const [, section, previewName] = /^(components|blocks)\/(.+)$/.exec(id) ?? []
-const kind = section === 'components' ? 'Component' : section === 'blocks' ? 'Block' : undefined
+// The blocks overview is a page about blocks, not a block.
+const [, folder, previewName] = /^(components|blocks)\/(?!overview$)(.+)$/.exec(id) ?? []
+const kind = folder === 'components' ? 'Component' : folder === 'blocks' ? 'Block' : undefined
 const hasPreview =
   previewName !== undefined && existsSync(`public/previews/${previewName}-light.webp`)
 ---
@@ -31,27 +34,20 @@ const hasPreview =
   <div class="container shell">
     <aside class="sidebar">
       <details class="mobile-nav">
-        <summary>Menu</summary>
+        <summary>{section ? `Browse ${section.label}` : 'Menu'}</summary>
         <div class="mobile-links">
           <a href="/">Home</a>
           <a href="https://github.com/adamtrip-solutions/eoria" rel="noopener">GitHub</a>
         </div>
       </details>
-      <nav class="tree" aria-label="Docs">
-        <input
-          type="search"
-          class="filter"
-          placeholder="Filter components"
-          aria-label="Filter components"
-          data-sidebar-filter
-        />
+      <nav class="tree" aria-label={section?.label ?? 'Docs'}>
         {
           groups.map((g) => (
-            <section aria-label={g.label} data-group={g.label === 'Start' ? 'start' : 'component'}>
+            <section aria-label={g.label}>
               <p class="group">{g.label}</p>
               <ul>
                 {g.items.map((e) => (
-                  <li data-title={e.data.title.toLowerCase()}>
+                  <li>
                     <a href={`/${e.id}/`} aria-current={e.id === id ? 'page' : undefined}>
                       {e.data.title}
                     </a>
@@ -126,29 +122,6 @@ const hasPreview =
     background: var(--color-background);
   }
   .mobile-nav {
-    display: none;
-  }
-  .filter {
-    width: 100%;
-    height: 40px;
-    margin: 0 0 var(--space-4);
-    padding: 0 var(--space-3);
-    border: 1.5px solid transparent;
-    border-radius: var(--radius-md);
-    background: var(--color-muted);
-    color: var(--color-foreground);
-    font: inherit;
-    font-size: var(--text-sm);
-    outline: none;
-  }
-  .filter::placeholder {
-    color: var(--color-muted-foreground);
-  }
-  .filter:focus {
-    border-color: var(--color-ring);
-  }
-  .tree section[hidden],
-  .tree li[hidden] {
     display: none;
   }
   .tree .group {
@@ -321,27 +294,12 @@ const hasPreview =
   // Every navigation is a full load on a static site, so carry the sidebar scroll over.
   const sidebar = document.querySelector<HTMLElement>('.sidebar')
   if (sidebar) {
-    const saved = sessionStorage.getItem('eoria-sidebar-scroll')
+    // One position per tab, so the Components scroll does not land on the Guides list.
+    const scrollKey = `eoria-sidebar-scroll:${location.pathname.split('/')[1]}`
+    const saved = sessionStorage.getItem(scrollKey)
     if (saved) sidebar.scrollTop = Number(saved)
     sidebar.addEventListener('scroll', () => {
-      sessionStorage.setItem('eoria-sidebar-scroll', String(sidebar.scrollTop))
+      sessionStorage.setItem(scrollKey, String(sidebar.scrollTop))
     })
   }
-
-  const input = document.querySelector<HTMLInputElement>('[data-sidebar-filter]')
-  const sections = document.querySelectorAll<HTMLElement>('.tree section[data-group="component"]')
-  const start = document.querySelector<HTMLElement>('.tree section[data-group="start"]')
-  input?.addEventListener('input', () => {
-    const q = input.value.trim().toLowerCase()
-    if (start) start.hidden = q.length > 0
-    sections.forEach((section) => {
-      let visible = 0
-      section.querySelectorAll<HTMLElement>('li[data-title]').forEach((li) => {
-        const hit = q === '' || li.dataset.title!.includes(q)
-        li.hidden = !hit
-        if (hit) visible++
-      })
-      section.hidden = visible === 0
-    })
-  })
 </script>

@@ -1,0 +1,82 @@
+---
+title: MCP server
+description: Give your agent the eoria CLI as tools. It runs on your machine and needs no account.
+sidebar:
+  order: 1
+---
+
+import CommandTabs from '../../../components/ui/CommandTabs.astro'
+
+`@eoria/cli` has a [Model Context Protocol](https://modelcontextprotocol.io) server built in.
+Your editor or agent starts it as a child process, talks to it over stdin and stdout, and stops
+it when the session ends. There is nothing to host. It reads the same static registry as every
+other command.
+
+## Set it up
+
+Run this in the root of your app and pick your client:
+
+<CommandTabs
+  items={[
+    { label: 'Claude Code', command: 'npx @eoria/cli mcp init --client claude' },
+    { label: 'Cursor', command: 'npx @eoria/cli mcp init --client cursor' },
+    { label: 'VS Code', command: 'npx @eoria/cli mcp init --client vscode' },
+    { label: 'Codex', command: 'npx @eoria/cli mcp init --client codex' },
+  ]}
+/>
+
+| Client      | File                   | Notes                                                         |
+| ----------- | ---------------------- | ------------------------------------------------------------- |
+| Claude Code | `.mcp.json`            | At the project root                                           |
+| Cursor      | `.cursor/mcp.json`     |                                                               |
+| VS Code     | `.vscode/mcp.json`     | The key is `servers` and the entry has `"type": "stdio"`      |
+| Codex       | `~/.codex/config.toml` | Outside the project, so the command prints the lines to paste |
+
+An existing file keeps its other servers and keys. If it already has an `eoria` entry with other
+settings, `mcp init` stops until you pass `--force`. A file that does not parse as JSON, which
+includes one with comments, is left alone, and the error prints the entry to paste.
+
+To write the entry yourself, this is all of it:
+
+```json title=".mcp.json"
+{
+  "mcpServers": {
+    "eoria": { "command": "npx", "args": ["-y", "@eoria/cli@latest", "mcp"] }
+  }
+}
+```
+
+## Tools
+
+| Tool                | Arguments                      | Returns                                                          |
+| ------------------- | ------------------------------ | ---------------------------------------------------------------- |
+| `list_components`   | `type`                         | What `list --json` prints                                        |
+| `search_components` | `query`, `type`                | What `search --json` prints                                      |
+| `view_component`    | `name`, `source`               | What `view --json` prints, with file contents under `source`     |
+| `get_docs`          | `topic`                        | The Markdown that `docs` prints, or `/llms.txt` with no topic    |
+| `get_project_info`  | none                           | What `info --json` prints                                        |
+| `run_doctor`        | none                           | What `doctor --json` prints                                      |
+| `add_components`    | `names`, `overwrite`, `dryRun` | The files it wrote, skipped and left alone, and `installCommand` |
+
+`type` is `"ui"` or `"block"`. Leave it out to get both. [CLI and registry](/start/cli/) describes
+the command behind each tool.
+
+## What it can change
+
+`add_components` is the only tool that writes. It writes the files `add` would write, blocks
+included, and records the same hashes in `eoria.json`. It takes 1 to 20 names and skips a file
+that differs from the registry unless `overwrite` is true. With `dryRun` it returns the plan and
+writes nothing.
+
+It never runs your package manager. The result has an `installCommand`, such as
+`["npx", "expo", "install", "@eoria/core"]`, for the agent to run in its own shell where you can
+see it. `installCommand` is `null` when `package.json` already lists every package. No tool runs
+`doctor --fix`.
+
+## Where it runs
+
+The server works on the folder the client starts it in, and walks up to the nearest `eoria.json`
+or `package.json` as the other commands do. If your client starts it somewhere else, add `--cwd`
+and the project folder to `args`. `--registry` and `--docs-url` go in `args` too and apply to
+every tool. Outside a project the registry tools and `get_docs` still answer, and
+`add_components` returns an error that tells the agent to run `init`.

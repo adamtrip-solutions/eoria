@@ -1,0 +1,113 @@
+---
+title: Long lists
+description: Item and Swipeable rows inside FlashList or LegendList, with recycling in mind.
+sidebar:
+  order: 2
+---
+
+`ItemGroup` is for a short, fixed set of rows such as a settings section. It renders every child. For a feed, an inbox or anything that grows, give the rows to a virtualized list.
+
+Rows work in `FlatList` as they are. This page covers the two faster lists, which recycle row components and so need a little care.
+
+## FlashList
+
+```sh
+npx expo install @shopify/flash-list
+```
+
+```tsx
+import { FlashList } from '@shopify/flash-list'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@/components/ui/item'
+import { Separator } from '@/components/ui/separator'
+
+type Message = { id: string; from: string; initials: string; preview: string }
+
+export function MessageList({
+  messages,
+  onOpen,
+}: {
+  messages: Message[]
+  onOpen: (id: string) => void
+}) {
+  return (
+    <FlashList
+      data={messages}
+      keyExtractor={(m) => m.id}
+      ItemSeparatorComponent={Separator}
+      renderItem={({ item }) => (
+        <Item onPress={() => onOpen(item.id)}>
+          <ItemMedia variant="avatar">
+            <Avatar accessibilityLabel={item.from}>
+              <AvatarFallback>{item.initials}</AvatarFallback>
+            </Avatar>
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>{item.from}</ItemTitle>
+            <ItemDescription numberOfLines={1}>{item.preview}</ItemDescription>
+          </ItemContent>
+        </Item>
+      )}
+    />
+  )
+}
+```
+
+FlashList 2 measures rows itself, so there is no `estimatedItemSize`. When rows come in clearly different shapes, such as a date header and a message, return a type from `getItemType` so a header is never recycled into a message.
+
+An `Item` outside an `ItemGroup` draws no hairline, which is why the list supplies `ItemSeparatorComponent`.
+
+## LegendList
+
+```sh
+npm install @legendapp/list
+```
+
+```tsx
+import { LegendList } from '@legendapp/list'
+
+<LegendList
+  data={messages}
+  keyExtractor={(m) => m.id}
+  renderItem={({ item }) => <MessageRow message={item} onOpen={onOpen} />}
+  recycleItems
+/>
+```
+
+`recycleItems` is off by default. Turn it on once your rows follow the rule below. For a chat, add `alignItemsAtEnd` and `maintainScrollAtEnd` so new messages keep the view pinned to the bottom.
+
+## The recycling rule
+
+A recycled row is the same component instance showing a different item. Anything the row keeps in `useState` stays behind when the item changes.
+
+eoria rows hold very little state, but two cases matter.
+
+- **Swipeable.** An open row that scrolls away can come back open on another item. Keep a ref to the open row and close it when the list scrolls, or close it in an effect keyed on the item id.
+- **Collapsible and Accordion inside a row.** Control them from the item (`open={expanded[item.id]}`) and keep that map above the list.
+
+```tsx
+import { useEffect, useRef } from 'react'
+import { Swipeable, SwipeableAction, type SwipeableRef } from '@/components/ui/swipeable'
+
+function MessageRow({ message, onArchive }: { message: Message; onArchive: (id: string) => void }) {
+  const row = useRef<SwipeableRef>(null)
+  // The instance is reused for another message, so start closed every time.
+  useEffect(() => row.current?.close(), [message.id])
+
+  return (
+    <Swipeable
+      ref={row}
+      trailing={<SwipeableAction onPress={() => onArchive(message.id)}>Archive</SwipeableAction>}
+    >
+      <Item>{/* ... */}</Item>
+    </Swipeable>
+  )
+}
+```
+
+FlashList also offers `useRecyclingState`, a `useState` that resets when its dependencies change. Use it for small local state you would rather keep in the row.
+
+## Notes
+
+- Keep `renderItem` stable and give rows plain props. A row that takes the whole list as a prop re-renders on every change.
+- Images in rows should use [Image](/components/image/), which caches and recycles through expo-image.

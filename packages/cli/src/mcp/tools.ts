@@ -150,14 +150,15 @@ const TOOLS: Tool[] = [
     name: 'get_docs',
     title: 'Read the docs',
     description:
-      'A page of the eoria docs as Markdown. A component name such as "select" returns its usage examples and props. A guide slug such as "installation", "theming", "recipes" or "cli" returns that guide. Leave `topic` out to get llms.txt, the index of every page.',
+      'A page of the eoria docs as Markdown. A component name such as "select" returns its usage examples and props. A block name such as "sign-in" returns the block. A page slug such as "installation", "theming", "forms" or "mcp" returns that page. Leave `topic` out to get llms.txt, the index of every page.',
     inputSchema: {
       type: 'object',
       properties: {
         topic: {
           type: 'string',
           minLength: 1,
-          description: 'Component name or guide slug. "start/theming" names a page outright.',
+          description:
+            'Component name, block name or page slug. "start/theming" names a page outright.',
         },
       },
       additionalProperties: false,

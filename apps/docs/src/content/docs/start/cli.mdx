@@ -5,9 +5,14 @@ sidebar:
   order: 5
 ---
 
-Four commands, shipped as `@eoria/cli` with an `eoria` binary. Run them with `npx @eoria/cli`,
+Ten commands, shipped as `@eoria/cli` with an `eoria` binary. Run them with `npx @eoria/cli`,
 or add the package as a dev dependency and call `pnpm eoria`. All of them are file plumbing
 over a static registry, so there is nothing to log in to and nothing that phones home.
+
+`init`, `add` and `extend` write files. `diff`, `list`, `search`, `view`, `info`, `docs` and
+`doctor` only read, unless you pass `doctor --fix`. Every command that talks to the registry
+takes `--registry <url or folder>` to use another one for a single run. `list`, `search`, `view`,
+`info` and `doctor` take `--json`, which prints one JSON object to stdout and nothing else.
 
 ## init
 
@@ -47,6 +52,16 @@ hash, so `diff` will not pretend to know what they looked like. Pass `--overwrit
 replace either. npm dependencies the items declare are installed unless you pass
 `--no-install`.
 
+```sh
+npx @eoria/cli add button --dry-run
+npx @eoria/cli add button --diff
+```
+
+Both flags write nothing, `eoria.json` included. `--dry-run` resolves everything and lists each
+file as would write, would skip or would overwrite, then prints the install command it would
+run. `--diff` prints the hunks between each file you already have and the registry file, in the
+format `diff` uses, and marks the rest as new files. Lines that start with `-` are yours.
+
 ## diff
 
 ```sh
@@ -73,6 +88,178 @@ Writes `checkout-button.tsx` next to `button.tsx`. The file imports the base rec
 `CheckoutButton` from the base's `createButton` factory. Bases without a factory get a
 comment explaining the two options instead. See [Recipes](/start/recipes/#extending) for the
 merge rules.
+
+## list and search
+
+```sh
+npx @eoria/cli list
+npx @eoria/cli search menu
+```
+
+`list` prints every registry item with its name, title and description. Inside a project,
+installed items get a `✓`. Outside one it reads the default registry, so you can browse before
+running `init`.
+
+`search` matches the query against name, title and description, ignoring case. Every word of
+the query has to appear somewhere in the item. Name matches come first, then title matches,
+then description matches.
+
+With `--json`, `list` prints `{ registry, items }` and `search` prints
+`{ registry, query, items }`. Each item has `name`, `title`, `description`, `type` and
+`installed`, which is `null` outside a project.
+
+## view
+
+```sh
+npx @eoria/cli view select
+npx @eoria/cli view select --source
+```
+
+Prints one item's title, description, npm dependencies and registry dependencies, then each
+file with the path `add` would write it to. The `add also brings` line follows the registry
+dependencies all the way down, which for `select` gives `portal`, `popper` and `text`.
+`--source` appends the file contents, with imports rewritten to your alias.
+
+In `--json` output the direct lists are `dependencies` and `registryDependencies`, and the
+followed ones are `allDependencies` and `allRegistryDependencies`. Each entry of `files` has
+`path`, `type`, `target` and `localPath`, plus `content` when you pass `--source`.
+
+## docs
+
+```sh
+npx @eoria/cli docs select
+npx @eoria/cli docs theming
+npx @eoria/cli docs
+```
+
+Prints the Markdown version of a docs page to stdout. `docs` tries a bare topic as a component
+first, so `select` fetches `/components/select.md`. If that page does not exist it tries a guide,
+so `theming` fetches `/start/theming.md`. A topic with a slash, such as `start/theming`, names
+the page outright. With no topic you get `/llms.txt`, the index of every page.
+
+The docs URL is the registry URL without its trailing `/r`. A local registry folder has no docs
+site, so `docs` stops and asks for `--docs-url`, which takes a URL or the folder of a local docs
+build. When no page answers, the error names every URL it tried.
+
+## info
+
+```sh
+npx @eoria/cli info
+npx @eoria/cli info --json
+```
+
+Prints what the CLI can see of the project. That is the CLI version, where `eoria.json` lives
+and what it says, the registry in use, the package manager, whether the app uses Expo, and the
+version ranges of `@eoria/core`, `react-native-unistyles`, `react-native-reanimated` and
+`react-native-worklets` from your `package.json`. Every file of every installed item gets one
+of the five `diff` labels. Paste the output into a bug report, or give `--json` to an agent
+before it touches your components.
+
+```json
+{
+  "cli": { "version": "0.1.1" },
+  "root": "/work/app",
+  "config": {
+    "path": "/work/app/eoria.json",
+    "error": null,
+    "values": {
+      "registry": "https://eoria.adamtrip.pt/r",
+      "components": "src/components/ui",
+      "alias": "@/components/ui"
+    }
+  },
+  "registry": {
+    "location": "https://eoria.adamtrip.pt/r",
+    "source": "eoria.json",
+    "remote": true,
+    "reachable": true,
+    "error": null
+  },
+  "components": { "directory": "src/components/ui", "alias": "@/components/ui", "exists": true },
+  "installed": [
+    {
+      "name": "button",
+      "files": [
+        { "path": "src/components/ui/button.tsx", "status": "local", "label": "edited locally" }
+      ]
+    }
+  ],
+  "packageManager": "pnpm",
+  "expo": true,
+  "packages": {
+    "@eoria/core": "^0.1.0",
+    "react-native-unistyles": "^3.0.0",
+    "react-native-reanimated": "~4.1.0",
+    "react-native-worklets": null
+  }
+}
+```
+
+The keys keep their names and types between releases, and new ones may appear. `status` is
+`unchanged`, `upstream`, `local`, `both` or `missing`, the five `diff` labels in the order the
+`diff` section lists them, and `label` is the text `diff` prints. A sixth value, `unknown`, means the
+registry could not supply the item, so `info` could only check the file against its hash.
+`registry.source` is `flag`, `eoria.json` or `default`. `packageManager` is `pnpm`, `yarn`,
+`bun` or `npm`, read from the lockfile. Outside a project `config.path`, `config.values` and
+`components` are `null` and `installed` is empty. A package that `package.json` does not list
+is `null`.
+
+## doctor
+
+```sh
+npx @eoria/cli doctor
+npx @eoria/cli doctor --fix
+```
+
+Checks the setup `init` and `add` leave behind. Each check reports pass, warn or fail, with one
+line on what to do about it. The exit code is 1 when any check fails and 0 otherwise, so it
+works as a CI step. Warnings do not change the exit code. The checks run in this order, and
+the names are the `id` values in the JSON:
+
+- `config`. `eoria.json` exists and parses. If it does not, `doctor` stops here.
+- `registry`. The registry index loads.
+- `components-folder`. The `components` folder exists.
+- `alias`. `tsconfig.json` has a path for the alias prefix, such as `@/*`. A project without a
+  `tsconfig.json` gets a warning.
+- `unistyles-file`. `unistyles.ts` exists under the source root.
+- `theme-import`. The root layout `init` looks for imports it. If `doctor` finds no layout, it
+  warns.
+- `babel`. `babel.config.js` lists `react-native-unistyles/plugin` and
+  `react-native-worklets/plugin`. Reanimated wants the Worklets plugin last, which is how `init`
+  writes it, so any other order is a warning.
+- `peers`. `package.json` lists `@eoria/core` and every peer `init` installs.
+- `installed-files`. Every file recorded in `eoria.json` exists.
+- `registry-dependencies`. Every item that an installed item depends on is installed too.
+- `npm-dependencies`. `package.json` lists every package the installed items declare.
+
+The last two need the registry. When it does not answer they turn into warnings.
+
+`--fix` runs the same code as `init` for the three repairs that cannot clobber your work. It
+adds the path alias, writes a missing `unistyles.ts`, and installs missing packages. Then it
+checks again and reports the second pass. It leaves your root layout and your Babel config alone,
+and the remedy line tells you what to paste.
+
+```json
+{
+  "ok": false,
+  "root": "/work/app",
+  "checks": [
+    {
+      "id": "alias",
+      "status": "fail",
+      "message": "tsconfig.json has no \"@/*\" path, so @/components/ui does not resolve.",
+      "remedy": "Run `eoria doctor --fix`, or add \"@/*\": [\"./src/*\"] to compilerOptions.paths.",
+      "fixable": true
+    }
+  ],
+  "fixed": [],
+  "summary": { "pass": 10, "warn": 0, "fail": 1 }
+}
+```
+
+The example shows one of the eleven checks. `ok` is false when any check failed. `remedy` is `null` on a pass. `fixable` marks the checks
+`--fix` can repair, and `fixed` lists the ids it did repair in this run. With `--json`, progress
+lines and installer output go to stderr, so stdout stays parseable.
 
 ## eoria.json
 

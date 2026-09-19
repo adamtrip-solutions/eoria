@@ -1,6 +1,6 @@
 {
   "name": "@eoria/cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Copy eoria React Native components into your app, and keep derived components in step",
   "license": "MIT",
   "type": "module",

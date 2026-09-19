@@ -71,6 +71,12 @@ const components: Array<{ href: Href; title: string }> = [
   { href: '/accordion', title: 'Accordion' },
   { href: '/toast', title: 'Toast' },
   { href: '/overlays', title: 'Popover, Tooltip, Menu, Select, Combobox' },
+  { href: '/actions', title: 'Alert dialog, Action sheet, Input group, Search, Chip, Empty' },
+  {
+    href: '/lists',
+    title: 'Item, Swipeable, Collapsible, Toggle group, Stepper, Rating, Carousel',
+  },
+  { href: '/native', title: 'Sheet, Date picker, Image, Keyboard, Haptics' },
 ]
 
 function ModePicker() {

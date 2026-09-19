@@ -1,0 +1,78 @@
+---
+title: Carousel
+description: Horizontal pager with snapping, peeking items, dots that follow the scroll, and an imperative scrollTo.
+category: Display
+sidebar:
+  order: 20.7
+---
+
+```sh
+npx @eoria/cli add carousel
+```
+
+## Usage
+
+```tsx
+import {
+  Carousel,
+  CarouselContent,
+  CarouselDots,
+  CarouselItem,
+} from '@/components/ui/carousel'
+
+<Carousel>
+  <CarouselContent>
+    {slides.map((slide) => (
+      <CarouselItem key={slide.title}>
+        <Text variant="title">{slide.title}</Text>
+        <Text variant="muted">{slide.body}</Text>
+      </CarouselItem>
+    ))}
+  </CarouselContent>
+  <CarouselDots />
+</Carousel>
+```
+
+Give `itemWidth` a number to let the neighbours peek.
+
+```tsx
+const carousel = useRef<CarouselRef>(null)
+
+<Carousel ref={carousel} itemWidth={280} gap={12} index={index} onIndexChange={setIndex}>
+  <CarouselContent>…</CarouselContent>
+  <CarouselDots />
+</Carousel>
+
+carousel.current?.scrollTo(2)
+```
+
+## Props
+
+| Prop            | Values                                                                                    | Default  |
+| --------------- | ----------------------------------------------------------------------------------------- | -------- |
+| `index`         | number; controlled                                                                        |          |
+| `defaultIndex`  | number                                                                                    | `0`      |
+| `onIndexChange` | fires when the page nearest the scroll position changes                                   |          |
+| `itemWidth`     | `full`, the width of the carousel, or a number of points                                  | `full`   |
+| `gap`           | points between items                                                                      | `0`      |
+| `align`         | `center` lets both neighbours peek, `start` only the next one                             | `center` |
+| `styles`        | override `root`, `viewport`, `content`, `item`, `dots`, `dot`, `dotActive`, `dotInactive` |          |
+| `ref`           | `scrollTo(index, animated = true)`                                                        |          |
+
+`CarouselContent` is the ScrollView and takes its props except `horizontal` and `onScroll`. Every direct child is one page. `CarouselItem` is a View with the item width. `CarouselDots` takes View props and renders nothing for fewer than two pages. Put it above, below or over the content.
+
+## Notes
+
+The pager is a Reanimated ScrollView with `snapToInterval`, fast deceleration and `disableIntervalMomentum`, so one swipe moves one page however hard the flick. It needs no native dependency beyond Reanimated. Every page snaps to the same place, the last one too. With `align="start"` that leaves empty space after the last item.
+
+The dots read the scroll position on the UI thread. The dot of the current page widens from 6pt to 18pt and the others fade to 0.25 as the finger moves, with no timing of their own. Tap a dot to scroll to its page. The dots row is 44pt tall and each dot has `hitSlop` to match.
+
+`scrollTo` and the dots use the native scroll animation. Under the OS reduce-motion setting they jump instead.
+
+`CarouselDots` is the element screen readers adjust, as UIPageControl is. It has the `adjustable` role, the label "Page", a value such as "2 of 5", and moves one page on increment and decrement. The slides stay separate elements, so their text and buttons remain reachable. For slides that are only images, pass `accessible` and an `accessibilityLabel` to `Carousel`. The whole carousel then becomes one adjustable element with the same value and actions.
+
+The carousel measures its width on layout, so items have no width on the first frame. Right-to-left layouts are not handled yet. Offsets are read left to right, so the index and the dots may run backwards under `I18nManager.isRTL`.
+
+## Source
+
+[`registry/ui/carousel.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/carousel.tsx)

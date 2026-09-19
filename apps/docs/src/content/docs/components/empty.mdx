@@ -1,0 +1,56 @@
+---
+title: Empty
+description: Centred empty state with media, a title, a description and actions.
+category: Display
+sidebar:
+  order: 14.7
+---
+
+```sh
+npx @eoria/cli add empty
+```
+
+## Usage
+
+```tsx
+import {
+  Empty,
+  EmptyActions,
+  EmptyDescription,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
+import { Inbox } from 'lucide-react-native'
+
+<Empty>
+  <EmptyMedia icon={<Inbox />} />
+  <EmptyTitle>No messages yet</EmptyTitle>
+  <EmptyDescription>When someone writes to you, the conversation shows up here.</EmptyDescription>
+  <EmptyActions>
+    <Button onPress={compose}>Start a conversation</Button>
+    <Button variant="ghost" onPress={invite}>Invite a friend</Button>
+  </EmptyActions>
+</Empty>
+```
+
+## Props
+
+| Part               | Props                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------ |
+| `Empty`            | any `View` prop, and `styles` for `media`, `icon`, `title`, `description`, `actions` |
+| `EmptyMedia`       | `variant` (`icon` default, `plain`), `icon`, children                                |
+| `EmptyTitle`       | any `Text` prop                                                                      |
+| `EmptyDescription` | any `Text` prop                                                                      |
+| `EmptyActions`     | any `View` prop                                                                      |
+
+## Notes
+
+- The root uses `flexGrow: 1`. In a parent with room, such as a screen, it fills the space and centres its content. Inside a Card or a `ScrollView` it keeps its own height. `flex: 1` would collapse to nothing there.
+- `EmptyMedia` with the `icon` variant is a 64pt well in the `muted` colour with the `theme.radius.card` corner, holding a 28pt icon. A pill preset turns the well into a near circle and a sharp preset squares it. `plain` draws no well and sizes the `icon` at 48pt in the muted foreground. Pass an illustration or an `Image` as children instead of `icon` when you have one.
+- The media is hidden from screen readers. `EmptyTitle` has the `header` role and carries the meaning.
+- Title and description stop at 300pt wide so lines stay short on a tablet. The title uses the heading font of the preset.
+- `EmptyActions` stacks its buttons and centres them, primary first. Pass `style={{ flexDirection: 'row' }}` for a pair side by side.
+
+## Source
+
+[`registry/ui/empty.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/empty.tsx)

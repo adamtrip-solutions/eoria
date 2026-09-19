@@ -1,0 +1,56 @@
+---
+title: Rating
+description: Star rating with tap and drag to set, partial stars for fractions, and a read-only mode.
+category: Forms
+sidebar:
+  order: 18.9
+---
+
+```sh
+npx @eoria/cli add rating
+```
+
+Needs `react-native-gesture-handler` with a `GestureHandlerRootView` around the app, and `react-native-svg` for the stars. Expo projects can add both with `npx expo install`. The CLI installs them as dependencies of the item.
+
+## Usage
+
+```tsx
+import { useState } from 'react'
+import { Rating } from '@/components/ui/rating'
+
+export function Review() {
+  const [stars, setStars] = useState(4)
+  return <Rating value={stars} onValueChange={setStars} accessibilityLabel="Your rating" />
+}
+
+<Rating defaultValue={2.5} allowHalf size="lg" />
+<Rating readOnly size="sm" value={4.3} />
+```
+
+## Props
+
+| Prop            | Values                                                                                                 | Default |
+| --------------- | ------------------------------------------------------------------------------------------------------ | ------- |
+| `value`         | number; controlled. A fraction draws as a partial star                                                 |         |
+| `defaultValue`  | number                                                                                                 | `0`     |
+| `onValueChange` | `(value: number) => void`, on every change while dragging                                              |         |
+| `max`           | number of stars                                                                                        | `5`     |
+| `allowHalf`     | taps, drags and screen-reader steps move by half a star                                                | `false` |
+| `readOnly`      | display only                                                                                           | `false` |
+| `size`          | `sm` 16pt, `md` 28pt, `lg` 36pt                                                                        | `md`    |
+| `disabled`      | boolean                                                                                                | `false` |
+| `styles`        | override `root`, `rootDisabled`, `star` (`width` is the size, `color` the fill), `starEmpty` (`color`) |         |
+
+## Notes
+
+Each star is an SVG path in `muted` with a clipped copy in `primary` over it. The clip is as wide as the filled fraction, so `value={4.3}` fills 30% of the fifth star. Any fraction draws, with or without `allowHalf`. `allowHalf` only changes the step of input, and interactive half steps ship in this version.
+
+A tap sets the star under the finger, or the half under it with `allowHalf`. A drag scrubs across the row, and a drag past the leading edge sets 0, which is the only way to clear by touch. The gesture is the same gesture-handler Pan as [Slider](/components/slider/). Horizontal movement activates it and a clear vertical movement fails it, so a parent ScrollView still scrolls.
+
+The interactive root stays 44pt tall whatever the star size. With `readOnly` it shrinks to the stars so it can sit in a line of text. The interactive root has the `adjustable` role, a value such as "3 of 5", and answers increment and decrement by one step. With `readOnly` the role is `image` with the same value. The label defaults to "Rating".
+
+The fill grows from the leading edge, and the drag reads from the right in right-to-left layouts.
+
+## Source
+
+[`registry/ui/rating.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/rating.tsx)

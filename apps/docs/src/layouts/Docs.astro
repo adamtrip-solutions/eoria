@@ -20,9 +20,11 @@ const index = flat.findIndex((e) => e.id === id)
 const prev = index > 0 ? flat[index - 1] : undefined
 const next = index >= 0 && index < flat.length - 1 ? flat[index + 1] : undefined
 const toc = headings.filter((h) => h.depth === 2)
-const isComponent = id.startsWith('components/')
-const previewName = id.replace(/^components\//, '')
-const hasPreview = isComponent && existsSync(`public/previews/${previewName}-light.webp`)
+// Component and block pages show their simulator capture when one exists.
+const [, section, previewName] = /^(components|blocks)\/(.+)$/.exec(id) ?? []
+const kind = section === 'components' ? 'Component' : section === 'blocks' ? 'Block' : undefined
+const hasPreview =
+  previewName !== undefined && existsSync(`public/previews/${previewName}-light.webp`)
 ---
 
 <Base title={title} description={description} markdownPath={`/${id}.md`}>
@@ -64,7 +66,7 @@ const hasPreview = isComponent && existsSync(`public/previews/${previewName}-lig
 
     <main class="main">
       <article class="prose">
-        {isComponent && <Badge class="kicker">Component</Badge>}
+        {kind && <Badge class="kicker">{kind}</Badge>}
         <h1>{title}</h1>
         <p class="lead">{description}</p>
         {hasPreview && <Preview name={previewName} title={title} />}

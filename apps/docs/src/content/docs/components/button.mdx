@@ -37,10 +37,19 @@ import { Plus } from 'lucide-react-native'
 | -------------- | ------------------------------------------------------------ |
 | `icon`         | element accepting `size` and `color`                         |
 | `iconPosition` | `left`, `right`                                              |
+| `loading`      | `boolean`. A spinner replaces the icon, presses are ignored  |
 | `styles`       | overrides for `label`, `icon`, `rootPressed`, `rootDisabled` |
 | `disabled`     | boolean, also sets accessibility state                       |
 
 `style` is not accepted. Use `styles={{ root: … }}` so overrides go through the recipe.
+
+`loading` is for a press that starts work, such as a form submit. The button keeps its colours, which `disabled` does not, and a screen reader hears it as busy. It uses the platform spinner, so Button needs no extra package.
+
+```tsx
+<Button loading={saving} onPress={save}>
+  Save changes
+</Button>
+```
 
 ## Press feedback
 

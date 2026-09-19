@@ -1,0 +1,81 @@
+---
+title: Profile header
+description: Avatar, name, handle, bio, up to three stats, a primary action and an icon button.
+sidebar:
+  order: 11
+---
+
+```sh
+npx @eoria/cli add profile-header
+```
+
+The command also adds [Avatar](/components/avatar/), [Button](/components/button/), [IconButton](/components/icon-button/) and [Text](/components/text/).
+
+## Usage
+
+```tsx
+import { MoreHorizontal } from 'lucide-react-native'
+import { ProfileHeader } from '@/components/blocks/profile-header'
+
+<ProfileHeader
+  name="Ada Lovelace"
+  handle="ada"
+  bio="Writes about analytical engines and component libraries. London."
+  avatarUri="https://i.pravatar.cc/200?img=47"
+  stats={[
+    { label: 'Posts', value: '48' },
+    { label: 'Followers', value: '12.4k' },
+    { label: 'Following', value: '310' },
+  ]}
+  primaryAction={{
+    label: following ? 'Following' : 'Follow',
+    variant: following ? 'secondary' : 'default',
+    onPress: toggleFollow,
+  }}
+  secondaryAction={{ icon: <MoreHorizontal />, label: 'More actions', onPress: openMenu }}
+/>
+```
+
+## Props
+
+| Prop              | Type                     | Default           |
+| ----------------- | ------------------------ | ----------------- |
+| `name`            | string                   |                   |
+| `handle`          | string, without the `@`  |                   |
+| `bio`             | string                   |                   |
+| `avatarUri`       | string                   |                   |
+| `initials`        | string                   | taken from `name` |
+| `stats`           | `ProfileStat[]`          | `[]`              |
+| `primaryAction`   | `ProfilePrimaryAction`   |                   |
+| `secondaryAction` | `ProfileSecondaryAction` |                   |
+| `style`           | `StyleProp<ViewStyle>`   |                   |
+
+## Data
+
+```ts
+type ProfileStat = { label: string; value: string }
+
+type ProfilePrimaryAction = {
+  label: string
+  onPress: () => void
+  variant?: 'default' | 'secondary' | 'outline'
+}
+
+type ProfileSecondaryAction = {
+  icon: ReactElement // any element accepting `size` and `color`
+  label: string // read out by screen readers
+  onPress: () => void
+}
+```
+
+## Notes
+
+- This is a section. It has no `flex: 1`, no background and no padding, so put it at the top of your own `ScrollView` or pass it as the header of a `FlatList`.
+- The block shows the first three stats and ignores the rest. Format the numbers yourself, since "12.4k" and "12 400" are both right somewhere.
+- Each stat is one element for screen readers and reads as "48 Posts". The name has the `header` role. The avatar reads the name.
+- The follow state lives in your app. Flip `label` and `variant` from it, as the usage does.
+- Change first: make the stats pressable if they open lists in your app. Wrap each stat in a `Pressable` and add an `onPressStat` prop.
+
+## Source
+
+[`registry/blocks/profile-header.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/blocks/profile-header.tsx)

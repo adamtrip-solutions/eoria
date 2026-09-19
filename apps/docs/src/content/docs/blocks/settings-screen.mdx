@@ -1,0 +1,103 @@
+---
+title: Settings screen
+description: Grouped settings rows with links, switches and actions, a confirmed sign out and a version footer.
+sidebar:
+  order: 10
+---
+
+```sh
+npx @eoria/cli add settings-screen
+```
+
+The command also adds [Item](/components/item/), [Switch](/components/switch/), [AlertDialog](/components/alert-dialog/) and [Text](/components/text/).
+
+## Usage
+
+```tsx
+import { Bell, Globe, HelpCircle } from 'lucide-react-native'
+import { SettingsScreen, type SettingsSection } from '@/components/blocks/settings-screen'
+
+const [push, setPush] = useState(true)
+
+const sections: SettingsSection[] = [
+  {
+    id: 'general',
+    label: 'General',
+    rows: [
+      {
+        kind: 'link',
+        id: 'language',
+        title: 'Language',
+        icon: <Globe />,
+        value: 'English',
+        onPress: openLanguage,
+      },
+    ],
+  },
+  {
+    id: 'notifications',
+    label: 'Notifications',
+    footer: 'Notifications respect your Focus settings.',
+    rows: [
+      {
+        kind: 'switch',
+        id: 'push',
+        title: 'Push notifications',
+        description: 'Mentions, replies and follows',
+        icon: <Bell />,
+        value: push,
+        onValueChange: setPush,
+      },
+      { kind: 'action', id: 'help', title: 'Contact support', icon: <HelpCircle />, onPress: openSupport },
+    ],
+  },
+]
+
+<SettingsScreen title="Settings" version="2.4.1" sections={sections} onSignOut={signOut} />
+```
+
+## Props
+
+| Prop        | Type                   | Default |
+| ----------- | ---------------------- | ------- |
+| `sections`  | `SettingsSection[]`    |         |
+| `onSignOut` | `() => void`           |         |
+| `title`     | string                 |         |
+| `version`   | string                 |         |
+| `insetTop`  | boolean                | `true`  |
+| `style`     | `StyleProp<ViewStyle>` |         |
+
+## Data
+
+```ts
+type SettingsSection = {
+  id: string
+  label?: string
+  footer?: string
+  rows: SettingsRow[]
+}
+
+type SettingsRow =
+  | { kind: 'link'; value?: string; onPress: () => void }
+  | { kind: 'switch'; value: boolean; onValueChange: (value: boolean) => void }
+  | { kind: 'action'; destructive?: boolean; onPress: () => void }
+
+// Every row also takes:
+//   id: string
+//   title: string
+//   description?: string
+//   icon?: ReactElement   any element accepting `size` and `color`
+//   disabled?: boolean
+```
+
+## Notes
+
+- The block keeps no settings state. A switch row shows `value` and calls `onValueChange`, so the values live in your store.
+- "Sign out" opens an AlertDialog. `onSignOut` runs only after the user confirms. Cancel, a tap on the overlay and Android back all close the alert without calling it.
+- A `link` row is one button with a chevron. A `switch` row is a plain row, so the Switch stays its own element for screen readers and takes the row title as its label.
+- The root is a `ScrollView` that fills the screen, paints `background` and pads the bottom by the safe area. Under a navigation header pass `insetTop={false}` and leave `title` out, because the header already does both jobs.
+- Change first: the copy of the alert, and the sign out row if your app needs "Delete account" next to it. Add it as an `action` row with `destructive`.
+
+## Source
+
+[`registry/blocks/settings-screen.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/blocks/settings-screen.tsx)

@@ -159,13 +159,16 @@ followed ones are `allDependencies` and `allRegistryDependencies`. Each entry of
 ```sh
 npx @eoria/cli docs select
 npx @eoria/cli docs theming
+npx @eoria/cli docs sign-in
 npx @eoria/cli docs
 ```
 
 Prints the Markdown version of a docs page to stdout. `docs` tries a bare topic as a component
-first, so `select` fetches `/components/select.md`. If that page does not exist it tries a guide,
-so `theming` fetches `/start/theming.md`. A topic with a slash, such as `start/theming`, names
-the page outright. With no topic you get `/llms.txt`, the index of every page.
+first, so `select` fetches `/components/select.md`. If that page does not exist it tries the
+other sections in turn: `/start`, `/blocks`, `/guides` and `/agents`. So `theming` fetches
+`/start/theming.md` and `sign-in` fetches `/blocks/sign-in.md`. A topic with a slash, such as
+`start/theming`, names the page outright. With no topic you get `/llms.txt`, the index of every
+page.
 
 The docs URL is the registry URL without its trailing `/r`. A local registry folder has no docs
 site, so `docs` stops and asks for `--docs-url`, which takes a URL or the folder of a local docs

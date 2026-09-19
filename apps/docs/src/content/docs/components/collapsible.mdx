@@ -1,0 +1,57 @@
+---
+title: Collapsible
+description: One section that opens and closes, controlled or not, with the Accordion motion.
+category: Display
+sidebar:
+  order: 20.5
+---
+
+```sh
+npx @eoria/cli add collapsible
+```
+
+## Usage
+
+```tsx
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
+
+<Collapsible>
+  <CollapsibleTrigger>Order details</CollapsibleTrigger>
+  <CollapsibleContent>Three items, shipped to Lisbon on Friday.</CollapsibleContent>
+</Collapsible>
+
+<Collapsible open={open} onOpenChange={setOpen}>
+  <CollapsibleTrigger asChild>
+    <Button variant="ghost" size="sm">
+      {open ? 'Show less' : 'Show more'}
+    </Button>
+  </CollapsibleTrigger>
+  <CollapsibleContent>…</CollapsibleContent>
+</Collapsible>
+```
+
+## Props
+
+| Prop           | Values                                                                                                               | Default |
+| -------------- | -------------------------------------------------------------------------------------------------------------------- | ------- |
+| `open`         | boolean; controlled                                                                                                  |         |
+| `defaultOpen`  | boolean                                                                                                              | `false` |
+| `onOpenChange` | `(open: boolean) => void`                                                                                            |         |
+| `disabled`     | locks the trigger                                                                                                    | `false` |
+| `styles`       | override `root`, `trigger`, `triggerLabel`, `triggerPressed`, `triggerDisabled`, `chevron`, `content`, `contentText` |         |
+
+`CollapsibleTrigger` renders a 44pt row with the label and a chevron that turns over 150 ms. With `asChild` it renders nothing of its own and injects `onPress`, `disabled` and the `expanded` state into its single child. `CollapsibleContent` takes View props. A string child gets the muted `contentText` style.
+
+## Notes
+
+Use Collapsible for one section and [Accordion](/components/accordion/) for a set where opening one closes another.
+
+The trigger reports `expanded`. Content mounts only while open and fades in over 150 ms, and the Collapsible shifts with a layout transition. The file mirrors the approach of `accordion.tsx` instead of importing it, because the accordion keeps its timings private. Views below the Collapsible do not animate unless they also carry `layout={LinearTransition}`.
+
+## Source
+
+[`registry/ui/collapsible.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/collapsible.tsx)

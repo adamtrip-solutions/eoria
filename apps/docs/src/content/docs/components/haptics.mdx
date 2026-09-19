@@ -1,0 +1,56 @@
+---
+title: Haptics
+description: Haptic feedback by intent, as a function you call from any handler.
+category: Primitives
+sidebar:
+  order: 28
+---
+
+```sh
+npx @eoria/cli add haptics
+```
+
+Needs `expo-haptics`, a native module. Add it with `npx expo install expo-haptics` and rebuild the development build.
+
+## Usage
+
+```tsx
+import { haptic, withHaptic, setHapticsEnabled } from '@/components/ui/haptics'
+
+<Button onPress={withHaptic('light', save)}>Save</Button>
+
+<Switch checked={on} onCheckedChange={(next) => { haptic('selection'); setOn(next) }} />
+
+try {
+  await pay()
+  haptic('success')
+} catch {
+  haptic('error')
+}
+
+setHapticsEnabled(settings.haptics)
+```
+
+## API
+
+| Function                     | What it does                                               |
+| ---------------------------- | ---------------------------------------------------------- |
+| `haptic(kind)`               | Plays one haptic. `kind` defaults to `selection`.          |
+| `withHaptic(kind, handler?)` | Returns a handler that plays the haptic, then calls yours. |
+| `setHapticsEnabled(boolean)` | Turns every call into a no-op. Bind it to a user setting.  |
+
+| Kind                          | Use it for                                        |
+| ----------------------------- | ------------------------------------------------- |
+| `selection`                   | a value that changed, such as a chip or a stepper |
+| `light`, `medium`, `heavy`    | a press that did something                        |
+| `success`, `warning`, `error` | the result of an action                           |
+
+## Notes
+
+This is a file with three functions and no component. Button, Switch and the other controls do not call it, so an app that never vibrates does not install expo-haptics. Add the call where the feedback means something. A haptic on every tap reads as noise.
+
+`haptic()` never throws and never waits. Devices without a haptic engine, low power mode and the web do nothing. iOS also mutes haptics while the microphone is recording.
+
+## Source
+
+[`registry/ui/haptics.ts`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/haptics.ts)

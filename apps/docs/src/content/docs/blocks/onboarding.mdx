@@ -1,0 +1,76 @@
+---
+title: Onboarding
+description: Full screen carousel of slides with page dots, a Continue button that ends in Get started, and Skip.
+sidebar:
+  order: 12
+---
+
+```sh
+npx @eoria/cli add onboarding
+```
+
+The command also adds [Carousel](/components/carousel/), [Button](/components/button/) and [Text](/components/text/).
+
+## Usage
+
+```tsx
+import { Bell, PiggyBank, ShieldCheck } from 'lucide-react-native'
+import { Onboarding, type OnboardingSlide } from '@/components/blocks/onboarding'
+
+const slides: OnboardingSlide[] = [
+  {
+    id: 'track',
+    icon: <PiggyBank />,
+    title: 'See where it goes',
+    body: 'Every payment lands in a category, so the month adds up without a spreadsheet.',
+  },
+  {
+    id: 'alerts',
+    icon: <Bell />,
+    title: 'Hear about it first',
+    body: 'A notification arrives the moment your card is used, at home or abroad.',
+  },
+  {
+    id: 'safe',
+    icon: <ShieldCheck />,
+    title: 'Freeze it in one tap',
+    body: 'Lost your card? Freeze it from the app and unfreeze it when it turns up.',
+  },
+]
+
+<Onboarding slides={slides} onDone={finish} />
+```
+
+## Props
+
+| Prop     | Type                   | Default  |
+| -------- | ---------------------- | -------- |
+| `slides` | `OnboardingSlide[]`    |          |
+| `onDone` | `() => void`           |          |
+| `onSkip` | `() => void`           | `onDone` |
+| `style`  | `StyleProp<ViewStyle>` |          |
+
+## Data
+
+```ts
+type OnboardingSlide = {
+  id: string
+  icon: ReactElement // any element accepting `size` and `color`
+  title: string
+  body: string
+}
+```
+
+## Notes
+
+- The block controls the Carousel through `index` and `onIndexChange`. A swipe, a tap on a dot and Continue all end in the same state, so the button label always matches the page.
+- Continue moves one slide. On the last slide it reads "Get started" and calls `onDone`. Skip is there on every slide but the last and calls `onSkip`, or `onDone` when you leave `onSkip` out.
+- The block does not remember that the user finished. Write that flag to storage in `onDone` and check it before you show the screen.
+- The root fills the screen, paints `background` and pads the top and bottom by the safe area. Show it without a navigation header.
+- The icon sits in a 96pt well and is hidden from screen readers. The slide title has the `header` role, and the dots are one adjustable element that reads "2 of 3".
+- Carousel does not handle right-to-left layouts yet, and this block inherits that.
+- Change first: swap the icon well for an illustration. Replace the `well` View with an `Image` and drop the `cloneElement` call.
+
+## Source
+
+[`registry/blocks/onboarding.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/blocks/onboarding.tsx)

@@ -78,7 +78,7 @@ export const inputOtpRecipe = defineSlotRecipe((theme) => ({
       },
     },
     invalid: {
-      true: { cell: { borderColor: theme.colors.destructive } },
+      true: { cell: { borderColor: theme.colors.destructiveText } },
       false: {},
     },
     disabled: {

@@ -1,0 +1,113 @@
+---
+title: Liquid glass
+description: A glass surface on iOS 26 that falls back to an eoria surface everywhere else.
+sidebar:
+  order: 4
+---
+
+iOS 26 draws its bars and floating controls in liquid glass. `expo-glass-effect` exposes the same material as a view. Older iOS versions, Android and the web do not have it, so the component needs a fallback that still looks like part of your theme.
+
+```sh
+npx expo install expo-glass-effect
+```
+
+## A surface with a fallback
+
+The component below is a recipe like any other. On a device with liquid glass it renders `GlassView`. Everywhere else it renders a `View` with the `elevated` colour, a hairline and the preset's shadow, which is what a Popover or a Sheet already looks like.
+
+```tsx
+// components/glass-surface.tsx
+import { View, type ViewProps } from 'react-native'
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
+import { defineSlotRecipe, useRecipe, type RecipeVariants, type SlotOverrides } from '@eoria/core'
+
+export const glassSurfaceRecipe = defineSlotRecipe((theme) => ({
+  slots: {
+    /** Shape and padding, shared by both renderings. */
+    root: {
+      borderRadius: theme.radius.card,
+      padding: theme.space[4],
+      overflow: 'hidden',
+    },
+    /** Only without glass. Glass brings its own fill, edge and shadow. */
+    fallback: {
+      backgroundColor: theme.colors.elevated,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      shadowColor: '#000',
+      shadowOpacity: theme.shadow.opacity,
+      shadowRadius: theme.shadow.radius,
+      shadowOffset: { width: 0, height: theme.shadow.offset },
+      elevation: 6,
+    },
+  },
+  variants: {
+    rounded: {
+      card: {},
+      full: { root: { borderRadius: theme.radius.full } },
+    },
+  },
+  defaultVariants: { rounded: 'card' },
+}))
+
+// The answer cannot change while the app runs, so ask once.
+const glass = isLiquidGlassAvailable()
+
+export type GlassSurfaceProps = ViewProps &
+  RecipeVariants<typeof glassSurfaceRecipe> & {
+    /** Reacts to touch like a system control. Set it for buttons and bars. */
+    interactive?: boolean
+    tintColor?: string
+    styles?: SlotOverrides<'fallback'>
+  }
+
+export function GlassSurface({
+  rounded,
+  interactive = false,
+  tintColor,
+  styles,
+  style,
+  ...rest
+}: GlassSurfaceProps) {
+  const s = useRecipe(glassSurfaceRecipe, { rounded }, styles)
+  if (glass) {
+    return (
+      <GlassView
+        glassEffectStyle="regular"
+        isInteractive={interactive}
+        tintColor={tintColor}
+        style={[s.root, style]}
+        {...rest}
+      />
+    )
+  }
+  return <View style={[s.root, s.fallback, style]} {...rest} />
+}
+```
+
+`overflow: 'hidden'` clips the shadow on iOS. When the fallback needs its shadow, move the clip to an inner `View` or drop it.
+
+## Where it fits
+
+Glass is for a thin layer that floats over content, such as a tab bar, a floating action row or a small player. It needs something behind it to bend, so it adds nothing over a flat background.
+
+```tsx
+<View style={styles.floatingBar}>
+  <GlassSurface rounded="full" interactive>
+    <HStack gap={2}>
+      <IconButton variant="ghost" icon={<Heart />} accessibilityLabel="Like" />
+      <IconButton variant="ghost" icon={<Share />} accessibilityLabel="Share" />
+    </HStack>
+  </GlassSurface>
+</View>
+```
+
+Keep cards, sheets and form fields on the normal surfaces. Text over glass changes contrast with whatever scrolls underneath, so keep it to icons and short labels, and use `foreground` for them.
+
+## Notes
+
+- `GlassView` already falls back to a plain `View` on unsupported platforms. That view has no fill, which is why this component draws its own fallback.
+- `isLiquidGlassAvailable()` is false on iOS 26 when the app was built with an older Xcode. Test the fallback on purpose. It is what most of your users see for now.
+- People who turn on Reduce Transparency get an opaque material from the system. You do not need to handle that.
+- Put several glass views that sit close together inside `GlassContainer`, so they merge the way system controls do.
+- Native tabs and headers from Expo Router pick up glass on their own. Reach for this component only for custom floating UI.

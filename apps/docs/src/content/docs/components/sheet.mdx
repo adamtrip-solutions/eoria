@@ -1,0 +1,89 @@
+---
+title: Sheet
+description: Draggable bottom sheet with snap points, built on @gorhom/bottom-sheet.
+category: Overlays
+sidebar:
+  order: 21.5
+---
+
+```sh
+npx @eoria/cli add sheet
+```
+
+Needs `@gorhom/bottom-sheet`, which the CLI installs. It runs on Reanimated and Gesture Handler, so there is nothing native to rebuild if you already use eoria. Wrap the app once, inside `GestureHandlerRootView`:
+
+```tsx
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
+
+<GestureHandlerRootView style={{ flex: 1 }}>
+  <BottomSheetModalProvider>{/* app */}</BottomSheetModalProvider>
+</GestureHandlerRootView>
+```
+
+## Usage
+
+```tsx
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
+
+<Sheet>
+  <SheetTrigger asChild>
+    <Button variant="secondary">Share</Button>
+  </SheetTrigger>
+  <SheetContent>
+    <SheetHeader>
+      <SheetTitle>Share trip</SheetTitle>
+      <SheetDescription>Anyone with the link can see the route.</SheetDescription>
+    </SheetHeader>
+    <SheetFooter>
+      <SheetClose asChild>
+        <Button width="full">Copy link</Button>
+      </SheetClose>
+    </SheetFooter>
+  </SheetContent>
+</Sheet>
+```
+
+A long list that snaps to half and full height:
+
+```tsx
+<Sheet inset="flush">
+  <SheetContent scroll snapPoints={['50%', '92%']} enableDynamicSizing={false}>
+    {rows}
+  </SheetContent>
+</Sheet>
+```
+
+## Props
+
+| Part                         | Prop                                   | Values                                                                      | Default  |
+| ---------------------------- | -------------------------------------- | --------------------------------------------------------------------------- | -------- |
+| `Sheet`                      | `open`, `defaultOpen`, `onOpenChange`  | controlled or uncontrolled                                                  | closed   |
+| `Sheet`                      | `inset`                                | `padded`, `flush`                                                           | `padded` |
+| `Sheet`                      | `styles`                               | override `background`, `handle`, `header`, `title`, `description`, `footer` |          |
+| `SheetContent`               | `dismissable`                          | drag down or tap the backdrop to close                                      | `true`   |
+| `SheetContent`               | `scroll`                               | wraps the content in the library's scroll view                              | `false`  |
+| `SheetContent`               | `snapPoints`, `enableDynamicSizing`, … | every other `BottomSheetModal` prop passes through                          |          |
+| `SheetTrigger`, `SheetClose` | `asChild`                              | inject `onPress` into the child                                             | `false`  |
+
+## Notes
+
+Dialog with `placement="bottom"` and Sheet share a frame, a grabber and a title style. Use Dialog for a short question with two buttons. Use Sheet when the content scrolls, snaps to heights, or the user expects to drag it.
+
+Without `snapPoints` the sheet sizes to its content. The library springs by default. Sheet replaces that with a 220 ms ease-out so it moves like the rest of the kit, and Reanimated skips the animation under the OS reduce motion setting.
+
+A text field inside a sheet should be the library's `BottomSheetTextInput`, or the keyboard covers it. Pass `keyboardBehavior="interactive"` to `SheetContent` to lift the sheet with the keyboard.
+
+The library portals the sheet out of your tree. React context from between the provider and the sheet does not reach its children, so pass values as props or provide the context again inside `SheetContent`.
+
+## Source
+
+[`registry/ui/sheet.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/sheet.tsx)

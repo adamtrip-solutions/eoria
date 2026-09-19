@@ -492,6 +492,559 @@
           "target": "components/ui/combobox.tsx"
         }
       ]
+    },
+    {
+      "name": "sheet",
+      "type": "registry:ui",
+      "title": "Sheet",
+      "description": "Draggable bottom sheet with snap points, on @gorhom/bottom-sheet.",
+      "dependencies": [
+        "@eoria/core",
+        "@gorhom/bottom-sheet",
+        "react-native-reanimated",
+        "react-native-gesture-handler"
+      ],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/sheet.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/sheet.tsx"
+        }
+      ]
+    },
+    {
+      "name": "date-picker",
+      "type": "registry:ui",
+      "title": "Date Picker",
+      "description": "A field that opens the platform date or time picker.",
+      "dependencies": [
+        "@eoria/core",
+        "react-native-unistyles",
+        "@react-native-community/datetimepicker"
+      ],
+      "registryDependencies": ["button", "dialog", "text"],
+      "files": [
+        {
+          "path": "registry/ui/date-picker.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/date-picker.tsx"
+        }
+      ]
+    },
+    {
+      "name": "image",
+      "type": "registry:ui",
+      "title": "Image",
+      "description": "expo-image in a frame with a ratio, a fade and a fallback.",
+      "dependencies": ["@eoria/core", "expo-image"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/image.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/image.tsx"
+        }
+      ]
+    },
+    {
+      "name": "keyboard",
+      "type": "registry:ui",
+      "title": "Keyboard",
+      "description": "Keyboard-aware scroll view, sticky footer and toolbar on react-native-keyboard-controller.",
+      "dependencies": ["@eoria/core", "react-native-unistyles", "react-native-keyboard-controller"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/keyboard.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/keyboard.tsx"
+        }
+      ]
+    },
+    {
+      "name": "haptics",
+      "type": "registry:ui",
+      "title": "Haptics",
+      "description": "Haptic feedback by intent, as functions to call from handlers.",
+      "dependencies": ["expo-haptics"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/haptics.ts",
+          "type": "registry:ui",
+          "target": "components/ui/haptics.ts"
+        }
+      ]
+    },
+    {
+      "name": "icon-button",
+      "type": "registry:ui",
+      "title": "IconButton",
+      "description": "Round icon-only button on the Button recipe. The type requires a label.",
+      "dependencies": ["@eoria/core", "react-native-unistyles"],
+      "registryDependencies": ["button"],
+      "files": [
+        {
+          "path": "registry/ui/icon-button.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/icon-button.tsx"
+        }
+      ]
+    },
+    {
+      "name": "alert-dialog",
+      "type": "registry:ui",
+      "title": "AlertDialog",
+      "description": "Centred dialog that waits for an answer. Extends the Dialog recipe.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["dialog", "button", "text"],
+      "files": [
+        {
+          "path": "registry/ui/alert-dialog.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/alert-dialog.tsx"
+        }
+      ]
+    },
+    {
+      "name": "action-sheet",
+      "type": "registry:ui",
+      "title": "ActionSheet",
+      "description": "Bottom sheet of actions with a separate Cancel block. Extends the Dialog recipe.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["dialog", "text"],
+      "files": [
+        {
+          "path": "registry/ui/action-sheet.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/action-sheet.tsx"
+        }
+      ]
+    },
+    {
+      "name": "input-group",
+      "type": "registry:ui",
+      "title": "InputGroup",
+      "description": "The Input frame around a text field with icons, text and buttons inside it.",
+      "dependencies": ["@eoria/core", "react-native-unistyles"],
+      "registryDependencies": ["input", "text"],
+      "files": [
+        {
+          "path": "registry/ui/input-group.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/input-group.tsx"
+        }
+      ]
+    },
+    {
+      "name": "password-input",
+      "type": "registry:ui",
+      "title": "PasswordInput",
+      "description": "Secure field with a reveal toggle, built on InputGroup.",
+      "dependencies": ["lucide-react-native"],
+      "registryDependencies": ["input-group"],
+      "files": [
+        {
+          "path": "registry/ui/password-input.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/password-input.tsx"
+        }
+      ]
+    },
+    {
+      "name": "search-bar",
+      "type": "registry:ui",
+      "title": "SearchBar",
+      "description": "Search field with a clear button and an optional Cancel that appears on focus.",
+      "dependencies": [
+        "@eoria/core",
+        "react-native-reanimated",
+        "react-native-worklets",
+        "react-native-unistyles",
+        "lucide-react-native"
+      ],
+      "registryDependencies": ["input-group", "button"],
+      "files": [
+        {
+          "path": "registry/ui/search-bar.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/search-bar.tsx"
+        }
+      ]
+    },
+    {
+      "name": "chip",
+      "type": "registry:ui",
+      "title": "Chip",
+      "description": "Pressable pill with selected state, icon and close target, plus a single or multiple choice group.",
+      "dependencies": [
+        "@eoria/core",
+        "react-native-reanimated",
+        "react-native-worklets",
+        "lucide-react-native"
+      ],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/chip.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/chip.tsx"
+        }
+      ]
+    },
+    {
+      "name": "empty",
+      "type": "registry:ui",
+      "title": "Empty",
+      "description": "Centred empty state with media, title, description and actions.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/empty.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/empty.tsx"
+        }
+      ]
+    },
+    {
+      "name": "item",
+      "type": "registry:ui",
+      "title": "Item",
+      "description": "List row with media, title, description and trailing slot, plus a contained group with inset separators.",
+      "dependencies": ["@eoria/core", "lucide-react-native"],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/item.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/item.tsx"
+        }
+      ]
+    },
+    {
+      "name": "swipeable",
+      "type": "registry:ui",
+      "title": "Swipeable",
+      "description": "Row that slides to show leading and trailing actions, also offered to screen readers.",
+      "dependencies": [
+        "@eoria/core",
+        "react-native-reanimated",
+        "react-native-worklets",
+        "react-native-gesture-handler"
+      ],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/swipeable.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/swipeable.tsx"
+        }
+      ]
+    },
+    {
+      "name": "collapsible",
+      "type": "registry:ui",
+      "title": "Collapsible",
+      "description": "One section that opens and closes, controlled or not.",
+      "dependencies": ["@eoria/core", "react-native-reanimated", "react-native-worklets"],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/collapsible.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/collapsible.tsx"
+        }
+      ]
+    },
+    {
+      "name": "toggle-group",
+      "type": "registry:ui",
+      "title": "ToggleGroup",
+      "description": "Two-state Toggle button and a joined group for one choice or several.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/toggle-group.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/toggle-group.tsx"
+        }
+      ]
+    },
+    {
+      "name": "stepper",
+      "type": "registry:ui",
+      "title": "Stepper",
+      "description": "Number input as minus, value and plus, with hold-to-repeat and screen-reader adjust actions.",
+      "dependencies": ["@eoria/core"],
+      "registryDependencies": ["text"],
+      "files": [
+        {
+          "path": "registry/ui/stepper.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/stepper.tsx"
+        }
+      ]
+    },
+    {
+      "name": "rating",
+      "type": "registry:ui",
+      "title": "Rating",
+      "description": "Star rating with tap and drag to set, partial stars and a read-only mode.",
+      "dependencies": [
+        "@eoria/core",
+        "react-native-reanimated",
+        "react-native-worklets",
+        "react-native-gesture-handler",
+        "react-native-svg"
+      ],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/rating.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/rating.tsx"
+        }
+      ]
+    },
+    {
+      "name": "carousel",
+      "type": "registry:ui",
+      "title": "Carousel",
+      "description": "Horizontal pager with snapping, peeking items and dots that follow the scroll.",
+      "dependencies": ["@eoria/core", "react-native-reanimated", "react-native-worklets"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/carousel.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/carousel.tsx"
+        }
+      ]
+    },
+    {
+      "name": "sign-in",
+      "type": "registry:block",
+      "title": "Sign in",
+      "description": "Email and password screen with validation, a busy state, an error banner and optional Apple and Google buttons.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "button",
+        "field",
+        "input",
+        "keyboard",
+        "password-input",
+        "separator",
+        "stack",
+        "text"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/sign-in.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/sign-in.tsx"
+        }
+      ]
+    },
+    {
+      "name": "sign-up",
+      "type": "registry:block",
+      "title": "Sign up",
+      "description": "Account creation screen with name, email, password and a terms checkbox that must be ticked.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "button",
+        "checkbox",
+        "field",
+        "input",
+        "keyboard",
+        "label",
+        "password-input",
+        "separator",
+        "stack",
+        "text"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/sign-up.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/sign-up.tsx"
+        }
+      ]
+    },
+    {
+      "name": "verify-otp",
+      "type": "registry:block",
+      "title": "Verify OTP",
+      "description": "Six digit code screen that submits on the last digit and has a resend action behind a countdown.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "button",
+        "field",
+        "input-otp",
+        "keyboard",
+        "stack",
+        "text"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/verify-otp.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/verify-otp.tsx"
+        }
+      ]
+    },
+    {
+      "name": "forgot-password",
+      "type": "registry:block",
+      "title": "Forgot password",
+      "description": "Email form that asks for a reset link, then a \"Check your inbox\" confirmation with a way back.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "button",
+        "empty",
+        "field",
+        "input",
+        "keyboard",
+        "stack",
+        "text"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/forgot-password.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/forgot-password.tsx"
+        }
+      ]
+    },
+    {
+      "name": "reset-password",
+      "type": "registry:block",
+      "title": "Reset password",
+      "description": "New password and confirmation fields that must match, for the screen a reset link opens.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "button",
+        "field",
+        "keyboard",
+        "password-input",
+        "stack",
+        "text"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/reset-password.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/reset-password.tsx"
+        }
+      ]
+    },
+    {
+      "name": "settings-screen",
+      "type": "registry:block",
+      "title": "Settings screen",
+      "description": "Grouped settings rows with links, switches and actions, a confirmed sign out and a version footer.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": ["alert-dialog", "item", "switch", "text"],
+      "files": [
+        {
+          "path": "registry/blocks/settings-screen.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/settings-screen.tsx"
+        }
+      ]
+    },
+    {
+      "name": "profile-header",
+      "type": "registry:block",
+      "title": "Profile header",
+      "description": "Avatar, name, handle, bio, up to three stats, a primary action and an icon button.",
+      "dependencies": ["@eoria/core", "react-native-unistyles"],
+      "registryDependencies": ["avatar", "button", "icon-button", "text"],
+      "files": [
+        {
+          "path": "registry/blocks/profile-header.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/profile-header.tsx"
+        }
+      ]
+    },
+    {
+      "name": "onboarding",
+      "type": "registry:block",
+      "title": "Onboarding",
+      "description": "Full screen carousel of slides with page dots, Continue that ends in Get started, and Skip.",
+      "dependencies": ["@eoria/core", "react-native-unistyles"],
+      "registryDependencies": ["button", "carousel", "text"],
+      "files": [
+        {
+          "path": "registry/blocks/onboarding.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/onboarding.tsx"
+        }
+      ]
+    },
+    {
+      "name": "transaction-list",
+      "type": "registry:block",
+      "title": "Transaction list",
+      "description": "Transactions grouped by day in a SectionList, with signed currency amounts and an empty state.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": ["avatar", "empty", "item", "separator", "text"],
+      "files": [
+        {
+          "path": "registry/blocks/transaction-list.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/transaction-list.tsx"
+        }
+      ]
+    },
+    {
+      "name": "checkout-summary",
+      "type": "registry:block",
+      "title": "Checkout summary",
+      "description": "Order lines, totals, a promo code field and a Pay button with a loading state.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": ["alert", "button", "card", "input-group", "separator", "text"],
+      "files": [
+        {
+          "path": "registry/blocks/checkout-summary.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/checkout-summary.tsx"
+        }
+      ]
+    },
+    {
+      "name": "inbox",
+      "type": "registry:block",
+      "title": "Inbox",
+      "description": "Searchable conversations with swipe to archive or delete, unread badges and two empty states.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "avatar",
+        "badge",
+        "button",
+        "empty",
+        "item",
+        "search-bar",
+        "separator",
+        "swipeable",
+        "text"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/inbox.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/inbox.tsx"
+        }
+      ]
     }
   ]
 }

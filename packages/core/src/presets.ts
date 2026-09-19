@@ -8,9 +8,12 @@ import type { EoriaColors, EoriaTheme, PlatformFont } from './theme'
  * `zinc` and `moss` use fonts the platform ships. The others name a family the app has to
  * embed. The Fonts section of the theming guide shows how.
  */
+/** A palette. `destructiveText` may be left out and then follows `destructive`. */
+export type PresetColors = Omit<EoriaColors, 'destructiveText'> & { destructiveText?: string }
+
 export type Preset = Omit<EoriaTheme, 'colors' | 'space' | 'fontSize' | 'lineHeight'> & {
-  light: EoriaColors
-  dark: EoriaColors
+  light: PresetColors
+  dark: PresetColors
 }
 
 /**
@@ -40,6 +43,7 @@ const zinc: Preset = {
     accentForeground: '#171717',
     destructive: '#dc2626',
     destructiveForeground: '#fafafa',
+    destructiveText: '#c51f1f',
     border: '#e5e5e5',
     input: '#e5e5e5',
     ring: '#a1a1a1',
@@ -59,6 +63,7 @@ const zinc: Preset = {
     accentForeground: '#fafafa',
     destructive: '#7f1d1d',
     destructiveForeground: '#fafafa',
+    destructiveText: '#f87171',
     border: '#262626',
     input: '#262626',
     ring: '#525252',
@@ -88,6 +93,7 @@ const moss: Preset = {
     accentForeground: '#1f4a2b',
     destructive: '#b93a2b',
     destructiveForeground: '#fff5f3',
+    destructiveText: '#ad3526',
     border: '#e0dacd',
     input: '#e0dacd',
     ring: '#2f6b3f',
@@ -107,6 +113,7 @@ const moss: Preset = {
     accentForeground: '#d7f0dc',
     destructive: '#8a2c22',
     destructiveForeground: '#fff5f3',
+    destructiveText: '#f08c7c',
     border: '#2c2922',
     input: '#2c2922',
     ring: '#7fc48f',
@@ -138,6 +145,7 @@ const cobalt: Preset = {
     accentForeground: '#1e3a8a',
     destructive: '#dc2626',
     destructiveForeground: '#fff5f5',
+    destructiveText: '#c51f1f',
     border: '#cfd8e3',
     input: '#b7c3d3',
     ring: '#1d4ed8',
@@ -157,6 +165,7 @@ const cobalt: Preset = {
     accentForeground: '#dbe6ff',
     destructive: '#991b1b',
     destructiveForeground: '#fff5f5',
+    destructiveText: '#f87171',
     border: '#243554',
     input: '#34496f',
     ring: '#60a5fa',
@@ -189,6 +198,7 @@ const iris: Preset = {
     accentForeground: '#352fa8',
     destructive: '#d92d20',
     destructiveForeground: '#ffffff',
+    destructiveText: '#c4281c',
     border: '#e2e5eb',
     input: '#d3d8e2',
     ring: '#4a44d4',
@@ -208,6 +218,7 @@ const iris: Preset = {
     accentForeground: '#d6d5fd',
     destructive: '#b42318',
     destructiveForeground: '#ffffff',
+    destructiveText: '#f97066',
     border: '#262933',
     input: '#343846',
     ring: '#8985f2',
@@ -240,6 +251,7 @@ const tide: Preset = {
     accentForeground: '#07474a',
     destructive: '#c8372d',
     destructiveForeground: '#fff6f5',
+    destructiveText: '#b53027',
     border: '#cfdddd',
     input: '#c3d4d4',
     ring: '#0a6468',
@@ -259,6 +271,7 @@ const tide: Preset = {
     accentForeground: '#c8f0ec',
     destructive: '#9b2c24',
     destructiveForeground: '#fff6f5',
+    destructiveText: '#f4877d',
     border: '#1a2e31',
     input: '#2a484c',
     ring: '#6ad1c8',
@@ -291,6 +304,7 @@ const plum: Preset = {
     accentForeground: '#5a2348',
     destructive: '#c4321f',
     destructiveForeground: '#fff6f3',
+    destructiveText: '#b82e1c',
     border: '#e2dedb',
     input: '#e2dedb',
     ring: '#5a2348',
@@ -310,6 +324,7 @@ const plum: Preset = {
     accentForeground: '#f1d9e9',
     destructive: '#a12c1c',
     destructiveForeground: '#fff6f3',
+    destructiveText: '#f2846f',
     border: '#2b2327',
     input: '#2b2327',
     ring: '#e0b3d3',

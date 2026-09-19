@@ -1,0 +1,71 @@
+---
+title: Blocks
+description: Whole screens and sections built from eoria components. Copy one in, then change it.
+sidebar:
+  order: 0
+---
+
+A block is a screen or a large section made of the components on this site. You add it the same way you add a component, and it becomes a file in your app.
+
+```sh
+npx @eoria/cli add sign-in
+```
+
+The CLI also adds every component the block uses, and tells you which packages to install. Blocks are free, like the components.
+
+## Where blocks land
+
+Components go to your components directory, `src/components/ui` by default. Blocks go to the `blocks` folder next to it.
+
+```
+src/components/
+  ui/        button.tsx, field.tsx, input.tsx ...
+  blocks/    sign-in.tsx
+```
+
+Set `blocks` in `eoria.json` to use another folder.
+
+## How a block is built
+
+Every block follows the same rules, so you know what you get before you open the file.
+
+- It is one file with one named export and a typed props object.
+- It imports nothing but React Native, Unistyles, `@eoria/core`, lucide icons and eoria components.
+- It has no navigation and no network code. Whatever leaves the screen is a callback prop such as `onSubmit` or `onSignOut`, so the block works with Expo Router, React Navigation or anything else.
+- A callback may return a promise. The block shows a loading state until it settles and shows the error message when it rejects.
+- Data comes in through props. Lists that can grow use `FlatList` or `SectionList`.
+- Layout uses theme tokens only, so a block follows your preset, your fonts and dark mode.
+- A block that fills the screen pads for the status bar. Pass `insetTop={false}` when it sits under a navigation header, which already covers that space.
+- The copy is plain English inside the file. Edit it or move it to your translation files.
+
+## Use one in a route
+
+A block is a component. A route renders it and wires the callbacks.
+
+```tsx
+// app/sign-in.tsx
+import { router } from 'expo-router'
+import { SignIn } from '@/components/blocks/sign-in'
+import { signIn } from '@/lib/auth'
+
+export default function SignInRoute() {
+  return (
+    <SignIn
+      onSubmit={async ({ email, password }) => {
+        await signIn(email, password)
+        router.replace('/')
+      }}
+      onForgotPassword={() => router.push('/forgot-password')}
+      onSignUp={() => router.push('/sign-up')}
+    />
+  )
+}
+```
+
+## Forms
+
+The auth blocks validate with plain state and no form library, so they add no dependency. When a form grows, move it to a form library. [Forms](/guides/forms/) shows react-hook-form and TanStack Form with the same fields. The file is yours, and the fields already take `value`, `onChangeText` and an `invalid` flag.
+
+## Updating
+
+A block is a starting point. Once you have changed it, `eoria diff sign-in` shows how the registry copy differs from yours. `eoria add sign-in` skips a file you edited unless you pass `--overwrite`.

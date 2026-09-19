@@ -74,7 +74,7 @@ export const dropdownMenuRecipe = defineSlotRecipe((theme) => ({
       lineHeight: theme.lineHeight.md,
       color: theme.colors.foreground,
     },
-    itemLabelDestructive: { color: theme.colors.destructive },
+    itemLabelDestructive: { color: theme.colors.destructiveText },
     itemDescription: {
       fontSize: theme.fontSize.sm,
       lineHeight: theme.lineHeight.sm,
@@ -82,7 +82,7 @@ export const dropdownMenuRecipe = defineSlotRecipe((theme) => ({
     },
     /** Read by the icon adapter: `width` becomes `size`, `color` becomes `color`. */
     icon: { width: 16, height: 16, color: theme.colors.mutedForeground },
-    iconDestructive: { color: theme.colors.destructive },
+    iconDestructive: { color: theme.colors.destructiveText },
     label: {
       paddingHorizontal: theme.space[3],
       paddingVertical: theme.space[2],

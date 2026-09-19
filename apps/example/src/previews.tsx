@@ -80,6 +80,11 @@ import { Text } from '@/components/ui/text'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toast'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { actionsPreviews } from '@/previews/actions'
+import { appBlockPreviews } from '@/previews/blocks-app'
+import { authBlockPreviews } from '@/previews/blocks-auth'
+import { listsPreviews } from '@/previews/lists'
+import { nativePreviews } from '@/previews/native'
 
 const faq = [
   ['shipping', 'How long does shipping take?', 'Two to five business days in most regions.'],
@@ -130,6 +135,9 @@ const countries = [
 ]
 
 export const previews: Record<string, () => ReactNode> = {
+  ...actionsPreviews,
+  ...listsPreviews,
+  ...nativePreviews,
   accordion: () => (
     <Accordion type="multiple" variant="contained" defaultValue={['shipping']}>
       {faq.map(([value, q, a]) => (
@@ -561,4 +569,10 @@ export const previews: Record<string, () => ReactNode> = {
       <TooltipContent>Shown while pressed</TooltipContent>
     </Tooltip>
   ),
+}
+
+/** Blocks, keyed by registry name. The preview route renders these full screen. */
+export const blockPreviews: Record<string, () => ReactNode> = {
+  ...authBlockPreviews,
+  ...appBlockPreviews,
 }

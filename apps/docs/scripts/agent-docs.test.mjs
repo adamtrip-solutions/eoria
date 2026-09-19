@@ -107,7 +107,11 @@ test('every repository page converts without losing its fenced examples', async 
   const registry = JSON.parse(
     await readFile(new URL('../../../registry/registry.json', import.meta.url), 'utf8'),
   )
-  for (const item of registry.items) assert.ok(allIds.has(`components/${item.name}`), item.name)
+  // Blocks are documented under blocks/, every other item under components/.
+  for (const item of registry.items) {
+    const section = item.type === 'registry:block' ? 'blocks' : 'components'
+    assert.ok(allIds.has(`${section}/${item.name}`), item.name)
+  }
   for (const path of paths) {
     const source = await readFile(new URL(path, base), 'utf8')
     const body = source.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')
@@ -138,6 +142,6 @@ test('the index links every supplied page once, plus the distributed skill and r
 })
 
 test('the index rejects pages the sidebar would not show', () => {
-  const entries = [{ id: 'guides/x', data: { title: 'x', description: 'd' } }]
+  const entries = [{ id: 'misc/x', data: { title: 'x', description: 'd' } }]
   assert.throws(() => renderAgentIndex(entries, site), /outside a known section/)
 })

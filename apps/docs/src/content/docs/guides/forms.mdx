@@ -1,0 +1,256 @@
+---
+title: Forms
+description: Wire eoria fields to react-hook-form or TanStack Form, with zod for the rules.
+sidebar:
+  order: 1
+---
+
+eoria ships no form library. `Field` handles the label, the hint, the error and the accessibility links, and every control takes a value and a change handler. That is all a form library needs, so you pick the one you like.
+
+Both examples below build the same sign-up form from the same zod schema.
+
+```ts
+// lib/sign-up-schema.ts
+import { z } from 'zod'
+
+export const signUpSchema = z.object({
+  name: z.string().min(1, 'Enter your name.'),
+  email: z.email('Enter a valid email address.'),
+  password: z.string().min(8, 'Use at least 8 characters.'),
+  terms: z.literal(true, { error: 'Accept the terms to continue.' }),
+})
+
+export type SignUpValues = z.input<typeof signUpSchema>
+```
+
+## What every control needs
+
+| Control                   | Value     | Change handler    | Blur     |
+| ------------------------- | --------- | ----------------- | -------- |
+| Input, Textarea           | `value`   | `onChangeText`    | `onBlur` |
+| PasswordInput, InputGroup | `value`   | `onChangeText`    | `onBlur` |
+| Checkbox, Switch          | `checked` | `onCheckedChange` | none     |
+| Select                    | `value`   | `onValueChange`   | none     |
+| DatePicker, Slider        | `value`   | `onValueChange`   | none     |
+
+Set `invalid` on `Field`, not on the control. `FieldControl` passes it down, and `FieldError` renders only while the field is invalid and has a message.
+
+## react-hook-form
+
+```sh
+npm install react-hook-form @hookform/resolvers zod
+```
+
+React Native inputs are not DOM inputs, so use `Controller` instead of `register`. A small wrapper keeps the form readable.
+
+```tsx
+// components/form-field.tsx
+import type { ReactElement } from 'react'
+import {
+  Controller,
+  type Control,
+  type ControllerRenderProps,
+  type FieldPath,
+  type FieldValues,
+} from 'react-hook-form'
+import { Field, FieldControl, FieldError, FieldLabel } from '@/components/ui/field'
+
+type Props<T extends FieldValues, N extends FieldPath<T>> = {
+  control: Control<T>
+  name: N
+  label: string
+  children: (field: ControllerRenderProps<T, N>) => ReactElement
+}
+
+export function FormField<T extends FieldValues, N extends FieldPath<T>>({
+  control,
+  name,
+  label,
+  children,
+}: Props<T, N>) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <Field invalid={fieldState.invalid}>
+          <FieldLabel>{label}</FieldLabel>
+          <FieldControl>{children(field)}</FieldControl>
+          <FieldError>{fieldState.error?.message}</FieldError>
+        </Field>
+      )}
+    />
+  )
+}
+```
+
+```tsx
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
+import { VStack } from '@/components/ui/stack'
+import { FormField } from '@/components/form-field'
+import { signUpSchema, type SignUpValues } from '@/lib/sign-up-schema'
+
+export function SignUpForm({ onSubmit }: { onSubmit: (values: SignUpValues) => Promise<void> }) {
+  const { control, handleSubmit, formState } = useForm<SignUpValues>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: { name: '', email: '', password: '', terms: false as unknown as true },
+  })
+
+  return (
+    <VStack gap={5}>
+      <FormField control={control} name="name" label="Name">
+        {({ value, onChange, onBlur, ref }) => (
+          <Input ref={ref} value={value} onChangeText={onChange} onBlur={onBlur} />
+        )}
+      </FormField>
+      <FormField control={control} name="email" label="Email">
+        {({ value, onChange, onBlur, ref }) => (
+          <Input
+            ref={ref}
+            value={value}
+            onChangeText={onChange}
+            onBlur={onBlur}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+        )}
+      </FormField>
+      <FormField control={control} name="password" label="Password">
+        {({ value, onChange, onBlur, ref }) => (
+          <PasswordInput ref={ref} value={value} onChangeText={onChange} onBlur={onBlur} />
+        )}
+      </FormField>
+      <FormField control={control} name="terms" label="I accept the terms">
+        {({ value, onChange }) => <Checkbox checked={value} onCheckedChange={onChange} />}
+      </FormField>
+      <Button loading={formState.isSubmitting} onPress={handleSubmit(onSubmit)}>
+        Create account
+      </Button>
+    </VStack>
+  )
+}
+```
+
+Passing `ref` lets react-hook-form focus the first invalid field after a failed submit.
+
+## TanStack Form
+
+```sh
+npm install @tanstack/react-form zod
+```
+
+TanStack Form reads a zod schema directly, because zod implements Standard Schema. No adapter is needed. Errors come back as issue objects, so read `message` from the first one.
+
+```tsx
+import { useForm } from '@tanstack/react-form'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Field, FieldControl, FieldError, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
+import { VStack } from '@/components/ui/stack'
+import { signUpSchema, type SignUpValues } from '@/lib/sign-up-schema'
+
+const defaultValues: SignUpValues = {
+  name: '',
+  email: '',
+  password: '',
+  terms: false as unknown as true,
+}
+
+export function SignUpForm({ onSubmit }: { onSubmit: (values: SignUpValues) => Promise<void> }) {
+  const form = useForm({
+    defaultValues,
+    validators: { onSubmit: signUpSchema },
+    onSubmit: ({ value }) => onSubmit(value),
+  })
+
+  return (
+    <VStack gap={5}>
+      <form.Field name="email">
+        {(field) => {
+          const error = field.state.meta.errors[0]?.message
+          return (
+            <Field invalid={error !== undefined}>
+              <FieldLabel>Email</FieldLabel>
+              <FieldControl>
+                <Input
+                  value={field.state.value}
+                  onChangeText={field.handleChange}
+                  onBlur={field.handleBlur}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </FieldControl>
+              <FieldError>{error}</FieldError>
+            </Field>
+          )
+        }}
+      </form.Field>
+
+      <form.Field name="password">
+        {(field) => {
+          const error = field.state.meta.errors[0]?.message
+          return (
+            <Field invalid={error !== undefined}>
+              <FieldLabel>Password</FieldLabel>
+              <FieldControl>
+                <PasswordInput
+                  value={field.state.value}
+                  onChangeText={field.handleChange}
+                  onBlur={field.handleBlur}
+                />
+              </FieldControl>
+              <FieldError>{error}</FieldError>
+            </Field>
+          )
+        }}
+      </form.Field>
+
+      <form.Field name="terms">
+        {(field) => {
+          const error = field.state.meta.errors[0]?.message
+          return (
+            <Field invalid={error !== undefined}>
+              <FieldLabel>I accept the terms</FieldLabel>
+              <FieldControl>
+                <Checkbox
+                  checked={field.state.value}
+                  onCheckedChange={(checked) => field.handleChange(checked as true)}
+                />
+              </FieldControl>
+              <FieldError>{error}</FieldError>
+            </Field>
+          )
+        }}
+      </form.Field>
+
+      <form.Subscribe selector={(state) => state.isSubmitting}>
+        {(isSubmitting) => (
+          <Button loading={isSubmitting} onPress={() => form.handleSubmit()}>
+            Create account
+          </Button>
+        )}
+      </form.Subscribe>
+    </VStack>
+  )
+}
+```
+
+The name field follows the email field and is left out for length. `validators: { onSubmit }` checks on submit, which matches the auth [blocks](/blocks/overview/). Use `onChange` or `onBlur` for earlier feedback.
+
+## Keep fields above the keyboard
+
+Wrap the form in `KeyboardScrollView` from [Keyboard](/components/keyboard/), and put the submit button in `KeyboardFooter` when it should ride above the keyboard. Both work with either library, because they only care about the focused input.
+
+## Notes
+
+- Show errors after the first submit or after blur. An error on the first keystroke reads as a scolding.
+- Keep the schema in its own file. The server can import the same rules.
+- `terms` uses `z.literal(true)`, so the default needs a cast. Use `z.boolean().refine((v) => v, 'Accept the terms to continue.')` to avoid it.
+- A screen reader hears the error because `FieldError` announces it and the control's hint changes to the error text. Neither library needs extra work for that.

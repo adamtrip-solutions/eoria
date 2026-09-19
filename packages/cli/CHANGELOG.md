@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/adamtrip-solutions/eoria/compare/cli-v0.2.0...cli-v0.2.1) (2026-09-19)
+
+
+### Bug Fixes
+
+* **cli:** docs finds blocks, guides and agents pages by bare name ([#36](https://github.com/adamtrip-solutions/eoria/issues/36)) ([63370ce](https://github.com/adamtrip-solutions/eoria/commit/63370ce42e87c28f426621f3576666e31776b7b3))
+
 ## [0.2.0](https://github.com/adamtrip-solutions/eoria/compare/cli-v0.1.1...cli-v0.2.0) (2026-09-19)
 
 

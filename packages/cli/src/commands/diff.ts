@@ -37,7 +37,7 @@ export async function diff(root: string, name: string | undefined, options: Diff
     const remote = await registry.item(item)
     const reports: FileReport[] = []
     for (const file of remote.files) {
-      const target = localPath(config.components, file)
+      const target = localPath(config, file)
       const abs = resolve(root, target)
       const upstream = rewriteAlias(file.content, config.alias)
       if (!existsSync(abs)) {

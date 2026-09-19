@@ -70,7 +70,7 @@ export async function planAdd(
   const files: PlannedFile[] = []
   for (const item of items) {
     for (const file of item.files) {
-      const target = localPath(config.components, file)
+      const target = localPath(config, file)
       const abs = resolve(root, target)
       const content = rewriteAlias(file.content, config.alias)
       const current = existsSync(abs) ? await readFile(abs, 'utf8') : null

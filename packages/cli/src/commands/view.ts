@@ -67,7 +67,7 @@ export async function viewItem(
       path: file.path,
       type: file.type,
       target: file.target ?? file.path,
-      localPath: config ? localPath(config.components, file) : null,
+      localPath: config ? localPath(config, file) : null,
       ...(options.source
         ? { content: config ? rewriteAlias(file.content, config.alias) : file.content }
         : {}),

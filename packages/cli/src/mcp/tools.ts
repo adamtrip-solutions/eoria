@@ -2,7 +2,7 @@ import { planAdd, writePlan } from '../commands/add'
 import { fetchDocs } from '../commands/docs'
 import { runDoctor } from '../commands/doctor'
 import { projectInfo } from '../commands/info'
-import { listItems } from '../commands/list'
+import { ITEM_TYPES, listItems } from '../commands/list'
 import { searchItems } from '../commands/search'
 import { viewItem } from '../commands/view'
 import { readConfigOrFail, type ReadOptions } from '../context'
@@ -27,6 +27,7 @@ interface StringSchema {
   type: 'string'
   description: string
   minLength?: number
+  enum?: readonly string[]
 }
 
 interface BooleanSchema {
@@ -70,6 +71,18 @@ interface Tool extends ToolDefinition {
 /** The registry override, left out when there is none. */
 const reading = ({ registry }: ToolContext): ReadOptions => (registry ? { registry } : {})
 
+/** The `type` argument of the tools that list items. */
+const typeArgument: StringSchema = {
+  type: 'string',
+  enum: ITEM_TYPES,
+  description:
+    'Keep one type of item. "ui" is a component. "block" is a full screen made of components. Leave it out to get both.',
+}
+
+/** The type filter, left out when the call has none. */
+const typed = (args: Record<string, unknown>): { type?: string } =>
+  typeof args.type === 'string' ? { type: args.type } : {}
+
 const noArguments: InputSchema = { type: 'object', properties: {}, additionalProperties: false }
 const readOnly = { readOnlyHint: true }
 
@@ -78,16 +91,20 @@ const TOOLS: Tool[] = [
     name: 'list_components',
     title: 'List components',
     description:
-      'Every item in the eoria registry with its name, title, description and type. `installed` says whether this app already has the item, and is null when the app has no eoria.json. Call it to see what exists before you build a component by hand.',
-    inputSchema: noArguments,
+      'Every item in the eoria registry with its name, title, description and type. The type is "registry:ui" for a component and "registry:block" for a block, a full screen made of components. `installed` says whether this app already has the item, and is null when the app has no eoria.json. Call it to see what exists before you build a component or a screen by hand.',
+    inputSchema: {
+      type: 'object',
+      properties: { type: typeArgument },
+      additionalProperties: false,
+    },
     annotations: readOnly,
-    run: (_args, context) => listItems(context.root, reading(context)),
+    run: (args, context) => listItems(context.root, { ...reading(context), ...typed(args) }),
   },
   {
     name: 'search_components',
     title: 'Search components',
     description:
-      'Registry items whose name, title or description contains every word of the query, ignoring case. Name matches come first. Use it when you know what the UI needs, such as "menu" or "date", and not what eoria calls it. An empty `items` array means nothing matched.',
+      'Registry items whose name, title or description contains every word of the query, ignoring case. Name matches come first. Use it when you know what the UI needs, such as "menu" or "date", and not what eoria calls it. Each result has its type, "registry:ui" or "registry:block". An empty `items` array means nothing matched.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -96,18 +113,20 @@ const TOOLS: Tool[] = [
           minLength: 1,
           description: 'One or more words, for example "bottom sheet".',
         },
+        type: typeArgument,
       },
       required: ['query'],
       additionalProperties: false,
     },
     annotations: readOnly,
-    run: (args, context) => searchItems(context.root, args.query as string, reading(context)),
+    run: (args, context) =>
+      searchItems(context.root, args.query as string, { ...reading(context), ...typed(args) }),
   },
   {
     name: 'view_component',
     title: 'View a component',
     description:
-      'One registry item with its npm dependencies, the registry items it pulls in, and each file with the path add_components would write it to. Set `source` to get the file contents as the registry has them now. For a component the app already has, read the file in the app instead, because the developer may have edited it.',
+      'One registry item, a component or a block, with its npm dependencies, the registry items it pulls in, and each file with the path add_components would write it to. Component files go to the components folder and block files to the blocks folder. Set `source` to get the file contents as the registry has them now. For a component the app already has, read the file in the app instead, because the developer may have edited it.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -174,7 +193,7 @@ const TOOLS: Tool[] = [
     name: 'add_components',
     title: 'Add components',
     description:
-      'Copies components and every registry item they depend on into the app, and records them in eoria.json. It never installs npm packages. `installCommand` in the result is the command for you to run afterwards, or null when package.json already lists everything. A file that exists and differs from the registry is skipped unless `overwrite` is true, and overwriting discards the edits in that file. Set `dryRun` to get the plan with nothing written. The app needs an eoria.json, which `npx @eoria/cli init` writes.',
+      'Copies components and blocks, with every registry item they depend on, into the app, and records them in eoria.json. Components land in the components folder and blocks in the blocks folder. It never installs npm packages. `installCommand` in the result is the command for you to run afterwards, or null when package.json already lists everything. A file that exists and differs from the registry is skipped unless `overwrite` is true, and overwriting discards the edits in that file. Set `dryRun` to get the plan with nothing written. The app needs an eoria.json, which `npx @eoria/cli init` writes.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -286,6 +305,9 @@ export function checkArguments(schema: InputSchema, args: Record<string, unknown
     } else if (rule.type === 'string') {
       if (typeof value !== 'string') return `"${key}" must be a string.`
       if (value.length < (rule.minLength ?? 0)) return `"${key}" must not be empty.`
+      if (rule.enum && !rule.enum.includes(value)) {
+        return `"${key}" must be one of ${rule.enum.join(', ')}.`
+      }
     } else {
       if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
         return `"${key}" must be an array of strings.`

@@ -25,11 +25,19 @@ export {
   type InstalledItem,
   type ProjectInfo,
 } from './commands/info'
-export { listItems, type ItemList, type ListedItem } from './commands/list'
+export {
+  ITEM_TYPES,
+  listItems,
+  type ItemList,
+  type ItemType,
+  type ListedItem,
+  type ListReadOptions,
+} from './commands/list'
 export { initMcpClient, type McpClient, type McpInitResult } from './commands/mcp'
 export { searchItems, type SearchResult } from './commands/search'
 export { viewItem, type ViewedFile, type ViewedItem } from './commands/view'
 export { findProjectRoot, readConfig, type EoriaConfig } from './config'
+export { blocksDirectory, localPath, type Directories } from './files'
 export { CliError } from './log'
 export {
   PROTOCOL_VERSIONS,

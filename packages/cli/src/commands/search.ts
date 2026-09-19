@@ -1,9 +1,8 @@
-import { type ReadOptions } from '../context'
 import { CliError, log } from '../log'
 import { printJson } from '../print'
-import { listItems, printItems, type ListedItem } from './list'
+import { listItems, printItems, type ListedItem, type ListReadOptions } from './list'
 
-export interface SearchOptions extends ReadOptions {
+export interface SearchOptions extends ListReadOptions {
   json?: boolean
 }
 
@@ -26,12 +25,13 @@ function rank(item: ListedItem, term: string): number | null {
 
 /**
  * Items whose name, title or description contains every word of the query, ignoring case.
- * Name matches come first, then title, then description. Ties keep registry order.
+ * Name matches come first, then title, then description. Ties keep registry order. `type`
+ * keeps one type of item.
  */
 export async function searchItems(
   root: string,
   query: string,
-  options: ReadOptions = {},
+  options: ListReadOptions = {},
 ): Promise<SearchResult> {
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean)
   if (terms.length === 0) throw new CliError('Give search something to look for.')

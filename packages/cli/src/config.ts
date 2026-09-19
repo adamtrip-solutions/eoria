@@ -11,6 +11,10 @@ export interface EoriaConfig {
   registry: string
   /** Directory that receives component files, relative to the project root. */
   components: string
+  /**
+   * Directory that receives blocks. Leave it out to use the `blocks` folder next to `components`.
+   */
+  blocks?: string
   /** Import alias that resolves to `components`. Registry sources use `@/components/ui`. */
   alias: string
   /** Content hash of every file at the time it was copied, keyed by item name. */

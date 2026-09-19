@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { CONFIG_FILE, readConfig, type EoriaConfig } from '../config'
 import { pickRegistry, type ReadOptions } from '../context'
-import { hashContent, localPath, rewriteAlias } from '../files'
+import { blocksDirectory, hashContent, localPath, rewriteAlias } from '../files'
 import { log } from '../log'
 import { columns, printJson } from '../print'
 import { detectPackageManager, readPackageJson, usesExpo, type PackageManager } from '../project'
@@ -57,6 +57,11 @@ export interface ProjectInfo {
   }
   /** Null without a readable `eoria.json`. */
   components: { directory: string; alias: string; exists: boolean } | null
+  /**
+   * Where blocks land, from `blocks` in `eoria.json` or the folder next to `components`. The
+   * folder appears with the first block. Null without a readable `eoria.json`.
+   */
+  blocks: { directory: string; exists: boolean } | null
   installed: InstalledItem[]
   packageManager: PackageManager
   expo: boolean
@@ -115,6 +120,12 @@ export async function projectInfo(root: string, options: ReadOptions = {}): Prom
           exists: existsSync(resolve(root, config.components)),
         }
       : null,
+    blocks: config
+      ? {
+          directory: blocksDirectory(config),
+          exists: existsSync(resolve(root, blocksDirectory(config))),
+        }
+      : null,
     installed: config ? await installedItems(root, config, reachable ? registry : null) : [],
     packageManager: detectPackageManager(root),
     expo: await usesExpo(root),
@@ -135,7 +146,7 @@ export async function installedItems(
     try {
       const remote = await registry?.item(name)
       for (const file of remote?.files ?? []) {
-        upstream.set(localPath(config.components, file), rewriteAlias(file.content, config.alias))
+        upstream.set(localPath(config, file), rewriteAlias(file.content, config.alias))
       }
     } catch (error) {
       if (!(error instanceof RegistryError)) throw error
@@ -187,6 +198,12 @@ export async function info(root: string, options: InfoOptions): Promise<void> {
       ],
       ['alias', result.components.alias],
     )
+  }
+  if (result.blocks) {
+    rows.push([
+      'blocks',
+      `${result.blocks.directory}${result.blocks.exists ? '' : log.dim(' (no blocks yet)')}`,
+    ])
   }
   rows.push(['package manager', result.packageManager], ['expo', result.expo ? 'yes' : 'no'])
   for (const [name, version] of Object.entries(result.packages)) {

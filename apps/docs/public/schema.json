@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://eoria.adamtrip.pt/schema.json",
+  "title": "eoria.json",
+  "description": "Project configuration written by `npx @eoria/cli init`.",
+  "type": "object",
+  "properties": {
+    "$schema": { "type": "string" },
+    "registry": {
+      "type": "string",
+      "description": "Registry base URL, or a local directory for development.",
+      "default": "https://eoria.adamtrip.pt/r"
+    },
+    "components": {
+      "type": "string",
+      "description": "Directory that receives component files, relative to the project root.",
+      "default": "src/components/ui"
+    },
+    "blocks": {
+      "type": "string",
+      "description": "Directory that receives blocks. Leave it out to use the `blocks` folder next to `components`."
+    },
+    "alias": {
+      "type": "string",
+      "description": "Import alias that resolves to `components`.",
+      "default": "@/components/ui"
+    },
+    "installed": {
+      "type": "object",
+      "description": "Content hash of every file at the time it was copied, keyed by item name. The CLI maintains this.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "type": "string" }
+      }
+    }
+  },
+  "required": ["registry", "components", "alias"]
+}

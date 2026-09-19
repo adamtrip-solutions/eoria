@@ -2,3 +2,6 @@ public/r
 .astro
 dist
 src/styles/tokens.css
+# generated from packages/*/CHANGELOG.md by scripts/build-changelog.mjs
+src/content/docs/changelog/core.mdx
+src/content/docs/changelog/cli.mdx

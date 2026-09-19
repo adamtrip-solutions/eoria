@@ -1,0 +1,37 @@
+---
+title: Agents
+description: What eoria gives a coding agent, and which part to set up first.
+sidebar:
+  order: 0
+---
+
+eoria copies component source into your app, so an agent that works in your repo can read every
+component it uses. What it cannot see from there is the registry, the docs and how your app is
+set up. Three things fill that gap. None of them needs an account and nothing runs on a server.
+
+| What                           | What it does                                                                   | Set it up when                                  |
+| ------------------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------- |
+| [MCP server](/agents/mcp/)     | Seven tools: search and read the registry, read docs, check the app, add files | Your agent supports MCP. Start here.            |
+| [Skill](/agents/skill/)        | Instructions that teach the agent how eoria works and what to check first      | Your agent loads skills, such as Claude Code    |
+| [Markdown docs](/agents/docs/) | Every page as Markdown, plus `/llms.txt` as the index                          | Nothing to set up. Point the agent at the index |
+
+## The short version
+
+In the root of your app:
+
+```sh
+npx @eoria/cli mcp init --client claude
+npx skills add adamtrip-solutions/eoria
+```
+
+The first line writes the MCP entry for Claude Code. `--client` also takes `cursor`, `vscode` and
+`codex`. The second line installs the skill. After that a prompt such as "add a settings screen
+with a sign out row" has what it needs. The agent searches the registry, reads the page for the
+block, copies the files and tells you which packages to install.
+
+## One rule for every agent
+
+The files in your app are the truth. You may have edited a component after you added it, so its
+props can differ from the docs. The skill and the MCP server both tell the agent to read the
+installed file before it writes code against it. If you write your own agent instructions, say
+the same.

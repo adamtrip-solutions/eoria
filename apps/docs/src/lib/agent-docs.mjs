@@ -77,14 +77,24 @@ function commandTabs(node) {
  * @param {Set<string>} ids
  * @param {string | URL} site
  * @param {{name: string, dependencies?: string[], registryDependencies?: string[]} | undefined} item
+ * @param {Record<string, () => object[]>} [blocks] Markdown for site components that take no
+ *   props and no children, keyed by tag name, such as the preset tabs on the theming page.
  */
-export function renderAgentDoc(doc, ids, site, item) {
+export function renderAgentDoc(doc, ids, site, item, blocks = {}) {
   const tree = parser.parse(doc.body)
   function convert(node) {
     if (node.type === 'mdxjsEsm') return []
     if (node.type === 'mdxJsxFlowElement' && node.name === 'CommandTabs') return commandTabs(node)
     if (node.type === 'mdxJsxFlowElement' && node.name === 'Steps' && !node.attributes.length) {
       return node.children.flatMap(convert)
+    }
+    if (
+      node.type === 'mdxJsxFlowElement' &&
+      Object.hasOwn(blocks, node.name) &&
+      !node.attributes.length &&
+      !node.children.length
+    ) {
+      return blocks[node.name]()
     }
     if (node.type.startsWith('mdx')) {
       throw new Error(`${doc.id}: unsupported ${node.name ?? node.type} in Markdown export`)

@@ -1,0 +1,72 @@
+---
+title: Tokens
+description: Every key in the theme, what it drives, and how to add your own.
+sidebar:
+  order: 3.2
+---
+
+The theme has `colors`, `space`, `radius`, `fontSize` with `lineHeight`, `fontWeight`, and four
+shape groups, `control`, `stroke`, `shadow` and `font`. A preset sets the colours and the shape.
+`createThemes` adds the scales. [Theming](/start/theming/) shows how to pick and change a preset.
+
+## Colour keys
+
+The colour keys are fixed so that components can rely on them. Four of them describe depth.
+
+| Key                                    | Used for                                                 |
+| -------------------------------------- | -------------------------------------------------------- |
+| `background`                           | Screens.                                                 |
+| `surface`                              | Cards and tiles. One step above the screen.              |
+| `muted`                                | Controls: fields, chips, secondary buttons. One step up. |
+| `elevated`                             | Floating layers: menus, popovers, sheets.                |
+| `foreground`                           | Default text and the active chip fill.                   |
+| `mutedForeground`                      | Secondary text.                                          |
+| `primary`, `primaryForeground`         | Primary button, checked switch, progress bar.            |
+| `secondary`, `secondaryForeground`     | Reserved. The secondary button uses `muted`.             |
+| `accent`, `accentForeground`           | Tinted badges, pressed menu rows.                        |
+| `destructive`, `destructiveForeground` | Destructive buttons, badges and toasts.                  |
+| `destructiveText`                      | Error text, invalid borders, destructive menu rows.      |
+| `border`                               | Separators and hairlines on floating layers.             |
+| `input`                                | Unchecked switch track.                                  |
+| `ring`                                 | Focus ring on fields and open selects.                   |
+
+Keeping `surface` and `muted` one step apart is what lets a filled input sit inside a filled
+card and still read as a control. If you change one, move the other.
+
+## Shape
+
+| Group     | What it drives                                                                                                                                                                                  |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `radius`  | `sm` to `2xl` and `full` are steps. `control` shapes buttons, fields, chips and segmented tabs; `card` shapes cards, contained accordions and alerts.                                           |
+| `control` | Heights for the `sm`, `md` and `lg` sizes of buttons, fields, selects and OTP cells.                                                                                                            |
+| `stroke`  | Border width on cards, contained accordions, alerts and filled fields. 0 is a filled look, 1 outlined.                                                                                          |
+| `shadow`  | Opacity, blur and offset under elevated cards, menus, popovers and toasts.                                                                                                                      |
+| `font`    | Optional `body` and `heading` families, one name per platform. Headings cover the title and heading text variants and card, dialog, alert and popover titles, and fall back to the body family. |
+
+## Scales
+
+| Group        | Keys                                                       |
+| ------------ | ---------------------------------------------------------- |
+| `space`      | 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16 (4pt grid)              |
+| `radius`     | sm, md, lg, xl, 2xl, full, control, card. From the preset. |
+| `fontSize`   | xs 12, sm 14, md 16, lg 18, xl 20, 2xl 24, 3xl 30          |
+| `lineHeight` | matched to each font size                                  |
+| `fontWeight` | normal, medium, semibold, bold. Mapped by the preset.      |
+
+`Box` exposes the spacing and colour scales as props, so `<Box p={4} bg="surface" rounded="xl">`
+reads the theme without a stylesheet.
+
+## Your own tokens
+
+The core keys are fixed. Extra keys are yours. Augment the interface, add the values, and the
+theme is typed everywhere, including inside recipes.
+
+```ts
+declare module '@eoria/core' {
+  interface EoriaTheme {
+    brand: { coral: string; ink: string }
+  }
+}
+
+const light = { ...lightTheme, brand: { coral: '#ff6b57', ink: '#101828' } }
+```

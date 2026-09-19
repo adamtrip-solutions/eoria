@@ -1,0 +1,65 @@
+---
+title: Components and blocks
+description: What changed in the registry, newest first.
+sidebar:
+  order: 1
+---
+
+Components and blocks have no version numbers. You copy the source, so the registry always
+serves the newest file and `npx @eoria/cli diff <name>` shows how your copy differs. This page
+lists what was added or changed and when. The packages have their own pages:
+[`@eoria/core`](/changelog/core/) and [`@eoria/cli`](/changelog/cli/).
+
+## 2026-09-19
+
+### Added
+
+- Blocks, whole screens you add like a component. Auth: [Sign in](/blocks/sign-in/),
+  [Sign up](/blocks/sign-up/), [Verify OTP](/blocks/verify-otp/),
+  [Forgot password](/blocks/forgot-password/) and [Reset password](/blocks/reset-password/).
+  App: [Settings screen](/blocks/settings-screen/), [Profile header](/blocks/profile-header/),
+  [Onboarding](/blocks/onboarding/), [Transaction list](/blocks/transaction-list/),
+  [Checkout summary](/blocks/checkout-summary/) and [Inbox](/blocks/inbox/).
+- Actions and overlays: [Icon Button](/components/icon-button/),
+  [Alert Dialog](/components/alert-dialog/), [Action Sheet](/components/action-sheet/) and
+  [Sheet](/components/sheet/).
+- Forms: [Input Group](/components/input-group/), [Password Input](/components/password-input/),
+  [Search Bar](/components/search-bar/), [Date Picker](/components/date-picker/),
+  [Stepper](/components/stepper/), [Rating](/components/rating/),
+  [Toggle Group](/components/toggle-group/) and [Chip](/components/chip/).
+- Lists and display: [Item](/components/item/), [Swipeable](/components/swipeable/),
+  [Collapsible](/components/collapsible/), [Carousel](/components/carousel/),
+  [Empty](/components/empty/) and [Image](/components/image/).
+- Platform: [Keyboard](/components/keyboard/) and [Haptics](/components/haptics/).
+
+### Changed
+
+- [Button](/components/button/) takes `loading`. It shows the platform spinner in place of the
+  icon, blocks presses and keeps its colours.
+- Error text, invalid borders and destructive menu rows use the new `destructiveText` colour, so
+  they stay readable in dark mode. Update `@eoria/core` to 0.2.0 before you update Alert,
+  Field, Input, Select, Input OTP, Date Picker, Action Sheet or Dropdown Menu.
+- [Date Picker](/components/date-picker/) takes `open`, `defaultOpen` and `onOpenChange`, and
+  the iOS calendar fills the dialog.
+
+## 2026-09-18
+
+### Changed
+
+- Every component reads its corner radius, control height, border width, shadow and typeface
+  from the theme, so a preset changes the shape of the components as well as the colours.
+  Needs `@eoria/core` 0.2.0. See [Theming](/start/theming/).
+
+## 2026-09-15
+
+### Added
+
+- [Alert](/components/alert/), [Input OTP](/components/input-otp/),
+  [Slider](/components/slider/), [Combobox](/components/combobox/) and
+  [Spinner](/components/spinner/).
+
+## 2026-09-13
+
+### Added
+
+- The first 27 components, the `@eoria/core` recipe engine and the CLI.

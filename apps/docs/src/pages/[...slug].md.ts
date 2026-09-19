@@ -1,7 +1,21 @@
 import type { APIRoute, GetStaticPaths } from 'astro'
 import { getCollection, type CollectionEntry } from 'astro:content'
 import registry from '../../../../registry/registry.json'
+import { presets } from '@eoria/core/tokens'
 import { renderAgentDoc } from '../lib/agent-docs.mjs'
+import { presetHints, presetNames } from '../lib/presets'
+import { presetSource, presetUsage } from '../lib/preset-code.mjs'
+
+/** The preset tabs as Markdown: every preset with the line that uses it and its full source. */
+const markdownBlocks = {
+  PresetTabs: () =>
+    presetNames.flatMap((name) => [
+      { type: 'heading', depth: 3, children: [{ type: 'text', value: name }] },
+      { type: 'paragraph', children: [{ type: 'text', value: `${presetHints[name]}.` }] },
+      { type: 'code', lang: 'ts', value: presetUsage(name) },
+      { type: 'code', lang: 'ts', value: presetSource(name, presets[name]) },
+    ]),
+}
 
 /** Blocks are documented under /blocks, everything else under /components. */
 const pageOf = (item: { name: string; type: string }) =>
@@ -28,6 +42,7 @@ export const GET: APIRoute = ({ props, site }) => {
       new Set(ids),
       site,
       item,
+      markdownBlocks,
     ),
     { headers: { 'Content-Type': 'text/markdown; charset=utf-8' } },
   )

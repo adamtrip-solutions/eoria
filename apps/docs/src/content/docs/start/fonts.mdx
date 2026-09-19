@@ -1,0 +1,70 @@
+---
+title: Fonts
+description: Embed the typeface a preset names, or set your own.
+sidebar:
+  order: 3.4
+---
+
+## Embed the files
+
+`zinc` and `moss` use fonts the platform ships. `cobalt`, `iris`, `tide` and `plum` name a
+family that your app has to embed. A theme names one family per platform and the recipes set
+`fontWeight`, so you have to register every weight under one family name. The `expo-font`
+config plugin does that on both platforms:
+
+```json
+[
+  "expo-font",
+  {
+    "ios": {
+      "fonts": [
+        "node_modules/@expo-google-fonts/geist/400Regular/Geist_400Regular.ttf",
+        "node_modules/@expo-google-fonts/geist/600SemiBold/Geist_600SemiBold.ttf"
+      ]
+    },
+    "android": {
+      "fonts": [
+        {
+          "fontFamily": "Geist",
+          "fontDefinitions": [
+            {
+              "path": "node_modules/@expo-google-fonts/geist/400Regular/Geist_400Regular.ttf",
+              "weight": 400
+            },
+            {
+              "path": "node_modules/@expo-google-fonts/geist/600SemiBold/Geist_600SemiBold.ttf",
+              "weight": 600
+            }
+          ]
+        }
+      ]
+    }
+  }
+]
+```
+
+List one file per weight the preset maps in `fontWeight`, then rebuild the native app. On
+iOS the family name comes from the font file; on Android it is the `fontFamily` you give.
+Loading with `useFonts` at runtime is not enough on Android. Each file becomes its own family
+there, and `fontWeight` has nothing to choose from.
+
+## Packages per preset
+
+| Preset   | Packages                                                              | Weights                 |
+| -------- | --------------------------------------------------------------------- | ----------------------- |
+| `cobalt` | `@expo-google-fonts/ibm-plex-sans`                                    | 400, 600, 700           |
+| `iris`   | `@expo-google-fonts/geist`                                            | 400, 500, 600, 700      |
+| `tide`   | `@expo-google-fonts/manrope`                                          | 500, 600, 700           |
+| `plum`   | `@expo-google-fonts/instrument-sans`, `@expo-google-fonts/newsreader` | 400, 500, 600; 500, 600 |
+
+## Your own typeface
+
+A family that is not installed falls back to the system font, so a preset still works
+before you embed anything. To use your own typeface, set `font` on a preset:
+
+```ts
+const brand = {
+  ...presets.iris,
+  font: { body: { ios: 'Satoshi', android: 'Satoshi', web: "'Satoshi', sans-serif" } },
+}
+```

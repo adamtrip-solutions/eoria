@@ -97,6 +97,17 @@ test('fails on unsupported or executable MDX rather than silently dropping conte
   }
 })
 
+test('a site component with no props exports the Markdown it is given', () => {
+  const blocks = { PresetTabs: () => [{ type: 'code', lang: 'ts', value: 'presets.zinc' }] }
+  const output = renderAgentDoc(doc('<PresetTabs />'), ids, site, undefined, blocks)
+  assert.ok(output.includes('presets.zinc'))
+  // Props or children would be dropped, so they fail instead.
+  assert.throws(() =>
+    renderAgentDoc(doc('<PresetTabs only="zinc" />'), ids, site, undefined, blocks),
+  )
+  assert.throws(() => renderAgentDoc(doc('<PresetTabs />'), ids, site))
+})
+
 test('every repository page converts without losing its fenced examples', async () => {
   const base = new URL('../src/content/docs/', import.meta.url)
   const paths = (await readdir(base, { recursive: true }))
@@ -116,7 +127,12 @@ test('every repository page converts without losing its fenced examples', async 
     const source = await readFile(new URL(path, base), 'utf8')
     const body = source.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')
     const id = idOf(path)
-    const result = markdown.parse(renderAgentDoc({ ...doc(body), id }, allIds, site))
+    // The preset tabs print from the core tokens at build time. A stand-in keeps this test
+    // free of the built package.
+    const blocks = { PresetTabs: () => [{ type: 'code', lang: 'ts', value: 'presets' }] }
+    const result = markdown.parse(
+      renderAgentDoc({ ...doc(body), id }, allIds, site, undefined, blocks),
+    )
     const exported = nodes(result, 'code').map(({ lang, value }) => ({ lang, value }))
     for (const { lang, value } of nodes(mdx.parse(body), 'code')) {
       assert.ok(

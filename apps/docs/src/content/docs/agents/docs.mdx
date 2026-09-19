@@ -1,0 +1,42 @@
+---
+title: Markdown docs
+description: Every page of this site as Markdown, with llms.txt as the index.
+sidebar:
+  order: 3
+---
+
+Agents read Markdown better than HTML. Every page on this site has a Markdown twin at the same
+address with `.md` on the end, and the site has one index of all of them.
+
+| Address                  | What it is                                                            |
+| ------------------------ | --------------------------------------------------------------------- |
+| `/llms.txt`              | Every page with a one-line description, in sidebar order              |
+| `/components/button.md`  | A page as Markdown. Works for every page, such as `/start/theming.md` |
+| `/r/index.json`          | The registry index: every component and block                         |
+| `/r/button.json`         | One item with its files, packages and registry dependencies           |
+| `/skills/eoria/SKILL.md` | The [skill](/agents/skill/)                                           |
+
+A component or block page in Markdown starts with its npm packages and the other items it
+brings, so an agent sees the cost of adding it before it reads the examples.
+
+## From the CLI
+
+```sh
+npx @eoria/cli docs sheet
+npx @eoria/cli docs start/theming
+npx @eoria/cli docs
+```
+
+`docs` prints a page as Markdown. A bare name is a component first and a Start page second. A
+name with a slash is the page outright. With no topic you get `/llms.txt`. The MCP tool
+`get_docs` returns the same text.
+
+## In your agent instructions
+
+If your agent has no MCP and no skills, two lines in `AGENTS.md` or `CLAUDE.md` do most of the
+work:
+
+```md
+This app uses eoria components, copied into src/components/ui. Read the installed file before
+you use a component. Docs index: https://eoria.adamtrip.pt/llms.txt
+```

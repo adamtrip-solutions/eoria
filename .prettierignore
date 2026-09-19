@@ -7,6 +7,8 @@ android
 registry/dist
 apps/docs/public/r
 apps/docs/src/styles/tokens.css
+apps/docs/src/content/docs/changelog/core.mdx
+apps/docs/src/content/docs/changelog/cli.mdx
 apps/docs/.astro
 pnpm-lock.yaml
 # Managed by release-please.

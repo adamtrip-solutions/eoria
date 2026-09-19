@@ -8,6 +8,7 @@ import { extend } from './commands/extend'
 import { info } from './commands/info'
 import { init } from './commands/init'
 import { list } from './commands/list'
+import { mcp, mcpInit } from './commands/mcp'
 import { search } from './commands/search'
 import { view } from './commands/view'
 import { CliError, log } from './log'
@@ -108,6 +109,21 @@ program
   .option('--json', 'print JSON')
   .option('--registry <url>', 'registry base URL or local directory')
   .action((options) => wrap(() => doctor(findProjectRoot(), options)))
+
+const mcpCommand = program
+  .command('mcp')
+  .description('Serve the registry, the docs and this project to an agent over MCP on stdio')
+  .option('--cwd <dir>', 'project folder, when the client starts the server somewhere else')
+  .option('--registry <url>', 'registry base URL or local directory')
+  .option('--docs-url <url>', 'docs site URL or local build folder')
+  .action((options) => wrap(() => mcp(options)))
+
+mcpCommand
+  .command('init')
+  .description('Add the eoria server to the MCP config of Claude Code, Cursor, VS Code or Codex')
+  .option('--client <name>', 'claude, cursor, vscode or codex')
+  .option('--force', 'replace an eoria entry that differs')
+  .action((options) => wrap(() => mcpInit(findProjectRoot(), options)))
 
 program.parseAsync(process.argv)
 

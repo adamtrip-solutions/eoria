@@ -100,16 +100,24 @@ export async function planAdd(
   }
 }
 
-export async function add(root: string, names: string[], options: AddOptions): Promise<void> {
-  const config = await readConfig(root)
-  if (!config) throw new CliError('No eoria.json here. Run `npx @eoria/cli init` first.')
-  const plan = await planAdd(root, config, names, options)
-  if (plan.pulled.length > 0) log.step(`Also needed: ${plan.pulled.join(', ')}`)
-  if (options.diff) return printAddDiff(config, plan)
-  if (options.dryRun) return printDryRun(plan, options)
+export interface WrittenPlan {
+  /** Targets of the files that were created or replaced. */
+  written: string[]
+  /** Files that exist, differ from the registry and were left alone. */
+  skipped: PlannedFile[]
+}
 
+/**
+ * Writes the files of a plan and records their hashes in `eoria.json`. Prints nothing and
+ * installs nothing, so `add` and the MCP server can share it.
+ */
+export async function writePlan(
+  root: string,
+  config: EoriaConfig,
+  plan: AddPlan,
+): Promise<WrittenPlan> {
   const written: string[] = []
-  const skipped: string[] = []
+  const skipped: PlannedFile[] = []
 
   for (const item of plan.items) {
     const hashes: Record<string, string> = {}
@@ -118,7 +126,7 @@ export async function add(root: string, names: string[], options: AddOptions): P
       hashes[file.target] = hashContent(file.content)
       if (file.action === 'same') continue
       if (file.action === 'skip') {
-        skipped.push(skipMessage(file))
+        skipped.push(file)
         // Keep whatever was recorded before; never claim a hash for content not on disk.
         const recorded = config.installed[item]?.[file.target]
         if (recorded !== undefined) hashes[file.target] = recorded
@@ -137,8 +145,20 @@ export async function add(root: string, names: string[], options: AddOptions): P
   }
 
   await writeConfig(root, config)
+  return { written, skipped }
+}
+
+export async function add(root: string, names: string[], options: AddOptions): Promise<void> {
+  const config = await readConfig(root)
+  if (!config) throw new CliError('No eoria.json here. Run `npx @eoria/cli init` first.')
+  const plan = await planAdd(root, config, names, options)
+  if (plan.pulled.length > 0) log.step(`Also needed: ${plan.pulled.join(', ')}`)
+  if (options.diff) return printAddDiff(config, plan)
+  if (options.dryRun) return printDryRun(plan, options)
+
+  const { written, skipped } = await writePlan(root, config, plan)
   for (const file of written) log.ok(file)
-  for (const line of skipped) log.warn(line)
+  for (const file of skipped) log.warn(skipMessage(file))
 
   if (plan.installCommand) {
     if (options.install === false) {

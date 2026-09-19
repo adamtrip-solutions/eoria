@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.0](https://github.com/adamtrip-solutions/eoria/compare/cli-v0.1.1...cli-v0.2.0) (2026-09-19)
+
+
+### Features
+
+* **cli:** add an MCP server over stdio ([#29](https://github.com/adamtrip-solutions/eoria/issues/29)) ([5cb9aba](https://github.com/adamtrip-solutions/eoria/commit/5cb9abaa26215845882550278915d7970017e591))
+* **cli:** add list, search, view, info, docs and doctor ([#27](https://github.com/adamtrip-solutions/eoria/issues/27)) ([fac863a](https://github.com/adamtrip-solutions/eoria/commit/fac863a9517d2087012cfea34725da79ded89ce8))
+* **cli:** place blocks in their own folder and filter by type ([#31](https://github.com/adamtrip-solutions/eoria/issues/31)) ([114bc37](https://github.com/adamtrip-solutions/eoria/commit/114bc379190b6f5f8421bf657608dd75cc11e334))
+
 ## [0.1.1](https://github.com/adamtrip-solutions/eoria/compare/cli-v0.1.0...cli-v0.1.1) (2026-09-13)
 
 

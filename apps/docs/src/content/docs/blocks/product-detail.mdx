@@ -1,0 +1,103 @@
+---
+title: Product detail
+description: Product images, options, quantity and details with an Add to cart bar that stays on screen.
+category: Commerce
+sidebar:
+  order: 20
+---
+
+```sh
+npx @eoria/cli add product-detail
+```
+
+The command also adds [Accordion](/components/accordion/), [Alert](/components/alert/), [Badge](/components/badge/), [Button](/components/button/), [Carousel](/components/carousel/), [IconButton](/components/icon-button/), [Image](/components/image/), [Rating](/components/rating/), [Stepper](/components/stepper/), [Text](/components/text/) and [ToggleGroup](/components/toggle-group/).
+
+## Usage
+
+```tsx
+import { useState } from 'react'
+import { ProductDetail } from '@/components/blocks/product-detail'
+
+export function ProductScreen() {
+  const [size, setSize] = useState<string | undefined>('m')
+  return (
+    <ProductDetail
+      images={[{ uri: 'https://example.com/hoodie.jpg' }]}
+      title="Everyday hoodie"
+      price={64}
+      currency="EUR"
+      locale="en-IE"
+      rating={4.8}
+      ratingCount={128}
+      badge="Low stock"
+      description="A soft cotton layer for cool mornings."
+      stock={5}
+      options={[{ value: 's', label: 'S' }, { value: 'm', label: 'M' }]}
+      value={size}
+      onValueChange={setSize}
+      sections={[
+        { id: 'details', title: 'Details', body: 'Organic cotton. Machine wash cold.' },
+        { id: 'shipping', title: 'Shipping', body: 'Ships in 2 to 3 working days.' },
+      ]}
+      onAddToCart={async ({ quantity, option }) => {
+        await addToCart({ productId: 'hoodie', quantity, size: option })
+      }}
+    />
+  )
+}
+```
+
+Supply your app's `addToCart` function. A rejection appears above the total.
+
+## Props
+
+| Prop                | Type                                                    | Default       |
+| ------------------- | ------------------------------------------------------- | ------------- |
+| `images`            | `ProductImageSource[]`                                  | required      |
+| `title`             | `string`                                                | required      |
+| `price`             | `number`, price per unit                                | required      |
+| `currency`          | ISO 4217 currency code                                  | required      |
+| `locale`            | BCP 47 locale tag                                       | device locale |
+| `rating`            | `number`, out of five                                   | required      |
+| `ratingCount`       | `number`                                                | required      |
+| `badge`             | `string`                                                |               |
+| `description`       | `string`                                                | required      |
+| `stock`             | `number`, available units                               | required      |
+| `sections`          | `ProductSection[]`                                      | required      |
+| `options`           | `ProductOption[]`                                       |               |
+| `value`             | `string`, selected option                               |               |
+| `onValueChange`     | `(value: string \| undefined) => void \| Promise<void>` |               |
+| `onAddToCart`       | `(values: ProductCartValues) => void \| Promise<void>`  | required      |
+| `onBack`            | `() => void \| Promise<void>`                           |               |
+| `onShare`           | `() => void \| Promise<void>`                           |               |
+| `onToggleFavourite` | `() => void \| Promise<void>`                           |               |
+| `favourite`         | `boolean`                                               | `false`       |
+| `insetTop`          | `boolean`                                               | `true`        |
+| `style`             | `StyleProp<ViewStyle>`                                  |               |
+
+## Data types
+
+```ts
+type ProductImageSource = Extract<NonNullable<ImageProps['source']>, { uri?: string }>
+type ProductOption = { value: string; label: string }
+type ProductSection = { id: string; title: string; body: string }
+type ProductCartValues = { quantity: number; option?: string }
+```
+
+`ProductImageSource` comes from the object source accepted by the Image component. Pass an array of image objects, such as `{ uri: 'https://example.com/hoodie.jpg' }`.
+
+## Notes
+
+- The body scrolls. The total and Add to cart button stay above the home indicator. Pass `insetTop={false}` under a navigation header.
+- Prices use `Intl.NumberFormat`. Supply prices in major currency units, so `64` means €64 with `currency="EUR"`. The total is the unit price times the current quantity.
+- Quantity starts at one and stops at the whole number of available units. Zero or invalid stock disables purchasing. Reducing stock also clamps the submitted quantity.
+- Options are controlled through `value` and `onValueChange`. Add to cart stays disabled until the selected value matches an option. Omit `options` for a product with no variants.
+- Pass a small product gallery and a finite set of option and detail sections. The Carousel uses a horizontal scroll view inside the page's vertical scroll view.
+- Optional callbacks render their icon buttons over the gallery. Update `favourite` in the parent after saving the change.
+- A pending callback blocks other actions. Buttons show loading, and option changes show an updating label. Rejections use `error.message` in an Alert with a polite live region. Non-Error rejections get a generic message. State updates stop after unmount.
+- The rating and review count read as one element. Image labels include the product title and position in the gallery.
+- Change first: the option heading and the image labels if you have descriptive alternative text for each photograph.
+
+## Source
+
+[`registry/blocks/product-detail.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/blocks/product-detail.tsx)

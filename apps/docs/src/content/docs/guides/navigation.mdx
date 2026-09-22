@@ -1,0 +1,277 @@
+---
+title: Navigation
+description: Render blocks in routes, hand callbacks to your navigator, and keep headers, insets and sheets in sync.
+sidebar:
+  order: 7
+---
+
+Blocks have no navigator. A route loads data, renders the block and connects callbacks to Expo Router or React Navigation. Keep route names and authentication decisions in that route, so the copied block stays usable elsewhere.
+
+Set up the root providers first. SignIn needs `KeyboardProvider`, SettingsScreen's confirmation needs `PortalHost`, and FilterSheet needs `BottomSheetModalProvider` inside `GestureHandlerRootView`. Mount `Toaster` for calls to `toast()`. The [overlays guide](/guides/overlays/#mount-the-hosts-once) shows the root layout and the host order needed when a sheet opens a dialog.
+
+## Expo Router routes
+
+A file in `app` exports the route component. This sign-in route keeps the native header and passes `insetTop={false}` because that header already covers the top safe area.
+
+The URL below stands in for your authentication service. Replace the request with your app's session flow, including storing its session before navigating. The `/`, `/forgot-password` and `/sign-up` destinations must exist in your app.
+
+```tsx
+// app/sign-in.tsx
+import { Stack, router } from 'expo-router'
+import { SignIn } from '@/components/blocks/sign-in'
+
+export default function SignInRoute() {
+  return (
+    <>
+      <Stack.Screen options={{ title: 'Sign in' }} />
+      <SignIn
+        insetTop={false}
+        onSubmit={async ({ email, password }) => {
+          const response = await fetch('https://api.example.com/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          })
+          if (!response.ok) throw new Error('Could not sign in. Check your details and try again.')
+          // Store the session returned by your service before replacing the route.
+          router.replace('/')
+        }}
+        onForgotPassword={() => router.push('/forgot-password')}
+        onSignUp={() => router.push('/sign-up')}
+      />
+    </>
+  )
+}
+```
+
+Return the request's promise to SignIn. It handles the busy button and rejected submission. `replace` removes this sign-in entry from the back stack; it is not an authentication guard. Protect private routes from unauthenticated access separately.
+
+## React Navigation screens
+
+Render the same blocks as registered screen components. This Settings screen uses a typed native-stack navigation prop. Register `Settings`, `Language` and `SignIn` in your app's navigator, with the Settings header visible.
+
+```tsx
+import type { NativeStackScreenProps } from '@react-navigation/native-stack'
+import { SettingsScreen } from '@/components/blocks/settings-screen'
+
+type RootStackParamList = {
+  Settings: undefined
+  Language: undefined
+  SignIn: undefined
+}
+
+export function SettingsRoute({
+  navigation,
+}: NativeStackScreenProps<RootStackParamList, 'Settings'>) {
+  return (
+    <SettingsScreen
+      insetTop={false}
+      sections={[
+        {
+          id: 'general',
+          label: 'General',
+          rows: [
+            {
+              kind: 'link',
+              id: 'language',
+              title: 'Language',
+              value: 'English',
+              onPress: () => navigation.navigate('Language'),
+            },
+          ],
+        },
+      ]}
+      onSignOut={() => {
+        // Clear your app's session before replacing this route.
+        navigation.replace('SignIn')
+      }}
+    />
+  )
+}
+```
+
+SettingsScreen asks for confirmation before calling `onSignOut`. That callback currently returns `void`; it does not await a request or display a failure. If signing out needs server work, handle its pending and error states in the route or adapt the copied block. Changing the route alone does not revoke a session or clear other private routes from history.
+
+Use your existing React Navigation container and register the screen through its [native-stack navigator](https://reactnavigation.org/docs/native-stack-navigator/). Keep the eoria providers and hosts around the navigator so they survive screen changes.
+
+## Headers and safe areas
+
+| Layout                                              | Block setup                                                                                                              |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| An ordinary visible navigation header               | Pass `insetTop={false}`. Leave SettingsScreen's `title` out so the heading appears once.                                 |
+| Header hidden                                       | Keep the full-screen block's default `insetTop`, which pads by the top safe area.                                        |
+| A custom header already accounts for the status bar | Pass `insetTop={false}` and give the block the remaining space.                                                          |
+| A transparent header overlays the content           | Decide whether content should scroll behind it. `insetTop` only adds the status-bar inset, not the header's full height. |
+| A section or a Sheet-based block                    | The screen or sheet owns its placement. FilterSheet has no `insetTop` prop.                                              |
+
+Avoid another top SafeAreaView around a block that already adds the inset. Check the bottom separately when a tab bar overlays content; a home-indicator inset is not the height of a tab bar.
+
+## Product callbacks belong to the route
+
+ProductDetail can draw its own Back button over the images. Hide the native header in that case and keep the default top inset. The route body below receives the loaded product and cart function from your app. Render it from `app/products/[id].tsx` after resolving that route's product id.
+
+The product type comes from the copied block. The wrapper changes only its navigation and cart callbacks, so it does not duplicate the product's data contract.
+
+```tsx
+import type { ComponentProps } from 'react'
+import { Stack, router } from 'expo-router'
+import { ProductDetail } from '@/components/blocks/product-detail'
+
+type ProductProps = ComponentProps<typeof ProductDetail>
+type ProductRouteBodyProps = {
+  product: Omit<ProductProps, 'onBack' | 'onAddToCart'>
+  addToCart: ProductProps['onAddToCart']
+}
+
+export function ProductRouteBody({ product, addToCart }: ProductRouteBodyProps) {
+  return (
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <ProductDetail
+        {...product}
+        onBack={() => {
+          if (router.canGoBack()) router.back()
+          else router.replace('/')
+        }}
+        onAddToCart={async ({ quantity, option }) => {
+          await addToCart({ quantity, option })
+          router.push('/cart')
+        }}
+      />
+    </>
+  )
+}
+```
+
+Here `/cart` is an existing route in your app. A failed cart request stays on the product and reaches the block's error handling. Only a successful request pushes the cart. With a visible native header, omit the block's `onBack` and pass `insetTop={false}` instead.
+
+## Native tabs or the Tabs component
+
+Use a navigator for destinations such as Home and Settings. Expo Router's [native tabs](https://docs.expo.dev/router/advanced/native-tabs/) create platform tab navigation. This layout uses the `NativeTabs.Trigger.Label` API exposed by the example app's Expo Router version. Check the API for your Expo SDK, since the module is still under `unstable-native-tabs`.
+
+```tsx
+// app/(tabs)/_layout.tsx
+import { NativeTabs } from 'expo-router/unstable-native-tabs'
+
+export default function TabLayout() {
+  return (
+    <NativeTabs>
+      <NativeTabs.Trigger name="index">
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="settings">
+        <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
+  )
+}
+```
+
+Create the corresponding `index.tsx` and `settings.tsx` routes in that group. Put a stack inside a tab when that destination needs its own push history and headers. Give safe-area padding one owner; native tabs can apply content insets as well, so check the container before leaving a block's top inset on.
+
+Use eoria's [Tabs](/components/tabs/) for views within one screen. It switches local content and does not create routes, URLs or back history.
+
+```tsx
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Text } from '@/components/ui/text'
+
+export function ProductInformation() {
+  return (
+    <Tabs defaultValue="details" variant="underline">
+      <TabsList>
+        <TabsTrigger value="details">Details</TabsTrigger>
+        <TabsTrigger value="delivery">Delivery</TabsTrigger>
+      </TabsList>
+      <TabsContent value="details">
+        <Text>Made from organic cotton.</Text>
+      </TabsContent>
+      <TabsContent value="delivery">
+        <Text>Dispatches within two working days.</Text>
+      </TabsContent>
+    </Tabs>
+  )
+}
+```
+
+TabsContent unmounts inactive children. Keep a draft above Tabs if it must survive changing tabs. If each selection should have a shareable URL, use routes instead.
+
+## A sheet is already an overlay
+
+FilterSheet owns a Sheet. Mount it alongside the route's content and control `open`. Putting that block inside another Sheet or a route with modal presentation adds another dismissal layer.
+
+```tsx
+// app/catalog.tsx
+import { useCallback, useState } from 'react'
+import { BackHandler } from 'react-native'
+import { useFocusEffect } from 'expo-router'
+import { FilterSheet, type FilterValues } from '@/components/blocks/filter-sheet'
+import { Button } from '@/components/ui/button'
+import { VStack } from '@/components/ui/stack'
+import { Text } from '@/components/ui/text'
+
+export default function CatalogRoute() {
+  const [open, setOpen] = useState(false)
+  const [filters, setFilters] = useState<FilterValues>({ inStock: false })
+
+  useFocusEffect(useCallback(() => {
+    if (!open) return
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setOpen(false)
+      return true
+    })
+    return () => {
+      subscription.remove()
+      setOpen(false)
+    }
+  }, [open]))
+
+  return (
+    <VStack flex={1} p={4} gap={4}>
+      <Button onPress={() => setOpen(true)}>Filters</Button>
+      <Text>{filters.inStock ? 'Showing items in stock' : 'Showing all items'}</Text>
+      <FilterSheet
+        open={open}
+        onOpenChange={setOpen}
+        value={filters}
+        groups={[{ kind: 'switch', id: 'inStock', title: 'In stock only' }]}
+        onApply={(next) => setFilters(next)}
+        onReset={() => {}}
+      />
+    </VStack>
+  )
+}
+```
+
+FilterSheet keeps a local draft. Apply commits it through `onApply`, while closing without Apply discards it. Reset restores the block's draft defaults, so this example needs no external reset work and supplies a no-op `onReset`. It leaves the applied filters unchanged until Apply. Keep `value` in the route or your store, not in route history for every chip press.
+
+A route modal is useful for a separate destination with its own lifecycle, such as a sign-in flow presented over a public screen. Configure it in the parent stack, then push it like another route. Expo's [modal guide](https://docs.expo.dev/router/advanced/modals/) covers presentation and linking.
+
+```tsx
+// Within the root layout's existing providers and hosts:
+import { Stack } from 'expo-router'
+
+<Stack>
+  <Stack.Screen name="index" />
+  <Stack.Screen name="sign-in" options={{ presentation: 'modal', title: 'Sign in' }} />
+</Stack>
+```
+
+Keep the SignIn route's `insetTop={false}` under that header. For React Navigation, set `presentation: 'modal'` on the corresponding native-stack screen. A route modal's close button and successful-submit destination should match the flow that opened it. A portal is a React Native view, not a native window above every presented screen, so check overlays inside native modal presentations on both platforms.
+
+## Back handling
+
+Use `router.back()` or `navigation.goBack()` for an explicit Back button. Check `router.canGoBack()` or `navigation.canGoBack()` first when the screen can open from a deep link with no earlier route, and provide a known fallback destination.
+
+The FilterSheet example registers Android back only while the route is focused and the sheet is open. Returning `true` consumes that press; once the sheet is closed, the navigator handles back normally. The focus cleanup also closes a sheet when the route loses focus. In a standalone React Navigation app, import `useFocusEffect` from `@react-navigation/native` and use the same pattern. See [custom Android back handling](https://reactnavigation.org/docs/custom-android-back-button-handling/).
+
+Dialog and AlertDialog already register Android back listeners. Do not add a route listener that closes the underlying sheet while a dialog is on top. Disable that sheet listener while the dialog is open. Back listeners are independent of portal drawing order.
+
+A native edge-back or modal swipe gesture belongs to the navigator. `dismissable={false}` on SheetContent controls sheet drag and backdrop dismissal, not leaving the route. If a form must confirm before leaving, use the navigator's route-removal prevention API and cover header back, gestures and programmatic navigation together. A hardware-back listener alone cannot protect a draft on iOS.
+
+## Deep links
+
+Use route params for stable identifiers, such as the id in `app/products/[id].tsx`. Load the product by that id before rendering ProductDetail. Keep callbacks, full product objects and credentials out of URLs. Validate the id and show loading, missing-product and error states before the block.
+
+Expo Router derives paths from route files; custom schemes and universal links still need app and platform configuration. React Navigation uses the container's linking configuration to map paths to registered screens. A link can open a cold app, so handle authentication and the no-history Back case even when ordinary in-app navigation always has a previous screen.
+
+For shareable filters, parse and validate URL values into the FilterSheet's `value` in the route. Apply can update that URL. Keep uncommitted draft edits inside the sheet, and decide explicitly whether a linked filter state should also open it.

@@ -92,6 +92,12 @@ const blocks: Array<{ href: Href; title: string }> = [
   ['transaction-list', 'Transaction list'],
   ['checkout-summary', 'Checkout summary'],
   ['inbox', 'Inbox'],
+  ['product-detail', 'Product detail'],
+  ['filter-sheet', 'Filter sheet'],
+  ['paywall', 'Paywall'],
+  ['edit-profile', 'Edit profile'],
+  ['chat-thread', 'Chat thread'],
+  ['feedback-form', 'Feedback form'],
 ].map(([name, title]) => ({ href: `/blocks/${name}` as Href, title: title as string }))
 
 function ModePicker() {

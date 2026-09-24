@@ -1,0 +1,102 @@
+---
+title: Chat thread
+description: A conversation with grouped bubbles, delivery states, retry and a keyboard-aware composer.
+category: Social
+sidebar:
+  order: 40
+---
+
+```sh
+npx @eoria/cli add chat-thread
+```
+
+The command also adds [Alert](/components/alert/), [Avatar](/components/avatar/), [Button](/components/button/), [IconButton](/components/icon-button/), [InputGroup](/components/input-group/), [Keyboard](/components/keyboard/) and [Text](/components/text/).
+
+## Usage
+
+```tsx
+import { useState } from 'react'
+import { ChatThread, type ChatMessage } from '@/components/blocks/chat-thread'
+
+export function ConversationRoute() {
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: 'first',
+      text: 'Can you look at the draft?',
+      sentAt: '2026-09-22T09:41:00Z',
+      from: 'them',
+    },
+  ])
+
+  return (
+    <ChatThread
+      participant={{ name: 'Grace Hopper', initials: 'GH', presence: 'online' }}
+      messages={messages}
+      onSend={async (text) => {
+        const message = await sendMessage(text)
+        setMessages((current) => [...current, message])
+      }}
+      onRetry={async (id) => {
+        await retryMessage(id)
+        setMessages((current) =>
+          current.map((message) =>
+            message.id === id ? { ...message, status: 'sent' } : message,
+          ),
+        )
+      }}
+      onBack={() => goBack()}
+    />
+  )
+}
+```
+
+`sendMessage`, `retryMessage` and `goBack` belong to your app. `sendMessage` returns a `ChatMessage` with a unique ID.
+
+## Props
+
+| Prop                | Type                                      | Default                 |
+| ------------------- | ----------------------------------------- | ----------------------- |
+| `messages`          | `ChatMessage[]`, oldest first             | required                |
+| `participant`       | `ChatParticipant`                         | required                |
+| `onSend`            | `(text: string) => void \| Promise<void>` | required                |
+| `onRetry`           | `(id: string) => void \| Promise<void>`   | hides Retry             |
+| `onPressAttachment` | `() => void \| Promise<void>`             | hides attachment button |
+| `onPressHeader`     | `() => void \| Promise<void>`             | header is not pressable |
+| `onBack`            | `() => void \| Promise<void>`             | hides back button       |
+| `header`            | `boolean`                                 | `true`                  |
+| `insetTop`          | `boolean`                                 | `true`                  |
+| `style`             | `StyleProp<ViewStyle>`                    |                         |
+
+## Data types
+
+```ts
+export type ChatMessage = {
+  id: string
+  text: string
+  sentAt: Date | string
+  from: 'me' | 'them'
+  status?: 'sending' | 'sent' | 'read' | 'failed'
+}
+
+export type ChatParticipant = {
+  name: string
+  avatarUrl?: string
+  initials: string
+  presence?: 'online' | 'offline' | string
+}
+```
+
+## Notes
+
+- Pass messages in chronological order, oldest first. The block reverses a copy for its inverted `FlatList`; it does not mutate the supplied array. Use stable, unique IDs. The parent owns sent messages and status updates.
+- Consecutive messages from the same sender share tighter spacing. The last bubble has a smaller bottom corner on the sender's side. Groups break at local calendar-day boundaries, with a day label above the first message. Times use the device locale. Invalid timestamps display Unknown date and Unknown time.
+- Each bubble is one screen-reader element containing sender, text, time and status. Retry remains a separate button. The header reads the participant's name and presence together.
+- The composer sends trimmed text and ignores whitespace-only messages. It stays disabled while an action is pending. A successful send clears the composer; a rejected send preserves the draft.
+- All callback props accept promises. Buttons show loading while their actions run; a pending header action shows Opening profile. Rejections show `error.message` in an announced Alert, or generic text for other values. Repeated presses are guarded and state updates stop after unmount.
+- A failed message shows Retry when `onRetry` is provided. Update that message through `messages` after retrying. The block does not add optimistic messages itself.
+- `KeyboardFooter` keeps the composer above the keyboard and pads the home indicator. Follow the [keyboard setup](/components/keyboard/). Set `header={false}` and `insetTop={false}` when your navigation header already supplies both.
+- The demo starts with a failed message to retry. Its first new send also fails, preserving the draft; the next succeeds with a toast.
+
+## Source
+
+[`registry/blocks/chat-thread.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/blocks/chat-thread.tsx)

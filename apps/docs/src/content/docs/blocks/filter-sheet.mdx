@@ -1,0 +1,100 @@
+---
+title: Filter sheet
+description: A scrollable filter sheet with local drafts, five kinds of controls, Reset and Apply.
+category: Commerce
+sidebar:
+  order: 21
+---
+
+```sh
+npx @eoria/cli add filter-sheet
+```
+
+The command also adds [Alert](/components/alert/), [Button](/components/button/), [Chip](/components/chip/), [RadioGroup](/components/radio-group/), [Sheet](/components/sheet/), [Slider](/components/slider/), [Switch](/components/switch/), [Text](/components/text/) and [ToggleGroup](/components/toggle-group/).
+
+## Usage
+
+```tsx
+import { useState } from 'react'
+import { FilterSheet, type FilterGroup, type FilterValues } from '@/components/blocks/filter-sheet'
+import { Button } from '@/components/ui/button'
+
+const groups: FilterGroup[] = [
+  {
+    kind: 'chips', id: 'sizes', title: 'Size', multiple: true,
+    options: [{ value: 's', label: 'S' }, { value: 'm', label: 'M' }],
+  },
+  { kind: 'range', id: 'price', title: 'Price', min: 0, max: 200, step: 5, format: (n) => `€${n}` },
+  { kind: 'switch', id: 'inStock', title: 'In stock only' },
+]
+
+export function Filters() {
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState<FilterValues>({})
+  return (
+    <>
+      <Button onPress={() => setOpen(true)}>Filters</Button>
+      <FilterSheet
+        open={open}
+        onOpenChange={setOpen}
+        value={value}
+        groups={groups}
+        resultCount={42}
+        onApply={setValue}
+        onReset={() => {}}
+      />
+    </>
+  )
+}
+```
+
+## Props
+
+| Prop           | Type                                              | Default  |
+| -------------- | ------------------------------------------------- | -------- |
+| `open`         | `boolean`                                         | required |
+| `onOpenChange` | `(open: boolean) => void`                         | required |
+| `value`        | `FilterValues`                                    | required |
+| `onApply`      | `(values: FilterValues) => void \| Promise<void>` | required |
+| `onReset`      | `() => void \| Promise<void>`                     | required |
+| `groups`       | `FilterGroup[]`                                   | required |
+| `resultCount`  | `number`, changes Apply to "Show 42 results"      |          |
+
+## Data types
+
+```ts
+type FilterOption = { value: string; label: string }
+type FilterValues = Record<string, string | string[] | number | boolean | undefined>
+type FilterGroup =
+  | { kind: 'chips'; id: string; title: string; options: FilterOption[]; multiple?: boolean }
+  | { kind: 'toggle'; id: string; title: string; options: FilterOption[] }
+  | { kind: 'range'; id: string; title: string; min: number; max: number; step?: number; format?: (value: number) => string }
+  | { kind: 'radio'; id: string; title: string; options: FilterOption[] }
+  | { kind: 'switch'; id: string; title: string }
+```
+
+| Kind              | Stored value   | Reset value   |
+| ----------------- | -------------- | ------------- |
+| `chips`, single   | option string  | `''`          |
+| `chips`, multiple | string array   | `[]`          |
+| `toggle`          | option string  | `''`          |
+| `range`           | maximum number | group's `max` |
+| `radio`           | option string  | `''`          |
+| `switch`          | boolean        | `false`       |
+
+## Notes
+
+- This is a Sheet, with no screen wrapper or top inset. It needs `BottomSheetModalProvider` inside `GestureHandlerRootView`, as described on the [Sheet page](/components/sheet/).
+- Each opening starts a draft from `value`. Editing does not call `onApply`. Dismissing without applying discards the draft. Changes to `value` while editing take effect on the next opening.
+- Apply passes the draft to `onApply`. Save it in the parent, then resolve the promise. The sheet requests closing only after success. A failed apply keeps the draft for another attempt.
+- Reset calls `onReset`, then clears the draft to the values in the table. It does not call `onApply`. Use `onReset` for a notification or other reset work; keep your applied values unchanged until Apply if dismissal should discard a reset too.
+- Both actions show loading and disable the controls until completion. Rejections show `error.message` in an Alert with a polite live region, or generic text for a non-Error rejection. A closed draft skips later state updates and cannot close a new opening.
+- `onOpenChange` is a synchronous state notification. Keep it connected to your controlled `open` state.
+- The Slider accepts one number, so range groups represent an upper bound. Use `min <= max` and a positive `step`. `format` controls the visible amount, while the stored value stays numeric.
+- Use unique group IDs and unique option values within each group. These are a finite form configuration. The Sheet scrolls when the controls exceed its available height.
+- `resultCount` is supplied by the parent. The block does not fetch or count results.
+- Change first: the "Filters" heading and range label if the value is not a price or upper limit.
+
+## Source
+
+[`registry/blocks/filter-sheet.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/blocks/filter-sheet.tsx)

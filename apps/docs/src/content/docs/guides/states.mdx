@@ -1,0 +1,244 @@
+---
+title: Loading, empty and error states
+description: Match loading feedback to the work, keep useful data visible, and give errors a way out.
+sidebar:
+  order: 6
+---
+
+A blank screen does not tell someone whether a request is running, returned nothing or failed. Give each state its own UI, and keep the last successful data visible during a refresh.
+
+## Match the feedback to the work
+
+| Work                                  | Component                                    | What to show                                                   |
+| ------------------------------------- | -------------------------------------------- | -------------------------------------------------------------- |
+| Fetching the first rows               | [Skeleton](/components/skeleton/)            | The shape and spacing of the rows that will replace it.        |
+| Waiting without a known total         | [Spinner](/components/spinner/)              | A small indicator with a label such as "Refreshing notes".     |
+| A button started a request            | [Button](/components/button/) with `loading` | Keep the action's label and colours while presses are blocked. |
+| A successful request returned no rows | [Empty](/components/empty/)                  | Explain the absence and offer an action that changes it.       |
+| Work failed and can be retried        | [Alert](/components/alert/)                  | Say what failed, with a Retry button beside the alert.         |
+| Work has a measurable total           | [Progress](/components/progress/)            | Completed units in `value`, total units in `max`.              |
+
+`Button` does not await `onPress` or turn on `loading` itself. Pass your request's pending state. Its built-in spinner replaces the icon, keeps the label, and reports the button as busy and disabled. Use a separate Spinner for work that belongs to the screen, such as a background refresh.
+
+## Match the skeleton to the row
+
+Use the same row container for loading and loaded content. This note row has a title and a description, so its placeholder has two text bars. An avatar-shaped placeholder would promise content the row does not have.
+
+```tsx
+import { View } from 'react-native'
+import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
+import { Skeleton } from '@/components/ui/skeleton'
+
+type Note = { id: string; title: string; preview: string }
+
+function NoteRow({ note }: { note: Note }) {
+  return (
+    <Item accessible accessibilityLabel={`${note.title}, ${note.preview}`}>
+      <ItemContent>
+        <ItemTitle>{note.title}</ItemTitle>
+        <ItemDescription numberOfLines={1}>{note.preview}</ItemDescription>
+      </ItemContent>
+    </Item>
+  )
+}
+
+function NotesSkeleton() {
+  return (
+    <View accessible accessibilityState={{ busy: true }} accessibilityLabel="Loading notes">
+      {[0, 1, 2].map((id) => (
+        <Item key={id}>
+          <ItemContent>
+            <Skeleton shape="text" style={{ width: '60%' }} />
+            <Skeleton shape="text" style={{ width: '85%' }} />
+          </ItemContent>
+        </Item>
+      ))}
+    </View>
+  )
+}
+```
+
+Skeleton hides its bars from assistive technology and stops pulsing under Reduce Motion. The parent supplies one loading label. Keep skeletons for the first load. Replacing real rows every time a request runs makes a refresh look like data loss.
+
+## Map TanStack Query to components
+
+This example uses TanStack Query v5 directly. No `useAsync` wrapper or second set of loading flags is needed. `status` describes the result, while `fetchStatus` describes whether a request is running, paused or idle. [TanStack's query guide](https://tanstack.com/query/latest/docs/framework/react/guides/queries) explains the distinction.
+
+```sh
+npm install @tanstack/react-query
+```
+
+| Query state                           | UI                                                                        |
+| ------------------------------------- | ------------------------------------------------------------------------- |
+| `isPending` and `isFetching`          | The initial skeleton.                                                     |
+| `isPending` without a running request | A waiting message, not an endless animation.                              |
+| `isError` with no data                | An error alert and Retry.                                                 |
+| Data is an empty array                | The empty state and New note.                                             |
+| Data exists and `isFetching`          | Keep it visible and add a small spinner.                                  |
+| `isError` with cached data            | Keep the cached result and show the refresh error above it.               |
+| `isPaused` with cached data           | Keep the result and explain that the refresh is waiting for a connection. |
+
+Add the following below `NoteRow` and `NotesSkeleton` in the same file. `loadNotes` is your API function. It receives the query's abort signal and must resolve to an array or reject with an error safe to show to the user. With `fetch`, check `response.ok` and throw for an unsuccessful response.
+
+```tsx
+import { useEffect, useState } from 'react'
+import { AccessibilityInfo, FlatList } from 'react-native'
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Empty, EmptyActions, EmptyDescription, EmptyTitle } from '@/components/ui/empty'
+import { Spinner } from '@/components/ui/spinner'
+import { VStack } from '@/components/ui/stack'
+
+type NotesProps = {
+  loadNotes: (signal: AbortSignal) => Promise<Note[]>
+  onCreate: () => void
+}
+
+function RetryNotice({
+  message, busy, onRetry,
+}: {
+  message: string
+  busy: boolean
+  onRetry: () => void
+}) {
+  useEffect(() => {
+    AccessibilityInfo.announceForAccessibility(message)
+  }, [message])
+
+  return (
+    <VStack gap={3} p={4}>
+      <Alert variant="destructive" accessibilityLiveRegion="polite">
+        <AlertTitle>Could not load notes</AlertTitle>
+        <AlertDescription>{message}</AlertDescription>
+      </Alert>
+      <Button variant="outline" loading={busy} onPress={onRetry}>
+        Retry
+      </Button>
+    </VStack>
+  )
+}
+
+function NotesScreen({ loadNotes, onCreate }: NotesProps) {
+  const query = useQuery({
+    queryKey: ['notes'],
+    queryFn: ({ signal }) => loadNotes(signal),
+  })
+  const retry = () => { void query.refetch() }
+  const message = query.error instanceof Error && query.error.message
+    ? query.error.message
+    : 'Your notes could not be loaded. Try again.'
+
+  if (query.isPending) {
+    if (query.isFetching) return <NotesSkeleton />
+    return (
+      <Alert>
+        <AlertTitle>{query.isPaused ? 'Waiting for a connection' : 'Waiting to load notes'}</AlertTitle>
+        <AlertDescription>
+          {query.isPaused ? 'Your notes will load when you are online.' : 'The request has not started.'}
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
+  if (query.isError && query.data === undefined) {
+    return <RetryNotice message={message} busy={query.isFetching} onRetry={retry} />
+  }
+
+  return (
+    <VStack flex={1} gap={3}>
+      {query.isError ? (
+        <RetryNotice message={message} busy={query.isFetching} onRetry={retry} />
+      ) : query.isFetching ? (
+        <Spinner size="sm" accessibilityLabel="Refreshing notes" />
+      ) : null}
+      {query.isPaused ? (
+        <Alert>
+          <AlertTitle>Refresh paused</AlertTitle>
+          <AlertDescription>Showing saved notes until your connection returns.</AlertDescription>
+        </Alert>
+      ) : null}
+      <FlatList
+        data={query.data ?? []}
+        keyExtractor={(note) => note.id}
+        contentContainerStyle={{ flexGrow: 1 }}
+        renderItem={({ item }) => <NoteRow note={item} />}
+        ListEmptyComponent={
+          <Empty>
+            <EmptyTitle>No notes yet</EmptyTitle>
+            <EmptyDescription>Save an idea so you can find it here later.</EmptyDescription>
+            <EmptyActions>
+              <Button onPress={onCreate}>New note</Button>
+            </EmptyActions>
+          </Empty>
+        }
+      />
+    </VStack>
+  )
+}
+
+export function NotesExample(props: NotesProps) {
+  const [client] = useState(() => new QueryClient())
+  return (
+    <QueryClientProvider client={client}>
+      <NotesScreen {...props} />
+    </QueryClientProvider>
+  )
+}
+```
+
+In an app, mount one stable `QueryClientProvider` at the root and render `NotesScreen` in the route. Include account or filter identifiers in the query key when they change which notes are loaded. Follow TanStack's [React Native setup](https://tanstack.com/query/latest/docs/framework/react/react-native) to connect `onlineManager` to network state and `focusManager` to app state. Native connectivity changes need that wiring for paused requests to resume.
+
+Retry sits outside Alert because Alert groups its content into one accessible element. The error is announced when it appears, and the separate button remains reachable. Keep it visible while waiting for the user to retry. An initial retry returns to the skeleton; a retry with cached data keeps the rows and shows the Retry button as busy. Do not clear errors on a timer.
+
+## Empty means the request succeeded
+
+Use "No notes yet" for a collection with no data. For a filtered list, use "No results" and offer Clear filters instead of creating a new item. Keep a failed initial request in the error state, even if rendering an empty array would be convenient.
+
+`Empty` uses `flexGrow: 1`. A list's `contentContainerStyle={{ flexGrow: 1 }}` gives it the spare height needed to centre the message, while a short section lets it keep its natural height.
+
+## Progress needs a real total
+
+Use completed files, uploaded bytes or another measurable unit. Do not advance a percentage on a timer while the server's progress is unknown.
+
+```tsx
+import { Progress } from '@/components/ui/progress'
+import { Spinner } from '@/components/ui/spinner'
+
+export function UploadProgress({ sent, total }: { sent: number; total?: number }) {
+  if (total === undefined || total <= 0) {
+    return <Spinner accessibilityLabel="Uploading" />
+  }
+  return <Progress value={sent} max={total} accessibilityLabel="Upload progress" />
+}
+```
+
+Progress clamps `value` to the range and exposes the minimum, maximum and current value to screen readers. Spinner handles the period before a total is known.
+
+## Return the promise to a block
+
+Async action callbacks on blocks such as [Sign in](/blocks/sign-in/) and [Checkout summary](/blocks/checkout-summary/) accept `void | Promise<void>`. Return or await the request so the block can keep its button busy until it settles. A rejection displays the error message, with a fallback when no usable message is available.
+
+```tsx
+import { SignIn, type SignInValues } from '@/components/blocks/sign-in'
+import { toast } from '@/components/ui/toast'
+
+export function SignInScreen({
+  authenticate,
+}: {
+  authenticate: (values: SignInValues) => Promise<void>
+}) {
+  return (
+    <SignIn
+      onSubmit={async (values) => {
+        await authenticate(values)
+        toast({ title: 'Signed in' })
+      }}
+    />
+  )
+}
+```
+
+Throw `Error` objects with copy the user can act on. If you catch an API error to translate its message, rethrow it so the block sees a failure. Starting a request with `void authenticate(values)` would end the callback before the work finishes.
+
+SignIn and CheckoutSummary skip their local state updates after unmount, so a callback can finish by navigating away. That guard does not cancel the network request. Also check each block's callback types: SettingsScreen's `onSignOut` and ordinary row `onPress` handlers are synchronous callbacks and do not supply async loading or error handling. The [overlays guide](/guides/overlays/#a-row-menu-a-confirmation-and-a-toast) shows that handling around an AlertDialog action.

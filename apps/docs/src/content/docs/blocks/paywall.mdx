@@ -1,0 +1,100 @@
+---
+title: Paywall
+description: A feature list and selectable subscription plans with purchase, restore and policy callbacks.
+category: Commerce
+sidebar:
+  order: 22
+---
+
+```sh
+npx @eoria/cli add paywall
+```
+
+The command also adds [Alert](/components/alert/), [Badge](/components/badge/), [Button](/components/button/), [Card](/components/card/), [IconButton](/components/icon-button/), [RadioGroup](/components/radio-group/) and [Text](/components/text/).
+
+## Usage
+
+```tsx
+import { Paywall } from '@/components/blocks/paywall'
+
+<Paywall
+  title="Make room for more"
+  subtitle="Your favourites, wherever you go."
+  features={[
+    { title: 'Every collection', description: 'Use all current and future collections.' },
+    { title: 'Available offline', description: 'Download favourites to take with you.' },
+  ]}
+  plans={[
+    {
+      id: 'annual', title: 'Yearly', price: '€39.99', period: 'year',
+      badge: 'Most popular', perMonth: 'About €3.33 per month',
+      description: 'Billed once a year. Cancel anytime.',
+    },
+    { id: 'monthly', title: 'Monthly', price: '€4.99', period: 'month' },
+  ]}
+  onSelectPlan={async (planId) => {
+    await purchasePlan(planId)
+  }}
+  onRestore={async () => {
+    await restorePurchases()
+  }}
+  onTerms={() => openTerms()}
+  onPrivacy={() => openPrivacy()}
+  onClose={() => closePaywall()}
+/>
+```
+
+Supply the purchase, restore, policy and close functions from your app.
+
+## Props
+
+| Prop           | Type                                        | Default      |
+| -------------- | ------------------------------------------- | ------------ |
+| `title`        | `string`                                    | required     |
+| `subtitle`     | `string`                                    | required     |
+| `features`     | `PaywallFeature[]`                          | required     |
+| `plans`        | `PaywallPlan[]`                             | required     |
+| `ctaLabel`     | `string`                                    | `'Continue'` |
+| `onSelectPlan` | `(planId: string) => void \| Promise<void>` | required     |
+| `onRestore`    | `() => void \| Promise<void>`               |              |
+| `onTerms`      | `() => void \| Promise<void>`               |              |
+| `onPrivacy`    | `() => void \| Promise<void>`               |              |
+| `onClose`      | `() => void \| Promise<void>`               |              |
+| `insetTop`     | `boolean`                                   | `true`       |
+| `style`        | `StyleProp<ViewStyle>`                      |              |
+
+## Data types
+
+```ts
+type PaywallFeature = {
+  icon?: ReactElement<{ size?: number; color?: string }>
+  title: string
+  description?: string
+}
+
+type PaywallPlan = {
+  id: string
+  title: string
+  price: string
+  period: string
+  badge?: string
+  description?: string
+  perMonth?: string
+}
+```
+
+## Notes
+
+- The first plan with a badge starts selected. If no plan has one, the first plan starts selected. Removing the selected plan falls back to that same rule. An empty plan list disables Continue.
+- Each Card is one radio option in a RadioGroup. Its label includes the plan title, price, billing period, badge and description. The selected border uses `theme.colors.primary` and a check icon also marks the selection.
+- Feature icons accept `size` and `color`, as lucide icons do. Omit an icon to use a check. Each feature title and description read as one element.
+- The feature and plan rows use a FlatList. The purchase button and policy links stay below it, above the home indicator. Pass `insetTop={false}` under a navigation header.
+- Price, period and `perMonth` are display strings. Read localized prices from your billing service and pass them through. The block does not calculate discounts or charge a customer.
+- `onSelectPlan` receives only the selected ID. Return your purchase promise to show loading. Every optional action also accepts a promise, and other actions stay blocked until it settles.
+- Rejections show `error.message` in an Alert with a polite live region. A non-Error rejection uses generic text. State updates stop after unmount, so a successful purchase can navigate away.
+- Restore, Terms, Privacy and Close only appear when their callbacks are supplied. Keep navigation and billing in those callbacks.
+- Change first: the headline, feature copy and Continue label to match what the plan includes.
+
+## Source
+
+[`registry/blocks/paywall.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/blocks/paywall.tsx)

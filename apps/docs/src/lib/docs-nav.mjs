@@ -2,7 +2,7 @@
 // four list pages identically.
 
 export const CATEGORY_ORDER = ['Layout', 'Forms', 'Display', 'Overlays', 'Primitives']
-export const BLOCK_CATEGORY_ORDER = ['Auth', 'App']
+export const BLOCK_CATEGORY_ORDER = ['Auth', 'App', 'Commerce', 'Account', 'Social']
 
 /**
  * The header tabs. Each owns the pages under its folders and shows only those in the sidebar.

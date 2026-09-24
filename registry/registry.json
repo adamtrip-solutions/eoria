@@ -1045,6 +1045,158 @@
           "target": "components/blocks/inbox.tsx"
         }
       ]
+    },
+    {
+      "name": "product-detail",
+      "type": "registry:block",
+      "title": "Product detail",
+      "description": "Image carousel, price, rating, variant picker, quantity stepper, detail accordion and a pinned Add to cart bar.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "accordion",
+        "alert",
+        "badge",
+        "button",
+        "carousel",
+        "icon-button",
+        "image",
+        "rating",
+        "stepper",
+        "text",
+        "toggle-group"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/product-detail.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/product-detail.tsx"
+        }
+      ]
+    },
+    {
+      "name": "filter-sheet",
+      "type": "registry:block",
+      "title": "Filter sheet",
+      "description": "A sheet of chips, toggles, a range slider, a sort order and switches, with a draft that Apply commits and Reset clears.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "button",
+        "chip",
+        "radio-group",
+        "sheet",
+        "slider",
+        "switch",
+        "text",
+        "toggle-group"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/filter-sheet.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/filter-sheet.tsx"
+        }
+      ]
+    },
+    {
+      "name": "paywall",
+      "type": "registry:block",
+      "title": "Paywall",
+      "description": "Feature list, selectable plan cards with a highlighted badge, a Continue button with a loading state and restore, terms and privacy links.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "badge",
+        "button",
+        "card",
+        "icon-button",
+        "radio-group",
+        "text"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/paywall.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/paywall.tsx"
+        }
+      ]
+    },
+    {
+      "name": "edit-profile",
+      "type": "registry:block",
+      "title": "Edit profile",
+      "description": "Avatar with a change action, name, username, bio with a counter, birthday, country and website, validated inline with a Save button that shows a loading state.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "avatar",
+        "button",
+        "date-picker",
+        "field",
+        "input",
+        "input-group",
+        "keyboard",
+        "select",
+        "stack",
+        "text",
+        "textarea"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/edit-profile.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/edit-profile.tsx"
+        }
+      ]
+    },
+    {
+      "name": "chat-thread",
+      "type": "registry:block",
+      "title": "Chat thread",
+      "description": "Inverted message list with grouped bubbles, day separators, delivery status, retry on failure and a keyboard-aware composer.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "avatar",
+        "button",
+        "icon-button",
+        "input-group",
+        "keyboard",
+        "text"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/chat-thread.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/chat-thread.tsx"
+        }
+      ]
+    },
+    {
+      "name": "feedback-form",
+      "type": "registry:block",
+      "title": "Feedback form",
+      "description": "Star rating, a category picker, a message with a counter, an optional contact checkbox and a thank-you state after submit.",
+      "dependencies": ["@eoria/core", "lucide-react-native", "react-native-unistyles"],
+      "registryDependencies": [
+        "alert",
+        "button",
+        "checkbox",
+        "empty",
+        "field",
+        "rating",
+        "stack",
+        "text",
+        "textarea",
+        "toggle-group"
+      ],
+      "files": [
+        {
+          "path": "registry/blocks/feedback-form.tsx",
+          "type": "registry:block",
+          "target": "components/blocks/feedback-form.tsx"
+        }
+      ]
     }
   ]
 }

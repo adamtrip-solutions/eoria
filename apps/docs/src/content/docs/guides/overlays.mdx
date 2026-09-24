@@ -1,0 +1,314 @@
+---
+title: Overlays
+description: Pick an overlay, mount its host, and handle stacking, dismissal and async actions.
+sidebar:
+  order: 5
+---
+
+Pick the overlay by what the user needs to do. A short confirmation should not need a draggable sheet, and a tooltip should never hold an action.
+
+## Which one to use
+
+| Need                                    | Component                                  | Behaviour                                                                                             |
+| --------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| A short question or a small panel       | [Dialog](/components/dialog/)              | Bottom placement by default, or `placement="center"`. The grabber is decoration, not a drag handle.   |
+| Confirm a destructive action            | [AlertDialog](/components/alert-dialog/)   | Centred, with explicit actions. A mounted Cancel allows backdrop and Android back dismissal.          |
+| A form, filters or content that scrolls | [Sheet](/components/sheet/)                | Draggable, with snap points and keyboard support from `@gorhom/bottom-sheet`.                         |
+| Several actions within thumb reach      | [ActionSheet](/components/action-sheet/)   | A bottom list of actions with a separate Cancel. Built on Dialog, so it does not drag.                |
+| Details beside a trigger                | [Popover](/components/popover/)            | An anchored card that can hold text and controls.                                                     |
+| Actions for one row or object           | [DropdownMenu](/components/dropdown-menu/) | An anchored menu. Selecting an item closes it by default.                                             |
+| A short hint for a control              | [Tooltip](/components/tooltip/)            | Opens on long press, closes on release. String content also becomes the trigger's accessibility hint. |
+| Confirm that work finished              | [Toast](/components/toast/)                | Call `toast()`. It announces the message and dismisses after four seconds by default.                 |
+
+Keep a failed form submission beside the form in an [Alert](/components/alert/). A toast disappears, which makes it a poor home for an error the user still needs to fix.
+
+## Mount the hosts once
+
+[Portal](/components/portal/) renders content in a root `PortalHost` instead of inside a clipped row or scroll view. Dialog, AlertDialog, ActionSheet, Popover, DropdownMenu, Tooltip and Toaster use that host. Sheet uses the separate host supplied by `BottomSheetModalProvider`.
+
+The example app's `apps/example/src/app/_layout.tsx` mounts `GestureHandlerRootView`, `KeyboardProvider`, `BottomSheetModalProvider`, `PortalHost` and `Toaster`. The toast host is named `Toaster`. Keep your Unistyles setup import before rendering any of them, and keep the app's font-loading gate if your preset uses custom fonts.
+
+For a sheet that opens a dialog, put `PortalHost` and `Toaster` after the whole `BottomSheetModalProvider`, as below. The example app currently puts them inside that provider. Gorhom appends its own host after the provider's children, so an eoria dialog can otherwise sit behind the sheet.
+
+```tsx
+// app/_layout.tsx
+import '@/unistyles'
+import { Stack } from 'expo-router'
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { KeyboardProvider } from 'react-native-keyboard-controller'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useUnistyles } from 'react-native-unistyles'
+import { PortalHost } from '@/components/ui/portal'
+import { Toaster } from '@/components/ui/toast'
+
+export default function RootLayout() {
+  const insets = useSafeAreaInsets()
+  const { theme } = useUnistyles()
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <KeyboardProvider>
+        <BottomSheetModalProvider>
+          <Stack />
+        </BottomSheetModalProvider>
+        <PortalHost />
+        <Toaster
+          offset={{ top: insets.top + theme.space[2], bottom: insets.bottom + theme.space[4] }}
+        />
+      </KeyboardProvider>
+    </GestureHandlerRootView>
+  )
+}
+```
+
+Expo Router supplies the safe-area context used here. With a standalone navigator, provide that context at the app root too. Keep the hosts mounted across route changes.
+
+React context from the trigger's branch does not automatically cross these portals. The eoria overlays re-provide their own context. Pass application data through props, put its provider above the host, or provide it again inside the overlay.
+
+## A sheet opening a dialog
+
+Keep both open states in the screen. Render the dialog beside the sheet so closing the sheet cannot leave a dialog owned by unmounted sheet content. With the host order above, the dialog covers the sheet and closing it reveals the sheet again.
+
+```tsx
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle,
+} from '@/components/ui/dialog'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
+
+export function DeliveryOptions() {
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
+
+  return (
+    <>
+      <Button onPress={() => setSheetOpen(true)}>Delivery options</Button>
+      <Sheet
+        open={sheetOpen}
+        onOpenChange={(open) => {
+          setSheetOpen(open)
+          if (!open) setDialogOpen(false)
+        }}
+      >
+        <SheetContent>
+          <SheetTitle>Delivery</SheetTitle>
+          <Button variant="outline" onPress={() => setDialogOpen(true)}>
+            How delivery works
+          </Button>
+        </SheetContent>
+      </Sheet>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen} placement="center">
+        <DialogContent>
+          <DialogTitle>Delivery times</DialogTitle>
+          <DialogDescription>Orders leave the warehouse within two working days.</DialogDescription>
+          <DialogClose asChild>
+            <Button>Got it</Button>
+          </DialogClose>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+```
+
+Portal entries draw in mount order. A newly opened dialog appears above earlier eoria entries, but this is not a global overlay manager. For a menu opening a confirmation, close the menu and keep the confirmation outside its content. For several nested overlays, let only the top one handle back.
+
+## Dismissal is part of the flow
+
+| Component              | Backdrop                                               | Android back                                                                     | Drag or back gesture                                                            |
+| ---------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Dialog and ActionSheet | Closes unless content has `dismissable={false}`        | Still closes when `dismissable` is false                                         | No drag dismissal. A route's edge-back gesture belongs to the navigator.        |
+| AlertDialog            | Closes only with a mounted `AlertDialogCancel`         | Same rule, otherwise consumes the press                                          | No drag dismissal.                                                              |
+| Sheet                  | Closes unless `SheetContent` has `dismissable={false}` | The wrapper installs no back listener. Handle the controlled state in the route. | Pan down closes when dismissable. This is separate from a route's back gesture. |
+| Popover                | Closes by default                                      | Closes by default                                                                | No drag dismissal. `dismissable={false}` removes both dismissal handlers.       |
+| DropdownMenu           | Closes                                                 | Closes                                                                           | No drag dismissal.                                                              |
+| Tooltip                | No backdrop                                            | No back handler                                                                  | Release the trigger to close.                                                   |
+| Toast                  | No backdrop                                            | No back handler                                                                  | Tap the toast or wait for its timer. `toast.dismiss()` closes all toasts.       |
+
+Put cleanup in `onOpenChange`, since backdrop and back dismissal do not call a Cancel button's `onPress`. Disabling `AlertDialogCancel` does not remove it, so it still permits backdrop and Android back requests. To reject those requests while saving, guard `onOpenChange` as in the delete example below.
+
+An overlay does not prevent the navigator from removing its route. See [Navigation](/guides/navigation/#back-handling) for focused Android back handling and route gestures.
+
+## The keyboard inside a sheet
+
+Use `BottomSheetTextInput` so the sheet knows which input has focus. `SheetContent` forwards `keyboardBehavior` and `keyboardBlurBehavior` to Gorhom. `scroll` uses its sheet-aware scroll view, which hands a downward gesture back to the sheet at the top.
+
+```tsx
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
+import { StyleSheet } from 'react-native-unistyles'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
+
+export function AddressSheet({
+  open, onOpenChange, address, onAddressChange,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  address: string
+  onAddressChange: (address: string) => void
+}) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent scroll keyboardBehavior="interactive" keyboardBlurBehavior="restore">
+        <SheetTitle>Delivery address</SheetTitle>
+        <BottomSheetTextInput
+          accessibilityLabel="Street address"
+          value={address}
+          onChangeText={onAddressChange}
+          style={styles.input}
+        />
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+const styles = StyleSheet.create((theme) => ({
+  input: {
+    minHeight: theme.control.md,
+    padding: theme.space[3],
+    borderRadius: theme.radius.control,
+    backgroundColor: theme.colors.muted,
+    color: theme.colors.foreground,
+    fontSize: theme.fontSize.md,
+  },
+}))
+```
+
+For a full-screen form, use [KeyboardScrollView](/components/keyboard/) instead. Mounting `KeyboardProvider` alone does not give a plain input Gorhom's focus handling.
+
+## A row menu, a confirmation and a toast
+
+Keep the selected row above the list. The confirmation must survive the menu closing and the deleted row disappearing. This example takes the deletion function from the app and removes a row only after that promise resolves.
+
+```tsx
+import { useEffect, useRef, useState } from 'react'
+import { AccessibilityInfo, FlatList } from 'react-native'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Item, ItemContent, ItemTitle, ItemTrailing } from '@/components/ui/item'
+import { toast } from '@/components/ui/toast'
+
+type Note = { id: string; title: string }
+
+export function Notes({
+  initialNotes, onDelete,
+}: {
+  initialNotes: Note[]
+  onDelete: (id: string) => Promise<void>
+}) {
+  const [notes, setNotes] = useState(initialNotes)
+  const [selected, setSelected] = useState<Note | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string>()
+  const pending = useRef(false)
+  const mounted = useRef(true)
+
+  useEffect(() => {
+    mounted.current = true
+    return () => { mounted.current = false }
+  }, [])
+
+  async function remove() {
+    if (!selected || pending.current) return
+    const note = selected
+    pending.current = true
+    setBusy(true)
+    setError(undefined)
+    try {
+      await onDelete(note.id)
+      if (!mounted.current) return
+      setNotes((current) => current.filter((row) => row.id !== note.id))
+      setSelected(null)
+      toast({ title: 'Note deleted', description: note.title })
+    } catch (cause) {
+      if (!mounted.current) return
+      const message = cause instanceof Error && cause.message
+        ? cause.message
+        : 'Could not delete this note. Try again.'
+      setError(message)
+      AccessibilityInfo.announceForAccessibility(message)
+    } finally {
+      pending.current = false
+      if (mounted.current) setBusy(false)
+    }
+  }
+
+  return (
+    <>
+      <FlatList
+        data={notes}
+        keyExtractor={(note) => note.id}
+        renderItem={({ item }) => (
+          <Item>
+            <ItemContent>
+              <ItemTitle>{item.title}</ItemTitle>
+            </ItemContent>
+            <ItemTrailing>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" accessibilityLabel={`Actions for ${item.title}`}>
+                    More
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    destructive
+                    onSelect={() => {
+                      setError(undefined)
+                      setSelected(item)
+                    }}
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </ItemTrailing>
+          </Item>
+        )}
+      />
+      <AlertDialog
+        open={selected !== null}
+        onOpenChange={(open) => {
+          if (!open && !pending.current) setSelected(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this note?</AlertDialogTitle>
+            <AlertDialogDescription>{selected?.title}</AlertDialogDescription>
+          </AlertDialogHeader>
+          {error ? (
+            <Alert variant="destructive" accessibilityLiveRegion="polite">
+              <AlertTitle>Delete failed</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
+          <AlertDialogFooter>
+            <AlertDialogAction
+              variant="destructive"
+              closeOnPress={false}
+              loading={busy}
+              onPress={remove}
+            >
+              Delete note
+            </AlertDialogAction>
+            <AlertDialogCancel disabled={busy}>Keep note</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  )
+}
+```
+
+`DropdownMenuItem` closes after `onSelect`. `AlertDialogAction` also closes immediately by default, even when its handler returns a promise, so `closeOnPress={false}` matters here. A rejection keeps the confirmation open with a retryable Delete button. The toast runs only after success.
+
+The row has no `onPress` and is not one grouped accessible element, so its More button stays reachable by screen readers. In an app with a query cache, update or invalidate that cache after deletion instead of keeping a second copy of the list.

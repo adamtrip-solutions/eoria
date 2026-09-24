@@ -81,8 +81,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toast'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { actionsPreviews } from '@/previews/actions'
+import { accountBlockPreviews } from '@/previews/blocks-account'
 import { appBlockPreviews } from '@/previews/blocks-app'
 import { authBlockPreviews } from '@/previews/blocks-auth'
+import { commerceBlockPreviews } from '@/previews/blocks-commerce'
+import { socialBlockPreviews } from '@/previews/blocks-social'
 import { listsPreviews } from '@/previews/lists'
 import { nativePreviews } from '@/previews/native'
 
@@ -575,4 +578,7 @@ export const previews: Record<string, () => ReactNode> = {
 export const blockPreviews: Record<string, () => ReactNode> = {
   ...authBlockPreviews,
   ...appBlockPreviews,
+  ...commerceBlockPreviews,
+  ...accountBlockPreviews,
+  ...socialBlockPreviews,
 }

@@ -1,0 +1,92 @@
+---
+title: Edit profile
+description: A profile form with a photo, inline validation and an async save action.
+category: Account
+sidebar:
+  order: 30
+---
+
+```sh
+npx @eoria/cli add edit-profile
+```
+
+The command also adds [Alert](/components/alert/), [Avatar](/components/avatar/), [Button](/components/button/), [DatePicker](/components/date-picker/), [Field](/components/field/), [Input](/components/input/), [InputGroup](/components/input-group/), [Keyboard](/components/keyboard/), [Select](/components/select/), [Stack](/components/stack/), [Text](/components/text/) and [Textarea](/components/textarea/).
+
+## Usage
+
+```tsx
+import { EditProfile, type EditProfileValues } from '@/components/blocks/edit-profile'
+
+const initialProfile: EditProfileValues = {
+  name: 'Ada Lovelace',
+  username: 'ada',
+  bio: 'Writes about analytical engines.',
+  country: 'PT',
+  website: 'https://example.com',
+}
+
+export function ProfileRoute() {
+  return (
+    <EditProfile
+      defaultValues={initialProfile}
+      countries={[
+        { value: 'PT', label: 'Portugal' },
+        { value: 'GB', label: 'United Kingdom' },
+      ]}
+      initials="AL"
+      onChangePhoto={async () => {
+        await chooseProfilePhoto()
+      }}
+      onSubmit={async (values) => {
+        await saveProfile(values)
+      }}
+      onCancel={() => goBack()}
+    />
+  )
+}
+```
+
+`chooseProfilePhoto`, `saveProfile` and `goBack` are your app's functions. Pass the new photo URL back through `avatarUrl` after choosing it.
+
+## Props
+
+| Prop            | Type                                                   | Default                           |
+| --------------- | ------------------------------------------------------ | --------------------------------- |
+| `defaultValues` | `Partial<EditProfileValues>`                           | empty fields                      |
+| `countries`     | `ProfileCountry[]`                                     | required                          |
+| `avatarUrl`     | `string`                                               |                                   |
+| `initials`      | `string`                                               | first letters of the name, or `?` |
+| `onChangePhoto` | `() => void \| Promise<void>`                          | hides Change photo                |
+| `onSubmit`      | `(values: EditProfileValues) => void \| Promise<void>` | required                          |
+| `onCancel`      | `() => void \| Promise<void>`                          | hides Cancel                      |
+| `insetTop`      | `boolean`                                              | `true`                            |
+| `style`         | `StyleProp<ViewStyle>`                                 |                                   |
+
+## Data types
+
+```ts
+export type ProfileCountry = { value: string; label: string }
+
+export type EditProfileValues = {
+  name: string
+  username: string
+  bio: string
+  birthday?: Date
+  country: string
+  website: string
+}
+```
+
+## Notes
+
+- Name is required. A filled username accepts letters, numbers and underscores. Website accepts a full HTTP or HTTPS URL. Birthday must be a valid date no later than today, and a filled country must match an option. Empty optional text fields submit as empty strings.
+- Bio stops at 160 characters and shows a counter. Invalid initial values also prevent submission until corrected. Clear birthday removes the optional date.
+- Validation starts on the first Save changes press, then follows edits. Field errors are announced to screen readers. Text values are trimmed before submission.
+- `defaultValues` initializes local state once. To load another person's profile, remount the block with a different React `key`.
+- Save, Change photo and Cancel accept promises. The active button shows loading and the form stays disabled until the callback settles. A rejected `Error` shows its message in an Alert. Other rejection values get generic text. State updates stop after unmount, and repeated presses cannot start another pending action.
+- This is a full screen form. Set `insetTop={false}` under a navigation header. `KeyboardScrollView` keeps fields above the keyboard and requires the app's [keyboard setup](/components/keyboard/). The date and country pickers also use the app's portal host.
+- The demo's first save fails and the next succeeds with a toast. The block leaves success handling to `onSubmit`.
+
+## Source
+
+[`registry/blocks/edit-profile.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/blocks/edit-profile.tsx)

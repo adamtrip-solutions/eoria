@@ -1,0 +1,73 @@
+---
+title: Feedback form
+description: A rating, optional details and contact consent, with a thank-you state after submission.
+category: Social
+sidebar:
+  order: 41
+---
+
+```sh
+npx @eoria/cli add feedback-form
+```
+
+The command also adds [Alert](/components/alert/), [Button](/components/button/), [Checkbox](/components/checkbox/), [Empty](/components/empty/), [Field](/components/field/), [Rating](/components/rating/), [Stack](/components/stack/), [Text](/components/text/), [Textarea](/components/textarea/) and [ToggleGroup](/components/toggle-group/).
+
+## Usage
+
+```tsx
+import { FeedbackForm } from '@/components/blocks/feedback-form'
+
+<FeedbackForm
+  title="How was your experience?"
+  description="Tell us what worked and what could be better."
+  categories={[
+    { value: 'design', label: 'Design' },
+    { value: 'speed', label: 'Speed' },
+    { value: 'other', label: 'Other' },
+  ]}
+  askContact
+  onSubmit={async (values) => {
+    await sendFeedback(values)
+  }}
+/>
+```
+
+`sendFeedback` is your app's function. Resolve after the feedback has been accepted, or throw an `Error` with a message the user can act on.
+
+## Props
+
+| Prop          | Type                                                | Default                                         |
+| ------------- | --------------------------------------------------- | ----------------------------------------------- |
+| `title`       | `string`                                            | `How was your experience?`                      |
+| `description` | `string`                                            | `Tell us what worked and what could be better.` |
+| `categories`  | `FeedbackCategory[]`                                | `[]`                                            |
+| `askContact`  | `boolean`                                           | `false`                                         |
+| `onSubmit`    | `(values: FeedbackValues) => void \| Promise<void>` | required                                        |
+| `style`       | `StyleProp<ViewStyle>`                              |                                                 |
+
+## Data types
+
+```ts
+export type FeedbackCategory = { value: string; label: string }
+
+export type FeedbackValues = {
+  rating: number
+  category?: string
+  message: string
+  contact: boolean
+}
+```
+
+## Notes
+
+- Choose at least one of five stars before submitting. The inline rating error appears after the first submit attempt. Rating supports touch, dragging and screen-reader adjustment. It requires the app's gesture-handler root, as described in [Rating](/components/rating/).
+- Category is optional and single select. Tap the selected category again to clear it. The row scrolls horizontally when the options do not fit. A category removed from `categories` is omitted from the submitted values.
+- Tell us more is optional, with a 500-character limit and counter. The submitted message is trimmed. An empty message is an empty string.
+- Contact consent starts unchecked and appears only with `askContact`. When that prop is false, `contact` submits as false even if the checkbox was checked before it was hidden.
+- While `onSubmit` is pending, controls stay disabled and the button shows loading. Repeated presses cannot submit twice. Rejections preserve the values and show `error.message` in an announced Alert. Other rejection values get generic text. The block skips updates after unmount.
+- A resolved submission replaces the form with a thank-you state. Send another resets the rating, category, message, contact consent and errors. Reset is internal; it makes no callback.
+- This is a section in a card-less `VStack`, with no root padding, safe-area inset or `flex: 1`. Place it in a padded keyboard-aware scroll view when using it as a screen. The demo does this, fails the first submission, then shows a toast and the thank-you state on success.
+
+## Source
+
+[`registry/blocks/feedback-form.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/blocks/feedback-form.tsx)

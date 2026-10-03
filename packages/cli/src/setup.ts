@@ -1,6 +1,13 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { dirname, relative, resolve } from 'node:path'
+import nodePath, {
+  basename,
+  dirname,
+  extname,
+  relative,
+  resolve,
+  type PlatformPath,
+} from 'node:path'
 import { aliasToDirectory, type EoriaConfig } from './config'
 import { installCommand, readPackageJson, run } from './project'
 import { CliError, log } from './log'
@@ -82,11 +89,87 @@ export function findEntryFile(root: string, srcRoot: string): string | undefined
   return candidates.find((f) => existsSync(resolve(root, f)))
 }
 
+/** Extensions Metro may add to an extensionless `main`. Only used to spot ambiguity. */
+const MAIN_EXTENSIONS = /\.(?:(?:ios|android|native|web)\.)?(?:[cm]?[jt]sx?|json)$/
+
+/**
+ * Whether `file` lies inside `root` and outside `node_modules`. Both paths must already be
+ * real (symlinks resolved). Takes the path module so the Windows rules can be tested anywhere:
+ * across drives `relative` returns an absolute path, which is rejected.
+ */
+export function isProjectFile(root: string, file: string, path: PlatformPath = nodePath): boolean {
+  const rel = path.relative(root, file)
+  if (rel === '' || path.isAbsolute(rel)) return false
+  const parts = rel.split(/[\\/]/)
+  return parts[0] !== '..' && !parts.includes('node_modules')
+}
+
+/**
+ * The project file `package.json` `main` points to, relative to the project root. Undefined
+ * when `main` is unset, names a package entry such as `expo-router/entry`, resolves outside
+ * the project or into `node_modules` (symlinks included), or has no extension and matches more
+ * than one file, because then only Metro knows which one runs.
+ */
+export function findMainFile(root: string): string | undefined {
+  const pkg = resolve(root, 'package.json')
+  if (!existsSync(pkg)) return undefined
+  let main: unknown
+  try {
+    main = (JSON.parse(readFileSync(pkg, 'utf8')) as { main?: unknown }).main
+  } catch {
+    return undefined
+  }
+  if (typeof main !== 'string' || main === '') return undefined
+
+  const target = resolve(root, main)
+  let candidates = [target]
+  if (extname(main) === '') {
+    const dir = dirname(target)
+    const base = basename(target)
+    const siblings = existsSync(dir) && statSync(dir).isDirectory() ? readdirSync(dir) : []
+    candidates = [
+      target,
+      ...siblings
+        .filter(
+          (name) => name.startsWith(`${base}.`) && MAIN_EXTENSIONS.test(name.slice(base.length)),
+        )
+        .map((name) => resolve(dir, name)),
+    ]
+  }
+  const files = candidates.filter((file) => existsSync(file) && statSync(file).isFile())
+  if (files.length !== 1) return undefined
+
+  const realRoot = realpathSync(root)
+  const realFile = realpathSync(files[0]!)
+  if (!isProjectFile(realRoot, realFile)) return undefined
+  return relative(realRoot, realFile).split('\\').join('/')
+}
+
 export function importsUnistyles(text: string): boolean {
   return (
     /^\s*import\s+['"][^'"]*\/unistyles['"]/m.test(text) ||
     /from\s+['"][^'"]*\/unistyles['"]/.test(text)
   )
+}
+
+/**
+ * Where the theme import lives or should go. `target` is the root layout, or the `main` file
+ * when there is no layout. `importedBy` is the first of the two that imports unistyles, so an
+ * Expo Router app whose custom entry imports the theme after `expo-router/entry` counts.
+ */
+export async function findThemeImport(
+  root: string,
+  srcRoot: string,
+): Promise<{ target: string | undefined; importedBy?: string }> {
+  const files = [...new Set([findEntryFile(root, srcRoot), findMainFile(root)])].filter(
+    (f): f is string => f !== undefined,
+  )
+  for (const file of files) {
+    if (importsUnistyles(await readFile(resolve(root, file), 'utf8'))) {
+      return { target: files[0], importedBy: file }
+    }
+  }
+  return { target: files[0] }
 }
 
 /** The import `ensureThemeImport` writes when the alias has a prefix. */
@@ -122,24 +205,26 @@ export async function ensureThemeImport(
   config: EoriaConfig,
 ): Promise<string | undefined> {
   const prefix = aliasPrefix(config.alias)
-  const entry = findEntryFile(root, srcRoot)
+  const { target: entry, importedBy } = await findThemeImport(root, srcRoot)
+  if (importedBy) {
+    log.step(`${importedBy} already imports unistyles.`)
+    return undefined
+  }
   if (!entry) {
     log.warn(
       `Could not find your root layout. Add ${log.bold(themeImportHint(config))} as the first import of your entry file.`,
     )
     return undefined
   }
-  const file = resolve(root, entry)
+  // `findMainFile` returns a path relative to the real root, so write through the real root.
+  const realRoot = realpathSync(root)
+  const file = resolve(realRoot, entry)
   const text = await readFile(file, 'utf8')
-  if (importsUnistyles(text)) {
-    log.step(`${entry} already imports unistyles.`)
-    return undefined
-  }
   let specifier: string
   if (prefix) {
     specifier = `${prefix}/unistyles`
   } else {
-    const rel = relative(dirname(file), resolve(root, srcRoot, 'unistyles'))
+    const rel = relative(dirname(file), resolve(realRoot, srcRoot, 'unistyles'))
       .split('\\')
       .join('/')
     specifier = rel.startsWith('.') ? rel : `./${rel}`

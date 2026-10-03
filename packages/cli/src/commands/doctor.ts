@@ -1,5 +1,4 @@
 import { existsSync } from 'node:fs'
-import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import pc from 'picocolors'
 import { CONFIG_FILE, readConfig, type EoriaConfig } from '../config'
@@ -19,8 +18,7 @@ import {
   babelState,
   ensureAlias,
   ensureUnistylesFile,
-  findEntryFile,
-  importsUnistyles,
+  findThemeImport,
   installPackages,
   sourceRoot,
   themeImportHint,
@@ -189,8 +187,10 @@ async function inspect(root: string, options: ReadOptions): Promise<Findings> {
         ),
   )
 
-  const entry = findEntryFile(root, srcRoot)
-  if (!entry) {
+  const { target: entry, importedBy } = await findThemeImport(root, srcRoot)
+  if (importedBy) {
+    checks.push(pass('theme-import', `${importedBy} imports unistyles.`))
+  } else if (!entry) {
     checks.push(
       problem(
         'warn',
@@ -199,8 +199,6 @@ async function inspect(root: string, options: ReadOptions): Promise<Findings> {
         `Make sure ${themeImportHint(config)} is the first import of your entry file.`,
       ),
     )
-  } else if (importsUnistyles(await readFile(resolve(root, entry), 'utf8'))) {
-    checks.push(pass('theme-import', `${entry} imports unistyles.`))
   } else {
     checks.push(
       problem(

@@ -123,6 +123,40 @@ maybe(
   },
 )
 
+maybe('doctor finds the theme import in the custom entry that main points to', async () => {
+  const root = await project()
+  await quiet(() => init(root, { registry: registryDir, install: false }))
+  // The Unistyles guide for Expo Router: a custom entry that loads the router, then the theme.
+  await writeFile(join(root, 'src/app/_layout.tsx'), LAYOUT)
+  await writeFile(join(root, 'index.ts'), "import 'expo-router/entry'\nimport './src/unistyles'\n")
+  const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'))
+  const withMain = (main: string) =>
+    writeFile(join(root, 'package.json'), JSON.stringify({ ...pkg, main }))
+  const themeImport = async () =>
+    (await runDoctor(root)).checks.find((check) => check.id === 'theme-import')
+
+  await withMain('index.ts')
+  expect(await themeImport()).toMatchObject({
+    status: 'pass',
+    message: 'index.ts imports unistyles.',
+  })
+
+  await withMain('expo-router/entry')
+  expect(await themeImport()).toMatchObject({
+    status: 'fail',
+    message: expect.stringContaining('src/app/_layout.tsx does not import unistyles'),
+  })
+
+  // An extensionless main that matches two files is unknown, so doctor checks the layout only.
+  await writeFile(join(root, 'boot.js'), "import './src/unistyles'\n")
+  await writeFile(join(root, 'boot.mjs'), "import 'expo-router/entry'\n")
+  await withMain('./boot')
+  expect(await themeImport()).toMatchObject({
+    status: 'fail',
+    message: expect.stringContaining('src/app/_layout.tsx does not import unistyles'),
+  })
+})
+
 maybe('doctor reports missing files, registry dependencies and packages', async () => {
   const root = await project()
   await quiet(() => init(root, { registry: registryDir, install: false }))

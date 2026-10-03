@@ -29,7 +29,9 @@ Five minutes on an existing Expo project. New projects can start from
 
     `src/unistyles.ts` registers the themes and has to run before any component renders. `init`
     imports it at the top of `app/_layout.tsx`, `App.tsx` or `index.js`, whichever it finds. If
-    your entry file lives somewhere else, add the import yourself and keep it first.
+    your entry file lives somewhere else, add the import yourself and keep it first. A custom
+    entry named by `main` in `package.json` that imports the theme after `expo-router/entry`
+    also counts.
 
     ```ts title="src/unistyles.ts"
     import { configureUnistyles, defaultThemes, type EoriaTheme } from '@eoria/core'
@@ -45,8 +47,8 @@ Five minutes on an existing Expo project. New projects can start from
     ```
 
     `configureUnistyles` wraps `StyleSheet.configure` and turns on adaptive themes, so the app
-    follows the OS appearance until you say otherwise. A device that reports no appearance starts
-    on the light theme. See [Theming](/start/theming/) for presets and manual switching.
+    follows the OS appearance until you say otherwise. See [Theming](/start/theming/) for presets
+    and manual switching.
 
 3.  **Add your first components.**
 

@@ -5,7 +5,9 @@ import {
   isValidElement,
   useCallback,
   useContext,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   type ForwardedRef,
   type ReactElement,
@@ -327,7 +329,10 @@ export type SelectSheetProps<T extends SelectSheetValue = string> = Pick<
      * to `false`, no filtering, when `query` is passed.
      */
     filter?: SelectSheetFilter<T> | false
-    /** Results are on their way. Shows a spinner above the rows and holds back the empty state. */
+    /**
+     * Results are on their way. Shows a spinner above the rows and holds back the empty state
+     * and the create row.
+     */
     loading?: boolean
     invalid?: boolean
     disabled?: boolean
@@ -394,22 +399,32 @@ function SelectSheetImpl(
         option: SelectSheetOption<SelectSheetValue>,
       ) => void)
     | undefined
+  // Toggles build on this, not on the rendered `values`, so taps that land before the parent
+  // re-renders are not lost. Every commit resets it, so a controlled parent that keeps its
+  // value wins.
+  const latest = useRef(values)
+  useLayoutEffect(() => {
+    latest.current = values
+  })
   const toggle = useCallback(
     (option: SelectSheetOption<SelectSheetValue>) => {
       if (option.disabled) return
       if (multiple) {
-        const next = values.includes(option.value)
-          ? values.filter((v) => v !== option.value)
-          : [...values, option.value]
+        const current = latest.current
+        const next = current.includes(option.value)
+          ? current.filter((v) => v !== option.value)
+          : [...current, option.value]
+        latest.current = next
         if (!isControlled) setUncontrolledValue(next)
         onChange?.(next, option)
       } else {
+        latest.current = [option.value]
         if (!isControlled) setUncontrolledValue(option.value)
         onChange?.(option.value, option)
       }
       if (closeOnSelect) setOpen(false)
     },
-    [multiple, values, isControlled, onChange, closeOnSelect, setOpen],
+    [multiple, isControlled, onChange, closeOnSelect, setOpen],
   )
 
   // After the close animation, so the list does not jump while it slides away.
@@ -518,7 +533,7 @@ export function SelectSheetTrigger({
   )
 }
 
-export type SelectSheetContentProps<T extends SelectSheetValue = string> = Omit<
+export type SelectSheetContentProps<T extends SelectSheetValue = SelectSheetValue> = Omit<
   SheetContentProps,
   'children' | 'scroll' | 'accessibilityLabel' | 'footer'
 > & {
@@ -620,7 +635,7 @@ function Row({ option, selected, multiple, onPress, renderOption, styles: s }: R
  * The sheet: title, optional search, then the options in a `SheetList`. Opens at 65% by
  * default, a fixed height, so the keyboard lifts the whole sheet and the rows stay above it.
  */
-export function SelectSheetContent<T extends SelectSheetValue = string>({
+export function SelectSheetContent<T extends SelectSheetValue = SelectSheetValue>({
   title,
   description,
   searchable = false,
@@ -657,8 +672,10 @@ export function SelectSheetContent<T extends SelectSheetValue = string>({
     [options, filter, query],
   )
   const trimmed = query.trim()
+  // Hidden while results load: stale or empty options would offer to create one that exists.
   const showCreate =
     createAction !== undefined &&
+    !loading &&
     trimmed !== '' &&
     !options.some((o) => fold(o.label) === fold(trimmed))
 
@@ -668,7 +685,6 @@ export function SelectSheetContent<T extends SelectSheetValue = string>({
     else setQuery('')
   }
 
-  const selectedKey = values.join('\u0000')
   const header =
     showCreate || loading ? (
       <>
@@ -747,8 +763,9 @@ export function SelectSheetContent<T extends SelectSheetValue = string>({
         accessibilityLabel={title}
         accessibilityState={{ busy: loading }}
         data={visible as ReadonlyArray<SelectSheetOption<T>>}
-        extraData={selectedKey}
-        keyExtractor={(o) => String(o.value)}
+        extraData={values}
+        // The type keeps `1` and `'1'` apart.
+        keyExtractor={(o) => `${typeof o.value}:${o.value}`}
         renderItem={({ item }) => (
           <Row
             option={item}

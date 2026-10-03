@@ -178,12 +178,12 @@ function SelectSheetDemos() {
     <>
       <Field>
         <FieldLabel>Start in</FieldLabel>
-        <FieldControl>
-          <SelectSheet options={towns} value={town} onValueChange={setTown}>
+        <SelectSheet options={towns} value={town} onValueChange={setTown}>
+          <FieldControl>
             <SelectSheetTrigger placeholder="Choose a town" />
-            <SelectSheetContent title="Start in" searchable searchPlaceholder="Search towns" />
-          </SelectSheet>
-        </FieldControl>
+          </FieldControl>
+          <SelectSheetContent title="Start in" searchable searchPlaceholder="Search towns" />
+        </SelectSheet>
         <FieldDescription>Search matches “evora” too.</FieldDescription>
       </Field>
 

@@ -44,7 +44,20 @@ export function TownSelect() {
 
 `SelectSheet` holds the options, the selection and the search text. `SelectSheetTrigger` is optional. `SelectSheetContent` is the sheet: the title, the search field when `searchable` is set, and the rows in a [`SheetList`](/components/sheet/#a-searchable-list). A single select closes when a row is picked.
 
-In a [Field](/components/field/), put the trigger under `FieldControl` like any other control. It takes the label, the hint and the `invalid` state from there.
+In a [Field](/components/field/), wrap the trigger itself in `FieldControl`, not `SelectSheet`. The trigger takes the label, the hint and the `invalid` state from there.
+
+```tsx
+<Field invalid={!town}>
+  <FieldLabel>Start in</FieldLabel>
+  <SelectSheet options={towns} value={town} onValueChange={setTown}>
+    <FieldControl>
+      <SelectSheetTrigger placeholder="Choose a town" />
+    </FieldControl>
+    <SelectSheetContent title="Start in" searchable />
+  </SelectSheet>
+  <FieldError>Pick a town to start from.</FieldError>
+</Field>
+```
 
 ### Open it from code
 
@@ -91,7 +104,7 @@ Each tap applies at once. There is no draft to confirm or throw away, so Done, a
 
 ### Search on a server
 
-Pass `query` and `onQueryChange` and the search text is yours. Local filtering then turns off, so `options` should be the results for the current query. `loading` puts a spinner above the rows and holds back the empty state until the answer arrives.
+Pass `query` and `onQueryChange` and the search text is yours. Local filtering then turns off, so `options` should be the results for the current query. `loading` puts a spinner above the rows and holds back the empty state and the create row until the answer arrives.
 
 ```tsx
 const [query, setQuery] = useState('')
@@ -125,7 +138,7 @@ The trigger shows the labels of the selected values it can find in `options`. Se
 
 ### Create and empty actions
 
-`createAction` adds a row above the options while the trimmed query is not empty and no option has that label, compared without case or accents. `label` builds the text from the query. `emptyAction` puts a button under `emptyText` when no row is left. Both `onPress` callbacks receive the trimmed query.
+`createAction` adds a row above the options while the trimmed query is not empty and no option has that label, compared without case or accents. The row stays hidden while `loading`, so stale results cannot offer to create a record that exists. `label` builds the text from the query. `emptyAction` puts a button under `emptyText` when no row is left. Both `onPress` callbacks receive the trimmed query.
 
 Both actions count as a choice. They close the sheet when picking a row would, and otherwise clear the query. To show the new option as selected, add it to `options` and set `value` in `onPress`.
 
@@ -147,7 +160,7 @@ Both actions count as a choice. They close the sheet when picking a row would, a
 />
 ```
 
-`renderOption` types the option with the content's own type parameter, which defaults to `string`. With numeric values, write `SelectSheetContent<number>`.
+`SelectSheetContent` cannot infer the value type from `SelectSheet`, so `renderOption` types `option.value` as `string | number`. Write `SelectSheetContent<string>` or `SelectSheetContent<number>` for the narrower type.
 
 ## Props
 
@@ -162,7 +175,7 @@ Both actions count as a choice. They close the sheet when picking a row would, a
 | `SelectSheet`        | `ref`                                           | `present()`, `dismiss()`, `snapToIndex(index)`                                                     |                                   |
 | `SelectSheet`        | `query`, `onQueryChange`                        | controlled search text                                                                             | uncontrolled                      |
 | `SelectSheet`        | `filter`                                        | `(option, query) => boolean`, or `false` for none                                                  | local match, `false` with `query` |
-| `SelectSheet`        | `loading`                                       | spinner above the rows, no empty state                                                             | `false`                           |
+| `SelectSheet`        | `loading`                                       | spinner above the rows, no empty state or create row                                               | `false`                           |
 | `SelectSheet`        | `size`                                          | `sm`, `md`, `lg`, for the trigger                                                                  | `md`                              |
 | `SelectSheet`        | `invalid`, `disabled`                           | trigger state                                                                                      | `false`                           |
 | `SelectSheet`        | `styles`, `sheetStyles`                         | slot overrides for this recipe and for Sheet's                                                     |                                   |

@@ -37,6 +37,7 @@ export const ratingRecipe = defineSlotRecipe((theme) => ({
       alignSelf: 'flex-start',
       gap: theme.space[1],
       minHeight: 44,
+      opacity: 1,
     },
     rootDisabled: { opacity: 0.5 },
     /** `width` is read as the star size, `color` as the fill. */

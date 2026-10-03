@@ -36,6 +36,7 @@ export const selectRecipe = defineSlotRecipe((theme) => ({
       borderColor: theme.stroke ? theme.colors.input : 'transparent',
       borderRadius: theme.radius.control,
       backgroundColor: theme.colors.muted,
+      opacity: 1,
     },
     value: {
       flex: 1,
@@ -76,6 +77,8 @@ export const selectRecipe = defineSlotRecipe((theme) => ({
       paddingHorizontal: theme.space[4],
       marginHorizontal: theme.space[2],
       borderRadius: theme.radius.sm,
+      backgroundColor: 'transparent',
+      opacity: 1,
     },
     itemPressed: { backgroundColor: theme.colors.accent },
     itemSelected: { backgroundColor: theme.colors.accent },

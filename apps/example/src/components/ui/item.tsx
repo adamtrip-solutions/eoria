@@ -47,6 +47,8 @@ export const itemRecipe = defineSlotRecipe((theme) => ({
       gap: theme.space[3],
       paddingHorizontal: theme.space[4],
       paddingVertical: theme.space[2],
+      backgroundColor: 'transparent',
+      opacity: 1,
     },
     rootPressed: { backgroundColor: theme.colors.accent },
     rootDisabled: { opacity: 0.5 },

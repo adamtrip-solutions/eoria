@@ -64,6 +64,8 @@ export const dropdownMenuRecipe = defineSlotRecipe((theme) => ({
       paddingHorizontal: theme.space[4],
       marginHorizontal: theme.space[2],
       borderRadius: theme.radius.sm,
+      backgroundColor: 'transparent',
+      opacity: 1,
     },
     itemPressed: { backgroundColor: theme.colors.accent },
     itemDisabled: { opacity: 0.5 },

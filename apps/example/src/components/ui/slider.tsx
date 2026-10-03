@@ -35,7 +35,7 @@ import {
  */
 export const sliderRecipe = defineSlotRecipe((theme) => ({
   slots: {
-    root: { minHeight: 44, justifyContent: 'center', alignSelf: 'stretch' },
+    root: { minHeight: 44, justifyContent: 'center', alignSelf: 'stretch', opacity: 1 },
     track: {
       height: 4,
       borderRadius: theme.radius.full,

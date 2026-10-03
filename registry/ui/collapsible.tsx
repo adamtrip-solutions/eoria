@@ -47,6 +47,7 @@ export const collapsibleRecipe = defineSlotRecipe((theme) => ({
       justifyContent: 'space-between',
       gap: theme.space[3],
       minHeight: 44,
+      opacity: 1,
     },
     triggerLabel: {
       flex: 1,

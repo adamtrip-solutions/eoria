@@ -8,6 +8,7 @@ import {
   useEffect,
   useId,
   useImperativeHandle,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactElement,
@@ -67,6 +68,7 @@ export const swipeableActionRecipe = defineSlotRecipe((theme) => ({
       gap: theme.space[1],
       paddingHorizontal: theme.space[1],
       backgroundColor: theme.colors.muted,
+      opacity: 1,
     },
     /** Own View layered over the fill while pressed. */
     rootPressed: { backgroundColor: theme.colors.foreground, opacity: 0.08 },
@@ -263,9 +265,12 @@ export function SwipeableAction({
     onPress?.()
     if (closeOnPress) close()
   }
-  // Latest handler for the screen-reader action, which outlives the render.
+  // Latest handler for the screen-reader action, which outlives the render. Updated after
+  // each commit, before the effect below registers it.
   const latest = useRef(run)
-  latest.current = run
+  useLayoutEffect(() => {
+    latest.current = run
+  })
   const name = useId()
   useEffect(() => {
     if (!label || disabled) return

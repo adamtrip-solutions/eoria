@@ -33,6 +33,9 @@ export const toggleRecipe = defineSlotRecipe((theme) => ({
       justifyContent: 'center',
       gap: theme.space[2],
       borderRadius: theme.radius.control,
+      // Set here so the on fill, `rootPressed` and `rootDisabled` always have a value to return to.
+      backgroundColor: 'transparent',
+      opacity: 1,
     },
     rootPressed: { opacity: 0.7 },
     rootDisabled: { opacity: 0.4 },
@@ -97,6 +100,7 @@ export const toggleGroupRecipe = defineSlotRecipe((theme) => ({
       alignSelf: 'flex-start',
       borderRadius: theme.radius.control,
       overflow: 'hidden',
+      opacity: 1,
     },
     /** Layered over the root of every Toggle in the group. */
     item: { borderRadius: 0, borderWidth: 0 },

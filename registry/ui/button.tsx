@@ -31,6 +31,8 @@ export const buttonRecipe = defineSlotRecipe((theme) => ({
       gap: theme.space[2],
       borderRadius: theme.radius.control,
       overflow: 'hidden',
+      // Set here so `rootDisabled` always has a value to return to.
+      opacity: 1,
     },
     label: {
       fontSize: theme.fontSize.md,

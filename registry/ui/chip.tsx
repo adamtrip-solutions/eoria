@@ -14,6 +14,7 @@ import {
   View,
   type PressableProps,
   type ScrollViewProps,
+  type TextProps,
   type ViewProps,
 } from 'react-native'
 import Animated, {
@@ -50,6 +51,9 @@ export const chipRecipe = defineSlotRecipe((theme) => ({
       borderRadius: theme.radius.control,
       borderWidth: 1,
       borderColor: 'transparent',
+      // Set here so the selected fill and `rootDisabled` always have a value to return to.
+      backgroundColor: 'transparent',
+      opacity: 1,
     },
     body: {
       flexDirection: 'row',
@@ -75,6 +79,7 @@ export const chipRecipe = defineSlotRecipe((theme) => ({
       justifyContent: 'center',
       paddingLeft: theme.space[2],
       paddingRight: theme.space[3],
+      opacity: 1,
     },
     dismissPressed: { opacity: 0.5 },
     dismissIcon: { width: 14, height: 14, color: theme.colors.mutedForeground },
@@ -175,6 +180,8 @@ export type ChipProps = Omit<PressableProps, 'style' | 'children'> &
     onDismiss?: () => void
     /** Read out for the close target. Defaults to "Remove" plus the label when the label is a string. */
     dismissLabel?: string
+    /** Passed to the label when `children` is a string, e.g. `{ numberOfLines: 1 }`. Style it through `styles.label`. */
+    labelProps?: Omit<TextProps, 'children' | 'style'>
     /** Per-slot style overrides, merged last. */
     styles?: SlotOverrides<ChipSlots>
   }
@@ -188,6 +195,7 @@ export function Chip({
   icon,
   onDismiss,
   dismissLabel,
+  labelProps,
   styles,
   disabled,
   accessibilityState,
@@ -255,7 +263,13 @@ export function Chip({
         style={[s.body, onDismiss ? s.bodyDismissible : null]}
       >
         {iconNode}
-        {text ? <Text style={s.label}>{text}</Text> : children}
+        {text ? (
+          <Text {...labelProps} style={s.label}>
+            {text}
+          </Text>
+        ) : (
+          children
+        )}
       </Pressable>
       {onDismiss ? (
         <Pressable

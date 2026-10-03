@@ -45,7 +45,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 `Tabs` takes `value`, `defaultValue`, `onValueChange` and `variant`. `TabsList` takes `scrollable`, which only applies to pills. `TabsTrigger` takes `value` and `disabled`. `TabsContent` renders only while its `value` is active.
 
-The thumb and the underline are one absolutely positioned view that animates over 150 ms to the trigger's measured layout. The first layout is placed without animating.
+The thumb and the underline are one absolutely positioned view that animates over 150 ms to the trigger's measured layout. The first layout is placed without animating. A trigger that unmounts drops its layout. When no mounted trigger has the active `value`, for example after you remove the selected tab without changing `value`, the indicator hides until one does.
 
 ## Source
 

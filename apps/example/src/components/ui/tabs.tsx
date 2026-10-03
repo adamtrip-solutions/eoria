@@ -24,6 +24,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import {
   defineSlotRecipe,
+  getStyleValue,
   useRecipe,
   type RecipeVariants,
   type SlotOverrides,
@@ -47,6 +48,7 @@ export const tabsRecipe = defineSlotRecipe((theme) => ({
       justifyContent: 'center',
       paddingHorizontal: theme.space[4],
       borderRadius: theme.radius.control,
+      opacity: 1,
     },
     triggerActive: {},
     triggerPressed: { opacity: 0.7 },
@@ -145,6 +147,7 @@ type Ctx = {
   /** Trigger positions, read in effects and handlers only. */
   layouts: RefObject<Map<string, Layout>>
   reportLayout: (value: string, layout: Layout) => void
+  removeLayout: (value: string) => void
   layoutVersion: number
 }
 const TabsContext = createContext<Ctx | null>(null)
@@ -190,9 +193,21 @@ export function Tabs({
     layouts.current.set(v, layout)
     setLayoutVersion((n) => n + 1)
   }, [])
+  const removeLayout = useCallback((v: string) => {
+    if (layouts.current.delete(v)) setLayoutVersion((n) => n + 1)
+  }, [])
   return (
     <TabsContext.Provider
-      value={{ value, variant, setValue, styles: s, layouts, reportLayout, layoutVersion }}
+      value={{
+        value,
+        variant,
+        setValue,
+        styles: s,
+        layouts,
+        reportLayout,
+        removeLayout,
+        layoutVersion,
+      }}
     >
       <View style={[s.root, style]} {...rest}>
         {children}
@@ -207,11 +222,20 @@ function Indicator() {
   const { value, styles, layouts, layoutVersion } = useTabs('TabsList')
   const x = useSharedValue(0)
   const width = useSharedValue(0)
+  const visible = useSharedValue(0)
   const ready = useRef(false)
+  // The indicator's own opacity, which `visible` scales.
+  const opacity = (getStyleValue(styles.indicator, 'opacity') as number | undefined) ?? 1
 
   useEffect(() => {
     const target = layouts.current.get(value)
-    if (!target) return
+    if (!target) {
+      // No trigger on screen has the selected value, so there is nothing to point at.
+      visible.value = 0
+      ready.current = false
+      return
+    }
+    visible.value = 1
     if (!ready.current) {
       // First layout: place without animating.
       x.value = target.x
@@ -221,9 +245,10 @@ function Indicator() {
     }
     x.value = withTiming(target.x, MOVE)
     width.value = withTiming(target.width, MOVE)
-  }, [value, layoutVersion, layouts, x, width])
+  }, [value, layoutVersion, layouts, x, width, visible])
 
   const animated = useAnimatedStyle(() => ({
+    opacity: opacity * visible.value,
     width: width.value,
     transform: [{ translateX: x.value }],
   }))
@@ -259,12 +284,20 @@ export type TabsTriggerProps = Omit<PressableProps, 'style' | 'children'> & {
 }
 
 export function TabsTrigger({ value, disabled, children, onLayout, ...rest }: TabsTriggerProps) {
-  const { value: active, setValue, styles, reportLayout } = useTabs('TabsTrigger')
+  const { value: active, setValue, styles, reportLayout, removeLayout } = useTabs('TabsTrigger')
   const selected = active === value
+  const measured = useRef<Layout | null>(null)
   const handleLayout = (e: LayoutChangeEvent) => {
-    reportLayout(value, { x: e.nativeEvent.layout.x, width: e.nativeEvent.layout.width })
+    measured.current = { x: e.nativeEvent.layout.x, width: e.nativeEvent.layout.width }
+    reportLayout(value, measured.current)
     onLayout?.(e)
   }
+  // A trigger that unmounts takes its position with it, so the indicator does not stay on a
+  // tab that is gone. A remount under Strict Mode or a new `value` reports the last position.
+  useEffect(() => {
+    if (measured.current) reportLayout(value, measured.current)
+    return () => removeLayout(value)
+  }, [value, reportLayout, removeLayout])
   return (
     <Pressable
       accessibilityRole="tab"

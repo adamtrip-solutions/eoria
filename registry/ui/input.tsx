@@ -24,6 +24,7 @@ export const inputRecipe = defineSlotRecipe((theme) => ({
       color: theme.colors.foreground,
       fontSize: theme.fontSize.md,
       ...bodyFont(theme),
+      opacity: 1,
     },
   },
   variants: {

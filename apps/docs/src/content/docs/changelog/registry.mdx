@@ -10,6 +10,38 @@ serves the newest file and `npx @eoria/cli diff <name>` shows how your copy diff
 lists what was added or changed and when. The packages have their own pages:
 [`@eoria/core`](/changelog/core/) and [`@eoria/cli`](/changelog/cli/).
 
+## 2026-10-04
+
+### Changed
+
+- [Toast](/components/toast/) takes an `icon` per toast, shown before the title and hidden
+  from screen readers. It sizes and colours itself from a new `icon` slot unless the element
+  sets its own `size` or `color`.
+- `Toaster` takes `dismissHint`, the screen-reader hint for tapping a toast, so it can be
+  translated. The default is still `"Dismisses this notification"`.
+- A toast action closes the toast before it calls `onPress`, so an `onPress` that throws no
+  longer leaves the toast up. The action is at least 36pt wide as well as tall, and a `hitSlop` brings it to 44pt.
+- Each toast is announced once. Under Strict Mode the announcement used to run twice.
+- [Chip](/components/chip/) takes `labelProps` for its string label, such as
+  `{ numberOfLines: 1 }`. [Date Time Chips](/components/date-time-chips/) triggers pass it on.
+- [Tabs](/components/tabs/) forgets the layout of a trigger that unmounts and hides the
+  indicator while no mounted trigger has the active value. Before, removing the selected last
+  tab left the indicator where that tab had been.
+- [Swipeable](/components/swipeable/) no longer writes a ref during render, so a copied
+  `swipeable.tsx` passes the `react-hooks/refs` lint rule. Actions behave as before.
+- On Android, a [Date Picker](/components/date-picker/) in `datetime` closes when the time
+  dialog throws before it opens, and every mode closes when `onValueChange` throws. Before,
+  both left the field open with no dialog on screen.
+- Components that dim or fill a slot only in a disabled, pressed, selected or open state now
+  set the resting value in the base slot, for example `opacity: 1` on Button's `root`. The
+  look does not change. Unistyles reapplies the styles a view had during a theme change, and
+  a key the next style leaves out could keep its old value, so a button disabled during a
+  theme switch could stay dimmed after it was enabled. Affected: Accordion, Action Sheet,
+  Button and Icon Button, Card, Checkbox, Chip, Collapsible, Date Picker, Dropdown Menu,
+  Input with Input Group, Textarea and Password Input, Input OTP, Item, Radio Group, Rating,
+  Select with Combobox, Select Sheet, Slider, Stepper, Swipeable, Switch, Tabs, and Toggle
+  with Toggle Group.
+
 ## 2026-10-03
 
 ### Added

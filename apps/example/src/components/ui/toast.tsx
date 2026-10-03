@@ -1,8 +1,15 @@
-import { useEffect, useSyncExternalStore } from 'react'
+import {
+  cloneElement,
+  isValidElement,
+  useEffect,
+  useSyncExternalStore,
+  type ReactElement,
+} from 'react'
 import { AccessibilityInfo, Pressable, View } from 'react-native'
 import Animated, { Easing, FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated'
 import {
   defineSlotRecipe,
+  getStyleValue,
   useRecipe,
   type RecipeVariants,
   type SlotOverrides,
@@ -35,6 +42,8 @@ export const toastRecipe = defineSlotRecipe((theme) => ({
       shadowOffset: { width: 0, height: theme.shadow.offset },
       elevation: 6,
     },
+    /** Read by the icon adapter: `width` becomes `size`, `color` becomes `color`. */
+    icon: { width: 20, height: 20, color: theme.colors.background },
     body: { flex: 1, gap: 2 },
     title: {
       fontSize: theme.fontSize.sm,
@@ -51,6 +60,8 @@ export const toastRecipe = defineSlotRecipe((theme) => ({
     action: {
       paddingHorizontal: theme.space[3],
       minHeight: 36,
+      minWidth: 36,
+      alignItems: 'center',
       justifyContent: 'center',
       borderRadius: theme.radius.full,
       backgroundColor: theme.colors.background,
@@ -67,6 +78,7 @@ export const toastRecipe = defineSlotRecipe((theme) => ({
       default: {},
       destructive: {
         toast: { backgroundColor: theme.colors.destructive },
+        icon: { color: theme.colors.destructiveForeground },
         title: { color: theme.colors.destructiveForeground },
         description: { color: theme.colors.destructiveForeground, opacity: 1 },
         action: { backgroundColor: theme.colors.destructiveForeground },
@@ -81,7 +93,7 @@ export const toastRecipe = defineSlotRecipe((theme) => ({
   defaultVariants: { variant: 'default', placement: 'bottom' },
 }))
 
-type ToastSlots = 'toast' | 'body' | 'title' | 'description' | 'action' | 'actionLabel'
+type ToastSlots = 'toast' | 'icon' | 'body' | 'title' | 'description' | 'action' | 'actionLabel'
 type ToastVariant = NonNullable<RecipeVariants<typeof toastRecipe>['variant']>
 export type ToastPlacement = NonNullable<RecipeVariants<typeof toastRecipe>['placement']>
 
@@ -93,6 +105,12 @@ export type ToastOptions = {
   placement?: ToastPlacement
   /** Milliseconds before auto-dismiss. `Infinity` keeps it until dismissed. Default 4000. */
   duration?: number
+  /**
+   * Shown before the title and hidden from screen readers. Any element accepting `size` and
+   * `color` props, e.g. a lucide icon. Values it sets itself win over the `icon` slot.
+   */
+  icon?: ReactElement<{ size?: number; color?: string }>
+  /** The toast closes before `onPress` runs. */
   action?: { label: string; onPress: () => void }
 }
 type ToastRecord = ToastOptions & { id: number }
@@ -104,6 +122,8 @@ let records: ReadonlyArray<ToastRecord> = []
 let nextId = 1
 let maxVisible = 3
 const timers = new Map<number, ReturnType<typeof setTimeout>>()
+// Toasts already announced, so Strict Mode's second effect run does not read one out twice.
+const announced = new Set<number>()
 const listeners = new Set<() => void>()
 const emit = () => listeners.forEach((l) => l())
 const subscribe = (l: () => void) => {
@@ -117,6 +137,7 @@ function dismiss(id?: number) {
   for (const t of gone) {
     clearTimeout(timers.get(t.id))
     timers.delete(t.id)
+    announced.delete(t.id)
   }
   records = id === undefined ? [] : records.filter((t) => t.id !== id)
   emit()
@@ -133,6 +154,7 @@ export function toast(options: ToastOptions): number {
     if (!oldest) break
     clearTimeout(timers.get(oldest.id))
     timers.delete(oldest.id)
+    announced.delete(oldest.id)
     records = records.slice(1)
   }
   if (Number.isFinite(duration))
@@ -146,13 +168,30 @@ export function toast(options: ToastOptions): number {
 toast.dismiss = dismiss
 
 const DURATION = 120
+/** Apple's minimum touch target, in points. */
+const MIN_TARGET = 44
+const DISMISS_HINT = 'Dismisses this notification'
 
-function ToastItem({ record, styles }: { record: ToastRecord; styles: SlotStyles<ToastSlots> }) {
-  const { id, title, description, action } = record
+function ToastItem({
+  record,
+  styles,
+  dismissHint,
+}: {
+  record: ToastRecord
+  styles: SlotStyles<ToastSlots>
+  dismissHint: string
+}) {
+  const { id, title, description, icon, action } = record
   // Live regions are Android-only and do not fire on mount, so announce explicitly.
   useEffect(() => {
+    // Skip a toast dismissed before this effect ran, so its id is never left in the set.
+    if (announced.has(id) || !records.some((t) => t.id === id)) return
+    announced.add(id)
     AccessibilityInfo.announceForAccessibility(description ? `${title}. ${description}` : title)
-  }, [title, description])
+  }, [id, title, description])
+  // The action is shorter and narrower than a touch target. The slop makes up the difference.
+  const actionHeight = (getStyleValue(styles.action, 'minHeight') as number | undefined) ?? 0
+  const slop = Math.max(0, Math.ceil((MIN_TARGET - actionHeight) / 2))
   return (
     <Animated.View
       entering={FadeIn.duration(DURATION)}
@@ -162,9 +201,17 @@ function ToastItem({ record, styles }: { record: ToastRecord; styles: SlotStyles
       accessibilityLiveRegion="polite"
       style={styles.toast}
     >
+      {isValidElement(icon) ? (
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          {cloneElement(icon, {
+            size: icon.props.size ?? (getStyleValue(styles.icon, 'width') as number | undefined),
+            color: icon.props.color ?? (getStyleValue(styles.icon, 'color') as string | undefined),
+          })}
+        </View>
+      ) : null}
       <Pressable
         accessibilityRole="button"
-        accessibilityHint="Dismisses this notification"
+        accessibilityHint={dismissHint}
         onPress={() => dismiss(id)}
         style={styles.body}
       >
@@ -174,9 +221,11 @@ function ToastItem({ record, styles }: { record: ToastRecord; styles: SlotStyles
       {action ? (
         <Pressable
           accessibilityRole="button"
+          hitSlop={slop}
           onPress={() => {
-            action.onPress()
+            // Closes first, so an action that throws does not leave the toast up.
             dismiss(id)
+            action.onPress()
           }}
           style={styles.action}
         >
@@ -194,6 +243,8 @@ export type ToasterProps = {
   offset?: number | { top?: number; bottom?: number }
   /** Newest toasts push the oldest out beyond this count. Default 3. */
   max?: number
+  /** Read out after a toast, for the tap that dismisses it. Default `"Dismisses this notification"`. */
+  dismissHint?: string
   styles?: SlotOverrides<ToastSlots>
 }
 
@@ -202,7 +253,13 @@ export type ToasterProps = {
  * above dialogs opened before them. Per-toast variant styles are resolved by
  * one recipe call per variant so the store stays free of React state.
  */
-export function Toaster({ placement = 'bottom', offset = 0, max = 3, styles }: ToasterProps) {
+export function Toaster({
+  placement = 'bottom',
+  offset = 0,
+  max = 3,
+  dismissHint = DISMISS_HINT,
+  styles,
+}: ToasterProps) {
   const all = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
   const top = useRecipe(toastRecipe, { placement: 'top', variant: 'default' }, styles)
   const topDestructive = useRecipe(
@@ -233,6 +290,7 @@ export function Toaster({ placement = 'bottom', offset = 0, max = 3, styles }: T
             <ToastItem
               key={t.id}
               record={t}
+              dismissHint={dismissHint}
               styles={t.variant === 'destructive' ? topDestructive : top}
             />
           ))}
@@ -244,6 +302,7 @@ export function Toaster({ placement = 'bottom', offset = 0, max = 3, styles }: T
             <ToastItem
               key={t.id}
               record={t}
+              dismissHint={dismissHint}
               styles={t.variant === 'destructive' ? bottomDestructive : bottom}
             />
           ))}

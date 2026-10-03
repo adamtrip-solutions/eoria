@@ -146,6 +146,15 @@ maybe('doctor finds the theme import in the custom entry that main points to', a
     status: 'fail',
     message: expect.stringContaining('src/app/_layout.tsx does not import unistyles'),
   })
+
+  // An extensionless main that matches two files is unknown, so doctor checks the layout only.
+  await writeFile(join(root, 'boot.js'), "import './src/unistyles'\n")
+  await writeFile(join(root, 'boot.mjs'), "import 'expo-router/entry'\n")
+  await withMain('./boot')
+  expect(await themeImport()).toMatchObject({
+    status: 'fail',
+    message: expect.stringContaining('src/app/_layout.tsx does not import unistyles'),
+  })
 })
 
 maybe('doctor reports missing files, registry dependencies and packages', async () => {

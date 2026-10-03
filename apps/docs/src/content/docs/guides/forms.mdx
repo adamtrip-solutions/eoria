@@ -32,6 +32,7 @@ export type SignUpValues = z.input<typeof signUpSchema>
 | Checkbox, Switch          | `checked` | `onCheckedChange` | none     |
 | Select                    | `value`   | `onValueChange`   | none     |
 | DatePicker, Slider        | `value`   | `onValueChange`   | none     |
+| DateTimeChips             | `value`   | `onValueChange`   | none     |
 
 Set `invalid` on `Field`, not on the control. `FieldControl` passes it down, and `FieldError` renders only while the field is invalid and has a message.
 

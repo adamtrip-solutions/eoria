@@ -1,10 +1,11 @@
 // Previews for the items that wrap a native package: sheet, select-sheet, date-picker,
-// image, keyboard and haptics. Spread into the map in ../previews.tsx.
+// date-time-chips, image, keyboard and haptics. Spread into the map in ../previews.tsx.
 import { useState, type ReactNode } from 'react'
 import { View } from 'react-native'
-import { Calendar, ImageOff, Mountain, Sailboat, Sun, Vibrate } from 'lucide-react-native'
+import { Calendar, Clock, ImageOff, Mountain, Sailboat, Sun, Vibrate } from 'lucide-react-native'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
+import { DateTimeChips } from '@/components/ui/date-time-chips'
 import { haptic, withHaptic } from '@/components/ui/haptics'
 import { Image } from '@/components/ui/image'
 import { Input } from '@/components/ui/input'
@@ -35,6 +36,26 @@ function DatePickerPreview() {
         <Label>Wake me at</Label>
         <DatePicker mode="time" placeholder="No alarm" />
       </VStack>
+    </VStack>
+  )
+}
+
+function DateTimeChipsPreview() {
+  const [pickup, setPickup] = useState(() => new Date(2026, 8, 24, 9, 30))
+  return (
+    <VStack gap={2}>
+      <Label>Pickup</Label>
+      <DateTimeChips
+        defaultExpanded="date"
+        value={pickup}
+        onValueChange={setPickup}
+        timeZoneName="Europe/Lisbon"
+        minuteInterval={5}
+        dateIcon={<Calendar />}
+        timeIcon={<Clock />}
+      >
+        <Text variant="muted">Times are in Lisbon time.</Text>
+      </DateTimeChips>
     </VStack>
   )
 }
@@ -76,6 +97,7 @@ export const nativePreviews: Record<string, () => ReactNode> = {
     </SelectSheet>
   ),
   'date-picker': () => <DatePickerPreview />,
+  'date-time-chips': () => <DateTimeChipsPreview />,
   image: () => (
     <VStack gap={4}>
       <Image

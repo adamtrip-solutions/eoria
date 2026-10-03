@@ -8,7 +8,10 @@ import {
 } from 'react'
 import { Platform, Pressable, View, type PressableProps } from 'react-native'
 import { useUnistyles } from 'react-native-unistyles'
-import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker'
+import DateTimePicker, {
+  DateTimePickerAndroid,
+  type IOSNativeProps,
+} from '@react-native-community/datetimepicker'
 import {
   defineSlotRecipe,
   getStyleValue,
@@ -102,18 +105,106 @@ export const datePickerRecipe = defineSlotRecipe((theme) => ({
 }))
 
 type DatePickerSlots = 'rootPressed' | 'value' | 'placeholder' | 'icon' | 'picker'
-type Mode = 'date' | 'time' | 'datetime'
+export type DatePickerMode = 'date' | 'time' | 'datetime'
 
-const defaultFormat = (date: Date, mode: Mode) =>
-  mode === 'date'
-    ? date.toLocaleDateString(undefined, { dateStyle: 'medium' })
-    : mode === 'time'
-      ? date.toLocaleTimeString(undefined, { timeStyle: 'short' })
-      : date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+export type DatePickerNativeOptions = {
+  /** BCP 47 tag for the default text and the iOS picker. Android pickers follow the system language. */
+  locale?: string
+  /** IANA name such as `Europe/Lisbon`. The picker and the default text show the time there. Defaults to the device's zone. */
+  timeZoneName?: string
+  /**
+   * 24-hour time in the Android time dialog and in the default text. iOS has no such switch:
+   * its wheels take the clock from `locale`, or from the device without one.
+   */
+  is24Hour?: boolean
+  /** Step of the minute wheel or clock. On iOS it applies to the spinner only. */
+  minuteInterval?: 1 | 2 | 3 | 4 | 5 | 6 | 10 | 12 | 15 | 20 | 30
+  /** Picker style per platform. Unset keeps the component's choice. */
+  display?: {
+    ios?: IOSNativeProps['display']
+    android?: 'default' | 'spinner'
+  }
+}
+
+/**
+ * The default text for a value: medium date, short time, or both. Honours `locale`,
+ * `timeZoneName` and `is24Hour` through `Intl.DateTimeFormat`.
+ */
+export function formatDateValue(
+  date: Date,
+  mode: DatePickerMode,
+  {
+    locale,
+    timeZoneName,
+    is24Hour,
+  }: Pick<DatePickerNativeOptions, 'locale' | 'timeZoneName' | 'is24Hour'> = {},
+): string {
+  const options: Intl.DateTimeFormatOptions = { timeZone: timeZoneName }
+  if (mode !== 'time') options.dateStyle = 'medium'
+  if (mode !== 'date') {
+    options.timeStyle = 'short'
+    if (is24Hour !== undefined) options.hourCycle = is24Hour ? 'h23' : 'h12'
+  }
+  return new Intl.DateTimeFormat(locale, options).format(date)
+}
+
+/**
+ * Keeps an instant inside the bounds. Android needs it after the pick: its time dialog takes
+ * no bounds and its date dialog limits calendar days, not instants.
+ */
+export function clampDate(date: Date, minimumDate?: Date, maximumDate?: Date): Date {
+  if (minimumDate && date.getTime() < minimumDate.getTime()) return new Date(minimumDate.getTime())
+  if (maximumDate && date.getTime() > maximumDate.getTime()) return new Date(maximumDate.getTime())
+  return date
+}
+
+/**
+ * Opens the Android system dialog and returns a function that takes it down. Android has no
+ * picker to render inline, so date-time-chips opens it through here too. Only the named
+ * options reach the dialog, so it is always the default design with a time zone name, no
+ * offset and no neutral button. The picked instant reaches `onPick` clamped to the bounds.
+ */
+export function openAndroidPicker(
+  step: 'date' | 'time',
+  value: Date,
+  {
+    minimumDate,
+    maximumDate,
+    timeZoneName,
+    is24Hour,
+    minuteInterval,
+    display,
+    onPick,
+    onDismiss,
+  }: Omit<DatePickerNativeOptions, 'locale'> & {
+    minimumDate?: Date
+    maximumDate?: Date
+    onPick: (date: Date) => void
+    onDismiss: () => void
+  },
+): () => void {
+  DateTimePickerAndroid.open({
+    value,
+    mode: step,
+    display: display?.android === 'spinner' ? 'spinner' : 'default',
+    minimumDate,
+    maximumDate,
+    timeZoneName,
+    is24Hour,
+    minuteInterval,
+    onValueChange: (_event, picked) => onPick(clampDate(picked, minimumDate, maximumDate)),
+    onDismiss,
+    // No neutral button is set. Should one appear anyway, it closes like a cancel.
+    onNeutralButtonPress: onDismiss,
+  })
+  return () => void DateTimePickerAndroid.dismiss(step)
+}
 
 export type DatePickerProps = Omit<PressableProps, 'style' | 'children' | 'disabled'> &
-  Pick<RecipeVariants<typeof datePickerRecipe>, 'size'> & {
-    value?: Date
+  Pick<RecipeVariants<typeof datePickerRecipe>, 'size'> &
+  DatePickerNativeOptions & {
+    /** Controlled when the key is present. `undefined` or `null` shows the placeholder. */
+    value?: Date | null
     defaultValue?: Date
     onValueChange?: (date: Date) => void
     /** Whether the picker is showing. Leave it out and the field opens itself on press. */
@@ -121,11 +212,11 @@ export type DatePickerProps = Omit<PressableProps, 'style' | 'children' | 'disab
     defaultOpen?: boolean
     onOpenChange?: (open: boolean) => void
     /** `date`, `time`, or both. Android asks for the date and then the time. Default `date`. */
-    mode?: Mode
+    mode?: DatePickerMode
     minimumDate?: Date
     maximumDate?: Date
     placeholder?: string
-    /** Turns the value into the text on the field. Defaults to the device locale. */
+    /** Turns the value into the text on the field. Defaults to `formatDateValue`. */
     formatValue?: (date: Date) => string
     /** Title of the iOS dialog, also read by screen readers. */
     title?: string
@@ -139,50 +230,62 @@ export type DatePickerProps = Omit<PressableProps, 'style' | 'children' | 'disab
     styles?: SlotOverrides<DatePickerSlots>
   }
 
-export function DatePicker({
-  value: controlled,
-  defaultValue,
-  onValueChange,
-  open: controlledOpen,
-  defaultOpen = false,
-  onOpenChange,
-  mode = 'date',
-  minimumDate,
-  maximumDate,
-  placeholder = mode === 'time' ? 'Select a time' : 'Select a date',
-  formatValue,
-  title = mode === 'time' ? 'Select a time' : 'Select a date',
-  doneLabel = 'Done',
-  closeLabel,
-  icon,
-  size,
-  invalid = false,
-  disabled = false,
-  styles,
-  accessibilityLabel,
-  ...rest
-}: DatePickerProps) {
+export function DatePicker(props: DatePickerProps) {
+  const {
+    value: controlled,
+    defaultValue,
+    onValueChange,
+    open: controlledOpen,
+    defaultOpen = false,
+    onOpenChange,
+    mode = 'date',
+    minimumDate,
+    maximumDate,
+    placeholder = mode === 'time' ? 'Select a time' : 'Select a date',
+    formatValue,
+    title = mode === 'time' ? 'Select a time' : 'Select a date',
+    doneLabel = 'Done',
+    closeLabel,
+    icon,
+    size,
+    invalid = false,
+    disabled = false,
+    styles,
+    accessibilityLabel,
+    locale,
+    timeZoneName,
+    is24Hour,
+    minuteInterval,
+    display,
+    ...rest
+  } = props
+  // Controlled when the `value` key is present, even if undefined (cleared).
+  const isControlled = 'value' in props
   const [uncontrolled, setUncontrolled] = useState(defaultValue)
-  const value = controlled ?? uncontrolled
+  const value = (isControlled ? controlled : uncontrolled) ?? undefined
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen)
   const open = controlledOpen ?? uncontrolledOpen
   // iOS edits a draft and commits it on Done, so scrolling the wheels does not fire changes.
   const [draft, setDraft] = useState(() => value ?? new Date())
-  // Every opening starts from the value, whatever the last draft was.
+  // Every opening starts from the value, whatever the last draft was, and so does every
+  // change of the value while open, so Done never commits a value the parent has replaced.
   const [wasOpen, setWasOpen] = useState(open)
-  if (wasOpen !== open) {
-    setWasOpen(open)
-    if (open) setDraft(value ?? new Date())
-  }
+  const valueTime = value?.getTime()
+  const [seenTime, setSeenTime] = useState(valueTime)
+  const valueChanged = !Object.is(seenTime, valueTime)
+  if (valueChanged) setSeenTime(valueTime)
+  if (wasOpen !== open) setWasOpen(open)
+  if (open && (wasOpen !== open || valueChanged)) setDraft(value ?? new Date())
   const { theme, rt } = useUnistyles()
   const s = useRecipe(datePickerRecipe, { size, open, invalid, disabled }, styles)
 
   const commit = useCallback(
-    (next: Date) => {
-      if (controlled === undefined) setUncontrolled(next)
+    (picked: Date) => {
+      const next = clampDate(picked, minimumDate, maximumDate)
+      if (!isControlled) setUncontrolled(next)
       onValueChange?.(next)
     },
-    [controlled, onValueChange],
+    [isControlled, onValueChange, minimumDate, maximumDate],
   )
 
   const setOpen = useCallback(
@@ -196,29 +299,38 @@ export function DatePicker({
   // Android has no view to render. Opening shows the system dialog, closing takes it down.
   useEffect(() => {
     if (Platform.OS !== 'android' || !open) return
-    let showing: 'date' | 'time' = mode === 'time' ? 'time' : 'date'
+    const options = {
+      minimumDate,
+      maximumDate,
+      timeZoneName,
+      is24Hour,
+      minuteInterval,
+      display,
+      onDismiss: () => setOpen(false),
+    }
+    let close = () => {}
     const ask = (step: 'date' | 'time', from: Date) => {
-      showing = step
-      DateTimePickerAndroid.open({
-        value: from,
-        mode: step,
-        minimumDate,
-        maximumDate,
-        onValueChange: (_event, picked) => {
+      close = openAndroidPicker(step, from, {
+        ...options,
+        onPick: (picked) => {
           if (mode === 'datetime' && step === 'date') return ask('time', picked)
           commit(picked)
           setOpen(false)
         },
-        onDismiss: () => setOpen(false),
       })
     }
-    ask(showing, value ?? new Date())
-    return () => void DateTimePickerAndroid.dismiss(showing)
+    ask(mode === 'time' ? 'time' : 'date', value ?? new Date())
+    return () => close()
     // Runs when `open` flips. The dialog keeps the props it was opened with.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
-  const text = value ? (formatValue ?? ((d: Date) => defaultFormat(d, mode)))(value) : undefined
+  const text = value
+    ? formatValue
+      ? formatValue(value)
+      : formatDateValue(value, mode, { locale, timeZoneName, is24Hour })
+    : undefined
+  const iosDisplay = display?.ios ?? (mode === 'date' ? 'inline' : 'spinner')
   return (
     <>
       <Pressable
@@ -248,15 +360,18 @@ export function DatePicker({
             </DialogHeader>
             <View style={s.picker}>
               <DateTimePicker
-                value={draft}
-                mode={mode}
-                display={mode === 'date' ? 'inline' : 'spinner'}
-                minimumDate={minimumDate}
-                maximumDate={maximumDate}
                 themeVariant={rt.themeName === 'dark' ? 'dark' : 'light'}
                 accentColor={theme.colors.primary}
                 textColor={theme.colors.foreground}
-                style={mode === 'date' ? FILL : undefined}
+                style={iosDisplay === 'inline' ? FILL : undefined}
+                value={draft}
+                mode={mode}
+                display={iosDisplay}
+                minimumDate={minimumDate}
+                maximumDate={maximumDate}
+                locale={locale}
+                timeZoneName={timeZoneName}
+                minuteInterval={minuteInterval}
                 onValueChange={(_event, picked) => setDraft(picked)}
               />
             </View>

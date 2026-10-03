@@ -548,6 +548,27 @@
       ]
     },
     {
+      "name": "date-time-chips",
+      "type": "registry:ui",
+      "title": "Date Time Chips",
+      "description": "A date chip and a time chip that open the platform picker inline beneath them.",
+      "dependencies": [
+        "@eoria/core",
+        "react-native-unistyles",
+        "react-native-reanimated",
+        "react-native-worklets",
+        "@react-native-community/datetimepicker"
+      ],
+      "registryDependencies": ["chip", "date-picker"],
+      "files": [
+        {
+          "path": "registry/ui/date-time-chips.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/date-time-chips.tsx"
+        }
+      ]
+    },
+    {
       "name": "image",
       "type": "registry:ui",
       "title": "Image",

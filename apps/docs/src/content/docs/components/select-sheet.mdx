@@ -1,0 +1,221 @@
+---
+title: Select Sheet
+description: Single or multiple select whose options open in a bottom sheet, with optional local or server search.
+category: Forms
+sidebar:
+  order: 18.4
+---
+
+```sh
+npx @eoria/cli add select-sheet
+```
+
+The CLI adds [Sheet](/components/sheet/), [SearchBar](/components/search-bar/) and [Button](/components/button/) with it. Sheet needs `BottomSheetModalProvider` at the root of the app; its page shows where.
+
+Reach for it over [Select](/components/select/) or [Combobox](/components/combobox/) when the list is long, the rows have a second line, more than one option can be picked, or the results come from a server. A sheet has the height for that and keeps the rows above the keyboard.
+
+## Usage
+
+```tsx
+import { useState } from 'react'
+import {
+  SelectSheet,
+  SelectSheetContent,
+  SelectSheetTrigger,
+  type SelectSheetOption,
+} from '@/components/ui/select-sheet'
+
+const towns: SelectSheetOption[] = [
+  { value: 'lis', label: 'Lisbon', description: 'Capital', keywords: ['lisboa'] },
+  { value: 'evo', label: 'Évora', description: 'Alentejo' },
+  { value: 'sag', label: 'Sagres', description: 'Algarve', disabled: true },
+]
+
+export function TownSelect() {
+  const [town, setTown] = useState<string | undefined>()
+  return (
+    <SelectSheet options={towns} value={town} onValueChange={setTown}>
+      <SelectSheetTrigger placeholder="Choose a town" />
+      <SelectSheetContent title="Start in" searchable searchPlaceholder="Search towns" />
+    </SelectSheet>
+  )
+}
+```
+
+`SelectSheet` holds the options, the selection and the search text. `SelectSheetTrigger` is optional. `SelectSheetContent` is the sheet: the title, the search field when `searchable` is set, and the rows in a [`SheetList`](/components/sheet/#a-searchable-list). A single select closes when a row is picked.
+
+In a [Field](/components/field/), wrap the trigger itself in `FieldControl`, not `SelectSheet`. The trigger takes the label, the hint and the `invalid` state from there.
+
+```tsx
+<Field invalid={!town}>
+  <FieldLabel>Start in</FieldLabel>
+  <SelectSheet options={towns} value={town} onValueChange={setTown}>
+    <FieldControl>
+      <SelectSheetTrigger placeholder="Choose a town" />
+    </FieldControl>
+    <SelectSheetContent title="Start in" searchable />
+  </SelectSheet>
+  <FieldError>Pick a town to start from.</FieldError>
+</Field>
+```
+
+### Open it from code
+
+When the select opens from a row of your own, leave the trigger out and use the ref. It has the Sheet ref's methods: `present()`, `dismiss()` and `snapToIndex(index)`.
+
+```tsx
+import { useRef, useState } from 'react'
+import { SelectSheet, SelectSheetContent, type SelectSheetRef } from '@/components/ui/select-sheet'
+
+export function LanguageRow() {
+  const sheet = useRef<SelectSheetRef>(null)
+  const [language, setLanguage] = useState('pt')
+  return (
+    <>
+      <Item onPress={() => sheet.current?.present()}>
+        <ItemContent>
+          <ItemTitle>Language</ItemTitle>
+        </ItemContent>
+        <ItemTrailing>{languages.find((l) => l.value === language)?.label}</ItemTrailing>
+        <ItemChevron />
+      </Item>
+      <SelectSheet ref={sheet} options={languages} value={language} onValueChange={setLanguage}>
+        <SelectSheetContent title="Language" searchable />
+      </SelectSheet>
+    </>
+  )
+}
+```
+
+### Multiple
+
+`multiple` turns the rows into checkboxes. `value` and `defaultValue` become arrays, and `onValueChange` gets every selected value plus the option that was toggled. The sheet stays open while the user picks, and a Done button pinned under the list closes it.
+
+```tsx
+const [extras, setExtras] = useState<string[]>([])
+
+<SelectSheet multiple options={extraOptions} value={extras} onValueChange={setExtras}>
+  <SelectSheetTrigger placeholder="No extras" />
+  <SelectSheetContent title="Extras" doneLabel="Done" />
+</SelectSheet>
+```
+
+Each tap applies at once. There is no draft to confirm or throw away, so Done, a drag, the backdrop and Android back all leave the same selection behind. Done is there because a drag is not available to every user, and a visible button is easier to find than the backdrop. Pass `footer={null}` to drop it, or your own node to replace it. `closeOnSelect` overrides the default either way.
+
+### Search on a server
+
+Pass `query` and `onQueryChange` and the search text is yours. Local filtering then turns off, so `options` should be the results for the current query. `loading` puts a spinner above the rows and holds back the empty state and the create row until the answer arrives.
+
+```tsx
+const [query, setQuery] = useState('')
+const { data = [], isFetching } = useCustomers(query)
+const options = data.map((c) => ({ value: c.id, label: c.name, description: c.email }))
+
+<SelectSheet
+  ref={sheet}
+  options={options}
+  value={customerId}
+  onValueChange={setCustomerId}
+  query={query}
+  onQueryChange={setQuery}
+  loading={isFetching}
+>
+  <SelectSheetContent
+    title="Customer"
+    searchable
+    emptyText="No customer found"
+    createAction={{
+      label: (q) => `Add "${q}"`,
+      onPress: (q) => router.push({ pathname: '/customers/new', params: { name: q } }),
+    }}
+  />
+</SelectSheet>
+```
+
+When the sheet has finished closing, the query goes back to empty and `onQueryChange('')` runs, so the next open starts from the full list. To filter the results locally as well, pass `filter={defaultSelectSheetFilter}` or your own function.
+
+The trigger shows the labels of the selected values it can find in `options`. Server results may not hold the selected record, so pass the label as the trigger's children when that can happen.
+
+### Create and empty actions
+
+`createAction` adds a row above the options while the trimmed query is not empty and no option has that label, compared without case or accents. The row stays hidden while `loading`, so stale results cannot offer to create a record that exists. `label` builds the text from the query. `emptyAction` puts a button under `emptyText` when no row is left. Both `onPress` callbacks receive the trimmed query.
+
+Both actions count as a choice. They close the sheet when picking a row would, and otherwise clear the query. To show the new option as selected, add it to `options` and set `value` in `onPress`.
+
+### Custom rows
+
+`renderOption(option, selected)` replaces the row body. The row keeps its press handling, its role, its checked and disabled state, its accessibility label and the mark on the right, so a custom body cannot lose them. Give the body `flex: 1` so the mark stays on the edge.
+
+```tsx
+<SelectSheetContent
+  title="Assignee"
+  renderOption={(option) => (
+    <HStack gap={3} style={{ flex: 1 }}>
+      <Avatar size="sm">
+        <AvatarFallback>{initials(option.label)}</AvatarFallback>
+      </Avatar>
+      <Text>{option.label}</Text>
+    </HStack>
+  )}
+/>
+```
+
+`SelectSheetContent` cannot infer the value type from `SelectSheet`, so `renderOption` types `option.value` as `string | number`. Write `SelectSheetContent<string>` or `SelectSheetContent<number>` for the narrower type.
+
+## Props
+
+| Part                 | Prop                                            | Values                                                                                             | Default                           |
+| -------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------- |
+| `SelectSheet`        | `options`                                       | `{ value, label, description?, icon?, disabled?, keywords? }[]`                                    |                                   |
+| `SelectSheet`        | `value`, `defaultValue`, `onValueChange`        | a value, or an array with `multiple`. Present-but-undefined is controlled and cleared              | uncontrolled                      |
+| `SelectSheet`        | `multiple`                                      | checkboxes instead of radios                                                                       | `false`                           |
+| `SelectSheet`        | `closeOnSelect`                                 | close after a row is picked                                                                        | `true` single, `false` multiple   |
+| `SelectSheet`        | `open`, `onOpenChange`                          | controlled or uncontrolled                                                                         | closed                            |
+| `SelectSheet`        | `onDismiss`                                     | called after the close animation, once the query is cleared                                        |                                   |
+| `SelectSheet`        | `ref`                                           | `present()`, `dismiss()`, `snapToIndex(index)`                                                     |                                   |
+| `SelectSheet`        | `query`, `onQueryChange`                        | controlled search text                                                                             | uncontrolled                      |
+| `SelectSheet`        | `filter`                                        | `(option, query) => boolean`, or `false` for none                                                  | local match, `false` with `query` |
+| `SelectSheet`        | `loading`                                       | spinner above the rows, no empty state or create row                                               | `false`                           |
+| `SelectSheet`        | `size`                                          | `sm`, `md`, `lg`, for the trigger                                                                  | `md`                              |
+| `SelectSheet`        | `invalid`, `disabled`                           | trigger state                                                                                      | `false`                           |
+| `SelectSheet`        | `styles`, `sheetStyles`                         | slot overrides for this recipe and for Sheet's                                                     |                                   |
+| `SelectSheetTrigger` | `placeholder`                                   | shown with nothing selected                                                                        | `Select…`                         |
+| `SelectSheetTrigger` | `children`                                      | replaces the label                                                                                 |                                   |
+| `SelectSheetTrigger` | `invalid`, `disabled`, `Pressable` props        | added to the root state. `FieldControl` sets them                                                  |                                   |
+| `SelectSheetContent` | `title`                                         | sheet title, list name, focus target on open                                                       | required                          |
+| `SelectSheetContent` | `description`                                   | line under the title                                                                               |                                   |
+| `SelectSheetContent` | `searchable`                                    | SearchBar above the list                                                                           | `false`                           |
+| `SelectSheetContent` | `searchPlaceholder`, `searchProps`              | SearchBar placeholder and other props, such as `autoFocus`                                         | SearchBar's `Search`              |
+| `SelectSheetContent` | `emptyText`                                     | shown when no row is left                                                                          | `No results`                      |
+| `SelectSheetContent` | `emptyAction`                                   | `{ label, onPress(query) }`                                                                        |                                   |
+| `SelectSheetContent` | `createAction`                                  | `{ label(query), onPress(query) }`                                                                 |                                   |
+| `SelectSheetContent` | `loadingLabel`                                  | read out for the spinner                                                                           | `Loading`                         |
+| `SelectSheetContent` | `renderOption`                                  | `(option, selected) => ReactNode`, the row body                                                    |                                   |
+| `SelectSheetContent` | `footer`, `doneLabel`                           | pinned node. A multiple select gets a Done button                                                  | Done on multiple, `Done`          |
+| `SelectSheetContent` | `listProps`                                     | `FlatList` props for the list                                                                      |                                   |
+| `SelectSheetContent` | `snapPoints`                                    | sheet heights                                                                                      | `['65%']`                         |
+| `SelectSheetContent` | `closeLabel`, `topInset`, `keyboardBehavior`, … | the other [SheetContent](/components/sheet/#props) props, except `scroll` and `accessibilityLabel` |                                   |
+
+`defaultSelectSheetFilter` is exported. It matches a substring of the label, the description or a keyword, ignoring case and accents, so "evora" finds "Évora".
+
+The default labels are English. Pass translated `placeholder`, `searchPlaceholder`, `emptyText`, `loadingLabel`, `doneLabel` and `closeLabel` in other languages.
+
+## The keyboard
+
+The sheet opens at 65% of the screen, a fixed height. The search field is SearchBar, which renders the sheet's own text input, so the keyboard lifts the whole sheet and the rows stay above it. The first tap on a row picks it while the keyboard is up. The trigger dismisses the keyboard before it opens the sheet. The ref does not, so call `Keyboard.dismiss()` first if a field on the screen behind may have focus.
+
+Pass `topInset={insets.top}` so a lifted sheet stops under the status bar. [Sheet](/components/sheet/#the-keyboard) covers the rest of the keyboard behaviour.
+
+## Accessibility
+
+On a single select the list is a radio group and each row a radio. On a multiple select the list is a list and each row a checkbox. Rows report checked and disabled. Their label reads the option label and then the description. The list takes `title` as its name, and the title takes focus when the sheet opens.
+
+The trigger has the `combobox` role, reports whether the sheet is open, and reads the selected labels as its value.
+
+## Slots
+
+The trigger uses `root`, `value`, `placeholder` and `chevron`, the same frame as Select. The sheet uses `header`, `search`, the row slots `item`, `itemPressed`, `itemSelected`, `itemDisabled`, `itemIcon`, `itemContent`, `itemLabel` and `itemDescription`, the marks `check`, `box`, `boxChecked` and `boxCheck`, the create row `create`, `createPressed`, `createIcon` and `createLabel`, then `loading`, `empty` and `emptyText`. `itemIcon` and `createIcon` pass their `width` and `color` to the icon, and `loading` passes its `color` to the spinner.
+
+## Source
+
+[`registry/ui/select-sheet.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/select-sheet.tsx)

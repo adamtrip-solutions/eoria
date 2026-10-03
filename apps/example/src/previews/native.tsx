@@ -1,8 +1,8 @@
-// Previews for the items that wrap a native package: sheet, date-picker, image, keyboard
-// and haptics. Spread into the map in ../previews.tsx.
+// Previews for the items that wrap a native package: sheet, select-sheet, date-picker,
+// image, keyboard and haptics. Spread into the map in ../previews.tsx.
 import { useState, type ReactNode } from 'react'
 import { View } from 'react-native'
-import { Calendar, ImageOff, Vibrate } from 'lucide-react-native'
+import { Calendar, ImageOff, Mountain, Sailboat, Sun, Vibrate } from 'lucide-react-native'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
 import { haptic, withHaptic } from '@/components/ui/haptics'
@@ -19,6 +19,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import { SelectSheet, SelectSheetContent } from '@/components/ui/select-sheet'
 import { HStack, VStack } from '@/components/ui/stack'
 import { Text } from '@/components/ui/text'
 
@@ -58,6 +59,21 @@ export const nativePreviews: Record<string, () => ReactNode> = {
         </SheetFooter>
       </SheetContent>
     </Sheet>
+  ),
+  'select-sheet': () => (
+    <SelectSheet
+      open
+      defaultValue="evo"
+      options={[
+        { value: 'lis', label: 'Lisbon', description: 'Capital' },
+        { value: 'evo', label: 'Évora', description: 'Alentejo', icon: <Sun /> },
+        { value: 'msz', label: 'Monsaraz', description: 'Alentejo', icon: <Mountain /> },
+        { value: 'tav', label: 'Tavira', description: 'Algarve', icon: <Sailboat /> },
+        { value: 'sag', label: 'Sagres', description: 'Algarve', disabled: true },
+      ]}
+    >
+      <SelectSheetContent title="Start in" searchable searchPlaceholder="Search towns" />
+    </SelectSheet>
   ),
   'date-picker': () => <DatePickerPreview />,
   image: () => (

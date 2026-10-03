@@ -47,6 +47,7 @@ import {
 
 - `accessibilityLabelledBy` is Android-only, so the label text is also passed as `accessibilityLabel`. Any explicit label on the child wins.
 - React Native has no `describedBy`. While invalid, the error text replaces the description in the control's hint.
+- The control's label and hint follow the parts that are mounted. Remove `FieldDescription` or `FieldError` and its text leaves the hint. Render it again and the text comes back.
 - Works with any control that accepts those props: Input, Textarea, Checkbox, Switch, Select's trigger.
 
 ## Source

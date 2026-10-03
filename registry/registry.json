@@ -188,7 +188,7 @@
       "type": "registry:ui",
       "title": "Tabs",
       "description": "Tabs with list, trigger and content parts.",
-      "dependencies": ["@eoria/core"],
+      "dependencies": ["@eoria/core", "react-native-reanimated", "react-native-worklets"],
       "registryDependencies": ["text"],
       "files": [
         {

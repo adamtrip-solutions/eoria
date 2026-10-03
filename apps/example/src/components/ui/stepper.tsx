@@ -103,6 +103,10 @@ const REPEAT_START = 160
 const REPEAT_FLOOR = 40
 const REPEAT_ACCELERATION = 0.85
 
+// Disabled passes an empty list: Android keeps the previous actions when the
+// prop goes back to undefined.
+const ADJUST_ACTIONS = [{ name: 'increment' }, { name: 'decrement' }]
+
 export function Stepper({
   value: controlled,
   defaultValue,
@@ -163,6 +167,7 @@ export function Stepper({
   }, [disabled, stop])
 
   const onAccessibilityAction = (e: AccessibilityActionEvent) => {
+    if (disabled) return
     if (e.nativeEvent.actionName === 'increment') stepBy(1)
     if (e.nativeEvent.actionName === 'decrement') stepBy(-1)
   }
@@ -218,7 +223,7 @@ export function Stepper({
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
       accessibilityValue={{ text: formatValue(value) }}
-      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+      accessibilityActions={disabled ? [] : ADJUST_ACTIONS}
       onAccessibilityAction={onAccessibilityAction}
       style={[s.root, disabled && s.rootDisabled, style]}
       {...rest}

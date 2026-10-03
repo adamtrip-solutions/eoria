@@ -99,6 +99,9 @@ const decimals = (n: number) => {
 
 const MOVE = { duration: 120, easing: Easing.out(Easing.quad) }
 const PRESS = { duration: 90, easing: Easing.out(Easing.quad) }
+// Disabled passes an empty list: Android keeps the previous actions when the
+// prop goes back to undefined.
+const ADJUST_ACTIONS = [{ name: 'increment' }, { name: 'decrement' }]
 
 export function Slider({
   value: controlled,
@@ -210,6 +213,7 @@ export function Slider({
     })
 
   const onAccessibilityAction = (e: AccessibilityActionEvent) => {
+    if (disabled) return
     const l = latest.current
     const delta = e.nativeEvent.actionName === 'increment' ? step : -step
     const next = l.snap(l.value + delta)
@@ -238,7 +242,7 @@ export function Slider({
         accessibilityLabel={accessibilityLabel}
         accessibilityState={{ disabled }}
         accessibilityValue={{ min, max, now: value }}
-        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+        accessibilityActions={disabled ? [] : ADJUST_ACTIONS}
         onAccessibilityAction={onAccessibilityAction}
         onLayout={handleLayout}
         style={[s.root, disabled && s.rootDisabled, style]}

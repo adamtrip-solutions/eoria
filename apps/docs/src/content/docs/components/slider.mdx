@@ -49,7 +49,7 @@ export function Volume() {
 
 ## Notes
 
-The root is the 44pt touch target and stretches to its container. Grabbing the thumb drags it without a jump; a press anywhere else moves the thumb to the finger and drags from there. The gesture is a gesture-handler Pan recognised natively, which is what keeps it from triggering the stack's swipe-back on iOS 26, where that swipe works from anywhere on the screen. A clear vertical movement fails the pan so a parent ScrollView still scrolls. Programmatic changes animate over 120 ms; the thumb scales up slightly while held. The root has the `adjustable` role with `min`, `max` and `now`, and answers the screen reader's increment and decrement actions by one `step`. The thumb is white on every theme with a soft shadow; change `styles.thumb` if your palette needs otherwise.
+The root is the 44pt touch target and stretches to its container. Grabbing the thumb drags it without a jump; a press anywhere else moves the thumb to the finger and drags from there. The gesture is a gesture-handler Pan recognised natively, which is what keeps it from triggering the stack's swipe-back on iOS 26, where that swipe works from anywhere on the screen. A clear vertical movement fails the pan so a parent ScrollView still scrolls. Programmatic changes animate over 120 ms; the thumb scales up slightly while held. The root has the `adjustable` role with `min`, `max` and `now`, and answers the screen reader's increment and decrement actions by one `step`. A disabled slider does not offer those actions and ignores them. The thumb is white on every theme with a soft shadow; change `styles.thumb` if your palette needs otherwise.
 
 ## Source
 

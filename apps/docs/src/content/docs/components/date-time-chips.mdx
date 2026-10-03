@@ -123,7 +123,7 @@ The open chip takes Chip's selected look. To change it, set the `chipSelected`, 
 
 `DateTimeChipsRoot` takes every prop above except `dateIcon`, `timeIcon` and `chipStyles`. Its `children` are the parts and your own layout.
 
-`DateTimeChipsTrigger` takes `section`, `date` or `time`, and the props of [Chip](/components/chip/) except `children`, `value`, `selected`, `onDismiss` and `dismissLabel`. `icon` sets its icon. `variant` and `size` default to the root's. `styles` holds Chip's own slots. `onPress` runs after the chip opens or closes its picker.
+`DateTimeChipsTrigger` takes `section`, `date` or `time`, and the props of [Chip](/components/chip/) except `children`, `value`, `selected`, `onDismiss` and `dismissLabel`. `icon` sets its icon. `variant` and `size` default to the root's. `styles` holds Chip's own slots. `labelProps` reaches the chip's label, so `labelProps={{ numberOfLines: 1 }}` keeps a long date on one line. `onPress` runs after the chip opens or closes its picker.
 
 `DateTimeChipsPicker` takes View props. It renders nothing while no chip is open, and nothing on Android.
 

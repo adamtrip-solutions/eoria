@@ -23,6 +23,7 @@ export const switchRecipe = defineSlotRecipe((theme) => ({
       borderRadius: theme.radius.full,
       backgroundColor: theme.colors.input,
       justifyContent: 'center',
+      opacity: 1,
     },
     thumb: {
       width: 27,

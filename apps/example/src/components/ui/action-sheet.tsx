@@ -78,6 +78,7 @@ export const actionSheetRecipe = extendSlotRecipe(dialogRecipe, (theme) => ({
       minHeight: theme.control.lg,
       paddingHorizontal: theme.space[5],
       backgroundColor: theme.colors.elevated,
+      opacity: 1,
     },
     itemPressed: { backgroundColor: theme.colors.accent },
     itemDisabled: { opacity: 0.5 },

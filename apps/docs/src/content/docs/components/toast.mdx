@@ -13,9 +13,11 @@ npx @eoria/cli add toast
 ## Usage
 
 ```tsx
+import { Check } from 'lucide-react-native'
 import { toast } from '@/components/ui/toast'
 
 toast({ title: 'Saved', description: 'Your changes are live.' })
+toast({ title: 'Payment sent', icon: <Check /> })
 toast({ title: 'Upload failed', variant: 'destructive' })
 toast({ title: 'Archived', duration: Infinity, action: { label: 'Undo', onPress: restore } })
 toast({ title: 'From the top', placement: 'top' })
@@ -31,21 +33,24 @@ const insets = useSafeAreaInsets()
 
 ## Options
 
-| Option        | Values                   | Default   |
-| ------------- | ------------------------ | --------- |
-| `title`       | string, required         |           |
-| `description` | string                   |           |
-| `variant`     | `default`, `destructive` | `default` |
-| `placement`   | `top`, `bottom`          | Toaster's |
-| `duration`    | ms, `Infinity` to keep   | `4000`    |
-| `action`      | `{ label, onPress }`     |           |
+| Option        | Values                               | Default   |
+| ------------- | ------------------------------------ | --------- |
+| `title`       | string, required                     |           |
+| `description` | string                               |           |
+| `variant`     | `default`, `destructive`             | `default` |
+| `placement`   | `top`, `bottom`                      | Toaster's |
+| `duration`    | ms, `Infinity` to keep               | `4000`    |
+| `icon`        | element accepting `size` and `color` |           |
+| `action`      | `{ label, onPress }`                 |           |
 
-`Toaster` takes `placement`, `offset` (number or per edge), `max` (default 3) and `styles`.
+`Toaster` takes `placement`, `offset` (number or per edge), `max` (default 3), `dismissHint` and `styles`. `dismissHint` is what a screen reader says about tapping a toast, `Dismisses this notification` by default. Pass your translation there.
 
 ## Notes
 
 - The store lives outside React, so `toast()` works from anywhere. Timers and the visible cap live in the store too, so a toast beyond the cap is dropped rather than hidden and resurfaced later.
-- Toasts announce themselves with `announceForAccessibility`, since live regions do nothing on iOS.
+- Toasts announce themselves with `announceForAccessibility`, since live regions do nothing on iOS. Each toast is announced once, also under Strict Mode, which runs effects twice in development.
+- The icon sits before the title. It takes its size and colour from the `icon` slot, the same colour as the title, unless the element sets its own `size` or `color`, as in `<Check color="#22c55e" />`. Screen readers skip it, so the title has to carry the meaning.
+- The action closes the toast and then calls `onPress`, so an `onPress` that throws still takes the toast down. The action is 36pt tall and its `hitSlop` stretches the target to 44pt.
 - Newest toast sits nearest the screen edge at both placements. Tap a toast to dismiss it.
 - Rendering through the portal means a toast fired after a dialog opened sits above the dialog.
 

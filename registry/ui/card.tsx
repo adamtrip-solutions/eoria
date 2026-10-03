@@ -25,7 +25,7 @@ import { Text, headingFont, type TextProps } from '@/components/ui/text'
 export const cardRecipe = defineSlotRecipe((theme) => ({
   slots: {
     /** No `overflow: hidden` here: it would clip the elevated shadow on iOS. */
-    root: { borderRadius: theme.radius.card },
+    root: { borderRadius: theme.radius.card, opacity: 1 },
     rootPressed: { opacity: 0.9 },
     header: { padding: theme.space[5], paddingBottom: 0, gap: theme.space[1] },
     title: {

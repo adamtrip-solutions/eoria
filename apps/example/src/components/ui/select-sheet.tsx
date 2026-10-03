@@ -66,6 +66,7 @@ export const selectSheetRecipe = defineSlotRecipe((theme) => ({
       borderColor: theme.stroke ? theme.colors.input : 'transparent',
       borderRadius: theme.radius.control,
       backgroundColor: theme.colors.muted,
+      opacity: 1,
     },
     value: {
       flex: 1,
@@ -95,6 +96,8 @@ export const selectSheetRecipe = defineSlotRecipe((theme) => ({
       minHeight: 52,
       paddingHorizontal: theme.space[6],
       paddingVertical: theme.space[2],
+      backgroundColor: 'transparent',
+      opacity: 1,
     },
     itemPressed: { backgroundColor: theme.colors.accent },
     itemSelected: { backgroundColor: theme.colors.accent },
@@ -132,6 +135,7 @@ export const selectSheetRecipe = defineSlotRecipe((theme) => ({
       borderColor: theme.colors.mutedForeground,
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: 'transparent',
     },
     boxChecked: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
     /** Tick inside a checked box. */
@@ -152,6 +156,7 @@ export const selectSheetRecipe = defineSlotRecipe((theme) => ({
       minHeight: 52,
       paddingHorizontal: theme.space[6],
       paddingVertical: theme.space[2],
+      backgroundColor: 'transparent',
     },
     createPressed: { backgroundColor: theme.colors.accent },
     /** Read by the icon adapter, like `itemIcon`. */

@@ -70,6 +70,7 @@ export const inputGroupRecipe = extendSlotRecipe(inputRecipe, (theme) => ({
       // Follows the frame's corner from the inside, down to the smallest step.
       borderRadius: Math.max(theme.radius.control - theme.space[2], theme.radius.sm),
       overflow: 'hidden',
+      opacity: 1,
     },
     /** A button inside an addon moves out toward that addon's edge of the frame. */
     buttonStart: { marginLeft: -theme.space[2] },

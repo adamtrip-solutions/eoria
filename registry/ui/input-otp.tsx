@@ -33,7 +33,7 @@ import { Text } from '@/components/ui/text'
  */
 export const inputOtpRecipe = defineSlotRecipe((theme) => ({
   slots: {
-    root: { flexDirection: 'row', gap: theme.space[2], alignSelf: 'flex-start' },
+    root: { flexDirection: 'row', gap: theme.space[2], alignSelf: 'flex-start', opacity: 1 },
     cell: {
       flex: 1,
       minWidth: 44,

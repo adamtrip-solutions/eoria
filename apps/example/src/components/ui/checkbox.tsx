@@ -19,6 +19,7 @@ export const checkboxRecipe = defineSlotRecipe((theme) => ({
       backgroundColor: theme.colors.background,
       alignItems: 'center',
       justifyContent: 'center',
+      opacity: 1,
     },
     /** Rotated L-shape drawn with borders, so no icon dependency. */
     check: {

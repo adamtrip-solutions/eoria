@@ -32,6 +32,7 @@ export const stepperRecipe = defineSlotRecipe((theme) => ({
       borderRadius: theme.radius.control,
       backgroundColor: theme.colors.muted,
       overflow: 'hidden',
+      opacity: 1,
     },
     rootDisabled: { opacity: 0.5 },
     /** Square, as wide as the control is tall. */
@@ -46,6 +47,7 @@ export const stepperRecipe = defineSlotRecipe((theme) => ({
       height: 2,
       borderRadius: theme.radius.full,
       backgroundColor: theme.colors.foreground,
+      opacity: 1,
     },
     value: {
       minWidth: 36,

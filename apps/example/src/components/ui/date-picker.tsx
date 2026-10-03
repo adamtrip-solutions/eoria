@@ -55,6 +55,7 @@ export const datePickerRecipe = defineSlotRecipe((theme) => ({
       borderColor: theme.stroke ? theme.colors.input : 'transparent',
       borderRadius: theme.radius.control,
       backgroundColor: theme.colors.muted,
+      opacity: 1,
     },
     rootPressed: { opacity: 0.85 },
     value: {
@@ -337,9 +338,23 @@ export function DatePicker(props: DatePickerProps) {
       close = openAndroidPicker(step, from, {
         ...options,
         onPick: (picked) => {
-          if (mode === 'datetime' && step === 'date') return ask('time', picked)
-          commit(picked)
-          setOpen(false)
+          if (mode === 'datetime' && step === 'date') {
+            try {
+              ask('time', picked)
+            } catch (error) {
+              // No time dialog came up, so nothing else would close the field. Rethrown, so
+              // the library treats it like any other error from this callback.
+              setOpen(false)
+              throw error
+            }
+            return
+          }
+          // Closes even when `onValueChange` throws.
+          try {
+            commit(picked)
+          } finally {
+            setOpen(false)
+          }
         },
       })
     }

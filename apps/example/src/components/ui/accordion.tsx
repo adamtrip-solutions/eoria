@@ -29,6 +29,7 @@ export const accordionRecipe = defineSlotRecipe((theme) => ({
       gap: theme.space[3],
       minHeight: 56,
       paddingVertical: theme.space[4],
+      opacity: 1,
     },
     triggerLabel: {
       flex: 1,

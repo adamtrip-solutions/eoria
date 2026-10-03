@@ -1,0 +1,85 @@
+---
+title: Date Time Chips
+description: A date chip and a time chip that open the platform picker inline beneath them.
+category: Forms
+sidebar:
+  order: 18.6
+---
+
+```sh
+npx @eoria/cli add date-time-chips
+```
+
+Needs `@react-native-community/datetimepicker`, a native module. Expo projects add it with `npx expo install @react-native-community/datetimepicker` and rebuild the development build. The item also brings `chip` and `date-picker`, whose formatter and Android dialog it shares, and through them `dialog`, `button` and `text`.
+
+## Usage
+
+```tsx
+import { DateTimeChips, type DateTimeChipsSection } from '@/components/ui/date-time-chips'
+import { Calendar, Clock } from 'lucide-react-native'
+
+const [start, setStart] = useState(() => new Date())
+
+<DateTimeChips
+  value={start}
+  onValueChange={setStart}
+  minimumDate={new Date()}
+  timeZoneName="Europe/Lisbon"
+  minuteInterval={5}
+  dateIcon={<Calendar />}
+  timeIcon={<Clock />}
+>
+  <Text variant="muted">Times are in Lisbon time.</Text>
+</DateTimeChips>
+```
+
+Children sit under the chips and above the open picker. Use them for a note the user should read while picking, such as the time zone.
+
+Open a picker from somewhere else with `expanded` and `onExpandedChange`:
+
+```tsx
+const [expanded, setExpanded] = useState<DateTimeChipsSection | null>(null)
+
+<DateTimeChips
+  value={start}
+  onValueChange={setStart}
+  expanded={expanded}
+  onExpandedChange={setExpanded}
+/>
+<Button variant="link" onPress={() => setExpanded('time')}>Change the time</Button>
+```
+
+## Props
+
+| Prop                                              | Values                                                  | Default           |
+| ------------------------------------------------- | ------------------------------------------------------- | ----------------- |
+| `value`, `onValueChange`                          | `Date`, controlled                                      |                   |
+| `expanded`, `defaultExpanded`, `onExpandedChange` | `date`, `time` or `null`, controlled or uncontrolled    | `null`            |
+| `minimumDate`, `maximumDate`                      | `Date`                                                  |                   |
+| `locale`, `timeZoneName`, `is24Hour`              | as on [Date Picker](/components/date-picker/)           | device            |
+| `minuteInterval`, `display`, `pickerProps`        | as on [Date Picker](/components/date-picker/)           |                   |
+| `dateLabel`, `timeLabel`                          | read out before each value, and the label of its picker | `Date`, `Time`    |
+| `formatDate`, `formatTime`                        | `(date) => string`                                      | `formatDateValue` |
+| `dateIcon`, `timeIcon`                            | element taking `size` and `color`                       |                   |
+| `variant`, `size`                                 | as on [Chip](/components/chip/)                         | `filled`, `md`    |
+| `disabled`                                        | boolean, closes the open picker                         | `false`           |
+| `children`                                        | content between the chips and the picker                |                   |
+| `styles`                                          | override `chips`, `chip`, `chipLabel`, `picker`         |                   |
+
+## Notes
+
+The value is one `Date`. The date chip changes its day and the time chip its time, and every pick calls `onValueChange` straight away. There is no Done button, unlike Date Picker, because the picker sits in the page and the chips already show the result.
+
+Pressing a chip opens its picker and closes the other. Pressing the open chip closes it. On iOS the date opens the system calendar and the time opens the wheels, inline under the children. The picker fades in over 150 ms and the component resizes with a layout transition, as Collapsible does. Views below it jump unless they set `layout` themselves. Both animations follow the system's reduce motion setting. On Android there is no inline picker, so a chip opens the system dialog and the chip stays open until the dialog closes.
+
+`display.ios` replaces the style of both pickers, so `spinner` turns the calendar into wheels too.
+
+The time zone, locale and clock behave as on [Date Picker](/components/date-picker/#time-zone-locale-and-clock). In short, `timeZoneName` reaches both the picker and the chip text, `is24Hour` reaches the chip text and the Android dialog, and the iOS wheels take their clock from `locale`.
+
+Each chip is a button whose label is its name and its value, for example "Date, Sep 24, 2026", with an `expanded` state. The open chip also takes Chip's selected look. The picker follows the chips and the children in reading order and carries the chip's name as its label. The labels default to English. Pass `dateLabel` and `timeLabel` to translate them.
+
+The `chip` and `chipLabel` slots go to each Chip's `root` and `label`. The label uses tabular digits so the chip keeps its width as the time changes. Set `chip` to `{ flexGrow: 1, justifyContent: 'center' }` to let the chips fill the row.
+
+## Source
+
+[`registry/ui/date-time-chips.tsx`](https://github.com/adamtrip-solutions/eoria/blob/main/registry/ui/date-time-chips.tsx)

@@ -6,6 +6,7 @@ import { useUnistyles } from 'react-native-unistyles'
 import { Section } from '@/components/screen'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
+import { DateTimeChips } from '@/components/ui/date-time-chips'
 import { Field, FieldControl, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { haptic, withHaptic } from '@/components/ui/haptics'
 import { Image } from '@/components/ui/image'
@@ -244,6 +245,8 @@ export default function NativeScreen() {
   const { theme } = useUnistyles()
   const insets = useSafeAreaInsets()
   const [checkIn, setCheckIn] = useState<Date | undefined>(new Date(2026, 8, 24))
+  const [departure, setDeparture] = useState<Date | null>(null)
+  const [pickup, setPickup] = useState(() => new Date(2026, 8, 24, 9, 30))
   return (
     <>
       <KeyboardScrollView
@@ -290,6 +293,40 @@ export default function NativeScreen() {
             <FieldDescription>Opens the system calendar.</FieldDescription>
           </Field>
           <DatePicker mode="time" placeholder="Arrival time" icon={<Clock />} />
+          <Field>
+            <FieldLabel>Departure from Tokyo</FieldLabel>
+            <FieldControl>
+              <DatePicker
+                mode="datetime"
+                value={departure}
+                onValueChange={setDeparture}
+                placeholder="No departure"
+                timeZoneName="Asia/Tokyo"
+                locale="en-GB"
+                is24Hour
+                minuteInterval={5}
+              />
+            </FieldControl>
+            <FieldDescription>Tokyo time, 24-hour, in 5 minute steps.</FieldDescription>
+          </Field>
+          {departure ? (
+            <Button variant="link" onPress={() => setDeparture(null)}>
+              Clear departure
+            </Button>
+          ) : null}
+        </Section>
+
+        <Section block title="Date time chips">
+          <DateTimeChips
+            value={pickup}
+            onValueChange={setPickup}
+            minimumDate={new Date()}
+            minuteInterval={5}
+            dateIcon={<Calendar />}
+            timeIcon={<Clock />}
+          >
+            <Text variant="muted">Pickup times are in local time.</Text>
+          </DateTimeChips>
         </Section>
 
         <Section block title="Sheet">

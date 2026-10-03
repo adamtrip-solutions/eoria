@@ -64,18 +64,26 @@ for the 16pt button label. [Tokens](/start/tokens/) lists every key and what it 
 The app follows the OS appearance by default. To let the user pick, turn adaptive themes off
 first. Calling `setTheme` while they are on throws.
 
+Some devices report no appearance at all. Unistyles refuses to start with adaptive themes on
+such a device, so `configureUnistyles` starts it on `light` with adaptive themes off. Turning
+them on later works there, but picks `dark`. The `system` branch below checks the scheme so it
+lands on light as well.
+
 ```ts
 import { UnistylesRuntime } from 'react-native-unistyles'
 
 export function setMode(mode: 'system' | 'light' | 'dark') {
-  if (mode === 'system') {
+  if (mode === 'system' && UnistylesRuntime.colorScheme !== 'unspecified') {
     UnistylesRuntime.setAdaptiveThemes(true)
     return
   }
   if (UnistylesRuntime.hasAdaptiveThemes) UnistylesRuntime.setAdaptiveThemes(false)
-  UnistylesRuntime.setTheme(mode)
+  UnistylesRuntime.setTheme(mode === 'system' ? 'light' : mode)
 }
 ```
+
+If you pass your own `settings`, `configureUnistyles` hands them to Unistyles unchanged, and
+`adaptiveThemes: true` throws on those devices.
 
 `useUnistyles().rt.themeName` and `rt.hasAdaptiveThemes` re-render when either changes, so a
 segmented control bound to them stays in sync.

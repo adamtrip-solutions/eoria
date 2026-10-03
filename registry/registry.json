@@ -494,6 +494,21 @@
       ]
     },
     {
+      "name": "select-sheet",
+      "type": "registry:ui",
+      "title": "SelectSheet",
+      "description": "Single or multiple select whose options open in a bottom sheet, with optional local or server search.",
+      "dependencies": ["@eoria/core", "lucide-react-native"],
+      "registryDependencies": ["sheet", "search-bar", "button", "text"],
+      "files": [
+        {
+          "path": "registry/ui/select-sheet.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/select-sheet.tsx"
+        }
+      ]
+    },
+    {
       "name": "sheet",
       "type": "registry:ui",
       "title": "Sheet",

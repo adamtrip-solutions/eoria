@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { TextInput } from 'react-native'
-import { Calendar, Clock, ImageOff } from 'lucide-react-native'
+import { Calendar, Clock, ImageOff, Mountain, Sailboat, Sun } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useUnistyles } from 'react-native-unistyles'
 import { Section } from '@/components/screen'
@@ -10,7 +10,7 @@ import { Field, FieldControl, FieldDescription, FieldLabel } from '@/components/
 import { haptic, withHaptic } from '@/components/ui/haptics'
 import { Image } from '@/components/ui/image'
 import { Input } from '@/components/ui/input'
-import { Item, ItemContent, ItemTitle } from '@/components/ui/item'
+import { Item, ItemChevron, ItemContent, ItemTitle, ItemTrailing } from '@/components/ui/item'
 import { KeyboardFooter, KeyboardScrollView, KeyboardToolbar } from '@/components/ui/keyboard'
 import {
   Sheet,
@@ -25,6 +25,14 @@ import {
   type SheetRef,
 } from '@/components/ui/sheet'
 import { SearchBar } from '@/components/ui/search-bar'
+import {
+  SelectSheet,
+  SelectSheetContent,
+  SelectSheetTrigger,
+  defaultSelectSheetFilter,
+  type SelectSheetOption,
+  type SelectSheetRef,
+} from '@/components/ui/select-sheet'
 import { HStack } from '@/components/ui/stack'
 import { Text } from '@/components/ui/text'
 import { toast } from '@/components/ui/toast'
@@ -118,6 +126,114 @@ function TripNoteSheets() {
           />
         </SheetContent>
       </Sheet>
+    </>
+  )
+}
+
+const towns: SelectSheetOption[] = [
+  { value: 'lis', label: 'Lisbon', description: 'Capital', keywords: ['lisboa'] },
+  { value: 'evo', label: 'Évora', description: 'Alentejo', icon: <Sun /> },
+  { value: 'msz', label: 'Monsaraz', description: 'Alentejo', icon: <Mountain /> },
+  { value: 'tav', label: 'Tavira', description: 'Algarve', icon: <Sailboat /> },
+  { value: 'sag', label: 'Sagres', description: 'Algarve', disabled: true },
+]
+
+const extras: SelectSheetOption[] = [
+  { value: 'bike', label: 'Bike rental' },
+  { value: 'guide', label: 'Local guide', description: 'Half a day' },
+  { value: 'wine', label: 'Wine tasting' },
+  { value: 'boat', label: 'Boat trip', description: 'Weather permitting' },
+]
+
+// Stands in for a server: answers after a delay with the matches for the query.
+function useFakeSearch(source: SelectSheetOption[], query: string) {
+  const [results, setResults] = useState(source)
+  const [loading, setLoading] = useState(false)
+  useEffect(() => {
+    setLoading(true)
+    const timer = setTimeout(() => {
+      setResults(source.filter((o) => defaultSelectSheetFilter(o, query)))
+      setLoading(false)
+    }, 600)
+    return () => clearTimeout(timer)
+  }, [source, query])
+  return { results, loading }
+}
+
+// Single with local search behind a Field, multiple opened from a row through the ref, and a
+// server search that can create the guest it did not find.
+function SelectSheetDemos() {
+  const [town, setTown] = useState<string>()
+  const extrasSheet = useRef<SelectSheetRef>(null)
+  const [picked, setPicked] = useState<string[]>(['guide'])
+  const [guests, setGuests] = useState<SelectSheetOption[]>([
+    { value: 'ana', label: 'Ana Sousa', description: 'ana@example.com' },
+    { value: 'rui', label: 'Rui Matos', description: 'rui@example.com' },
+    { value: 'ines', label: 'Inês Costa', description: 'ines@example.com' },
+  ])
+  const [guest, setGuest] = useState<string>()
+  const [query, setQuery] = useState('')
+  const { results, loading } = useFakeSearch(guests, query)
+  return (
+    <>
+      <Field>
+        <FieldLabel>Start in</FieldLabel>
+        <FieldControl>
+          <SelectSheet options={towns} value={town} onValueChange={setTown}>
+            <SelectSheetTrigger placeholder="Choose a town" />
+            <SelectSheetContent title="Start in" searchable searchPlaceholder="Search towns" />
+          </SelectSheet>
+        </FieldControl>
+        <FieldDescription>Search matches “evora” too.</FieldDescription>
+      </Field>
+
+      <Item onPress={() => extrasSheet.current?.present()}>
+        <ItemContent>
+          <ItemTitle>Extras</ItemTitle>
+        </ItemContent>
+        <ItemTrailing>{picked.length > 0 ? String(picked.length) : 'None'}</ItemTrailing>
+        <ItemChevron />
+      </Item>
+      <SelectSheet
+        ref={extrasSheet}
+        multiple
+        options={extras}
+        value={picked}
+        onValueChange={setPicked}
+      >
+        <SelectSheetContent title="Extras" description="Pick as many as you like." />
+      </SelectSheet>
+
+      <SelectSheet
+        options={results}
+        value={guest}
+        onValueChange={setGuest}
+        query={query}
+        onQueryChange={setQuery}
+        loading={loading}
+      >
+        <SelectSheetTrigger placeholder="Add a guest">
+          {guest ? (
+            <Text numberOfLines={1} style={{ flex: 1 }}>
+              {guests.find((g) => g.value === guest)?.label}
+            </Text>
+          ) : undefined}
+        </SelectSheetTrigger>
+        <SelectSheetContent
+          title="Guest"
+          searchable
+          searchPlaceholder="Search guests"
+          emptyText="No guest found"
+          createAction={{
+            label: (q) => `Add “${q}”`,
+            onPress: (q) => {
+              const created = { value: `new-${Date.now()}`, label: q }
+              setGuests((list) => [...list, created])
+              setGuest(created.value)
+            },
+          }}
+        />
+      </SelectSheet>
     </>
   )
 }
@@ -216,6 +332,10 @@ export default function NativeScreen() {
             </SheetContent>
           </Sheet>
           <TripNoteSheets />
+        </Section>
+
+        <Section block title="Select sheet">
+          <SelectSheetDemos />
         </Section>
 
         <Section block title="Haptics">

@@ -127,20 +127,28 @@ export function Stepper({
   const value = clamp(controlled ?? uncontrolled, min, max)
 
   // Committed props for presses and the repeat timer, which outlives the render. Written
-  // after commit, so every step builds on the value on screen. A parent that rejects a
-  // change keeps that value, and a render React throws away never reaches the ref.
+  // after commit, so a render React throws away never reaches the ref. A controlled step
+  // builds on the parent's value, so a parent that rejects a change keeps it.
   const latest = useRef({ value, controlled, min, max, step, disabled, onValueChange })
   useLayoutEffect(() => {
     latest.current = { value, controlled, min, max, step, disabled, onValueChange }
   })
+  // Uncontrolled, the stepper owns the value: the last one it set, before React commits it,
+  // so hold ticks that outpace renders still add up. Only `stepBy` writes it.
+  const own = useRef(uncontrolled)
 
   const stepBy = useCallback((direction: 1 | -1) => {
     const l = latest.current
     if (l.disabled) return false
+    const uncontrolledMode = l.controlled === undefined
+    const from = uncontrolledMode ? clamp(own.current, l.min, l.max) : l.value
     const places = Math.max(decimals(l.step), decimals(l.min))
-    const next = clamp(Number((l.value + direction * l.step).toFixed(places)), l.min, l.max)
-    if (next === l.value) return false
-    if (l.controlled === undefined) setUncontrolled(next)
+    const next = clamp(Number((from + direction * l.step).toFixed(places)), l.min, l.max)
+    if (next === from) return false
+    if (uncontrolledMode) {
+      own.current = next
+      setUncontrolled(next)
+    }
     l.onValueChange?.(next)
     return true
   }, [])

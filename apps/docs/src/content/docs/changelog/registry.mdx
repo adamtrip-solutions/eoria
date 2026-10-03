@@ -32,7 +32,7 @@ lists what was added or changed and when. The packages have their own pages:
 - Date Picker is controlled whenever the `value` key is present, as Select and Combobox are.
   Setting a controlled value back to `undefined` or `null` now clears the field. Before, the
   last picked date came back.
-- [Stepper](/components/stepper/) steps from the value on screen. A parent holding
+- A controlled [Stepper](/components/stepper/) steps from the parent's value. A parent holding
   `value={4}` that ignores changes got 5, 6, 5 from plus, plus, minus, and now gets 5, 5, 3.
   A held button reads the current `min`, `max`, `step` and `disabled` on every tick, so it
   stops at a bound the parent narrowed during the hold. The file no longer touches a ref

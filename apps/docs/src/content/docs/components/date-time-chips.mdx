@@ -57,7 +57,7 @@ const [expanded, setExpanded] = useState<DateTimeChipsSection | null>(null)
 | `expanded`, `defaultExpanded`, `onExpandedChange` | `date`, `time` or `null`, controlled or uncontrolled    | `null`            |
 | `minimumDate`, `maximumDate`                      | `Date`                                                  |                   |
 | `locale`, `timeZoneName`, `is24Hour`              | as on [Date Picker](/components/date-picker/)           | device            |
-| `minuteInterval`, `display`, `pickerProps`        | as on [Date Picker](/components/date-picker/)           |                   |
+| `minuteInterval`, `display`                       | as on [Date Picker](/components/date-picker/)           |                   |
 | `dateLabel`, `timeLabel`                          | read out before each value, and the label of its picker | `Date`, `Time`    |
 | `formatDate`, `formatTime`                        | `(date) => string`                                      | `formatDateValue` |
 | `dateIcon`, `timeIcon`                            | element taking `size` and `color`                       |                   |
@@ -70,7 +70,7 @@ const [expanded, setExpanded] = useState<DateTimeChipsSection | null>(null)
 
 The value is one `Date`. The date chip changes its day and the time chip its time, and every pick calls `onValueChange` straight away. There is no Done button, unlike Date Picker, because the picker sits in the page and the chips already show the result.
 
-Pressing a chip opens its picker and closes the other. Pressing the open chip closes it. On iOS the date opens the system calendar and the time opens the wheels, inline under the children. The picker fades in over 150 ms and the component resizes with a layout transition, as Collapsible does. Views below it jump unless they set `layout` themselves. Both animations follow the system's reduce motion setting. On Android there is no inline picker, so a chip opens the system dialog and the chip stays open until the dialog closes.
+Pressing a chip opens its picker and closes the other. Pressing the open chip closes it. On iOS the date opens the system calendar and the time opens the wheels, inline under the children. The picker fades in over 150 ms and the component resizes with a layout transition, as Collapsible does. Views below it jump unless they set `layout` themselves. Both animations follow the system's reduce motion setting. On Android there is no inline picker, so a chip opens the system dialog and the chip stays open until the dialog closes. The Android time dialog has no bounds, so the picked instant is clamped to `minimumDate` and `maximumDate` before `onValueChange`, as in [Date Picker](/components/date-picker/#bounds).
 
 `display.ios` replaces the style of both pickers, so `spinner` turns the calendar into wheels too.
 

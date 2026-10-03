@@ -10,7 +10,6 @@ import { Platform, Pressable, View, type PressableProps } from 'react-native'
 import { useUnistyles } from 'react-native-unistyles'
 import DateTimePicker, {
   DateTimePickerAndroid,
-  type AndroidNativeProps,
   type IOSNativeProps,
 } from '@react-native-community/datetimepicker'
 import {
@@ -108,26 +107,6 @@ export const datePickerRecipe = defineSlotRecipe((theme) => ({
 type DatePickerSlots = 'rootPressed' | 'value' | 'placeholder' | 'icon' | 'picker'
 export type DatePickerMode = 'date' | 'time' | 'datetime'
 
-/** Props this file sets itself. The rest of the native picker's props go through `pickerProps`. */
-type OwnNativeProps =
-  | 'value'
-  | 'mode'
-  | 'onChange'
-  | 'onValueChange'
-  | 'onDismiss'
-  | 'minimumDate'
-  | 'maximumDate'
-  | 'locale'
-  | 'timeZoneName'
-  | 'timeZoneOffsetInMinutes'
-  | 'is24Hour'
-  | 'minuteInterval'
-  | 'display'
-
-/**
- * What reaches the native picker, shared with date-time-chips. The default text follows
- * `locale`, `timeZoneName` and `is24Hour` too, so the field and the picker agree.
- */
 export type DatePickerNativeOptions = {
   /** BCP 47 tag for the default text and the iOS picker. Android pickers follow the system language. */
   locale?: string
@@ -144,11 +123,6 @@ export type DatePickerNativeOptions = {
   display?: {
     ios?: IOSNativeProps['display']
     android?: 'default' | 'spinner'
-  }
-  /** Any other native picker prop, per platform, e.g. Android button labels or `firstDayOfWeek`. */
-  pickerProps?: {
-    ios?: Partial<Omit<IOSNativeProps, OwnNativeProps>>
-    android?: Partial<Omit<AndroidNativeProps, OwnNativeProps>>
   }
 }
 
@@ -174,15 +148,21 @@ export function formatDateValue(
   return new Intl.DateTimeFormat(locale, options).format(date)
 }
 
-/** The typings leave out dismiss's second argument, which picks the Material 3 dialog. */
-const dismissAndroid = DateTimePickerAndroid.dismiss as (
-  mode: 'date' | 'time',
-  design?: AndroidNativeProps['design'],
-) => Promise<boolean>
+/**
+ * Keeps an instant inside the bounds. Android needs it after the pick: its time dialog takes
+ * no bounds and its date dialog limits calendar days, not instants.
+ */
+export function clampDate(date: Date, minimumDate?: Date, maximumDate?: Date): Date {
+  if (minimumDate && date.getTime() < minimumDate.getTime()) return new Date(minimumDate.getTime())
+  if (maximumDate && date.getTime() > maximumDate.getTime()) return new Date(maximumDate.getTime())
+  return date
+}
 
 /**
- * Opens the Android system dialog with the shared options and returns a function that takes
- * it down. Android has no picker to render inline, so date-time-chips opens it through here too.
+ * Opens the Android system dialog and returns a function that takes it down. Android has no
+ * picker to render inline, so date-time-chips opens it through here too. Only the named
+ * options reach the dialog, so it is always the default design with a time zone name, no
+ * offset and no neutral button. The picked instant reaches `onPick` clamped to the bounds.
  */
 export function openAndroidPicker(
   step: 'date' | 'time',
@@ -194,7 +174,6 @@ export function openAndroidPicker(
     is24Hour,
     minuteInterval,
     display,
-    pickerProps,
     onPick,
     onDismiss,
   }: Omit<DatePickerNativeOptions, 'locale'> & {
@@ -205,19 +184,20 @@ export function openAndroidPicker(
   },
 ): () => void {
   DateTimePickerAndroid.open({
-    ...pickerProps?.android,
     value,
     mode: step,
-    display: display?.android,
+    display: display?.android === 'spinner' ? 'spinner' : 'default',
     minimumDate,
     maximumDate,
     timeZoneName,
     is24Hour,
     minuteInterval,
-    onValueChange: (_event, picked) => onPick(picked),
+    onValueChange: (_event, picked) => onPick(clampDate(picked, minimumDate, maximumDate)),
     onDismiss,
+    // No neutral button is set. Should one appear anyway, it closes like a cancel.
+    onNeutralButtonPress: onDismiss,
   })
-  return () => void dismissAndroid(step, pickerProps?.android?.design)
+  return () => void DateTimePickerAndroid.dismiss(step)
 }
 
 export type DatePickerProps = Omit<PressableProps, 'style' | 'children' | 'disabled'> &
@@ -277,7 +257,6 @@ export function DatePicker(props: DatePickerProps) {
     is24Hour,
     minuteInterval,
     display,
-    pickerProps,
     ...rest
   } = props
   // Controlled when the `value` key is present, even if undefined (cleared).
@@ -288,21 +267,25 @@ export function DatePicker(props: DatePickerProps) {
   const open = controlledOpen ?? uncontrolledOpen
   // iOS edits a draft and commits it on Done, so scrolling the wheels does not fire changes.
   const [draft, setDraft] = useState(() => value ?? new Date())
-  // Every opening starts from the value, whatever the last draft was.
+  // Every opening starts from the value, whatever the last draft was, and so does every
+  // change of the value while open, so Done never commits a value the parent has replaced.
   const [wasOpen, setWasOpen] = useState(open)
-  if (wasOpen !== open) {
-    setWasOpen(open)
-    if (open) setDraft(value ?? new Date())
-  }
+  const valueTime = value?.getTime()
+  const [seenTime, setSeenTime] = useState(valueTime)
+  const valueChanged = !Object.is(seenTime, valueTime)
+  if (valueChanged) setSeenTime(valueTime)
+  if (wasOpen !== open) setWasOpen(open)
+  if (open && (wasOpen !== open || valueChanged)) setDraft(value ?? new Date())
   const { theme, rt } = useUnistyles()
   const s = useRecipe(datePickerRecipe, { size, open, invalid, disabled }, styles)
 
   const commit = useCallback(
-    (next: Date) => {
+    (picked: Date) => {
+      const next = clampDate(picked, minimumDate, maximumDate)
       if (!isControlled) setUncontrolled(next)
       onValueChange?.(next)
     },
-    [isControlled, onValueChange],
+    [isControlled, onValueChange, minimumDate, maximumDate],
   )
 
   const setOpen = useCallback(
@@ -323,7 +306,6 @@ export function DatePicker(props: DatePickerProps) {
       is24Hour,
       minuteInterval,
       display,
-      pickerProps,
       onDismiss: () => setOpen(false),
     }
     let close = () => {}
@@ -382,7 +364,6 @@ export function DatePicker(props: DatePickerProps) {
                 accentColor={theme.colors.primary}
                 textColor={theme.colors.foreground}
                 style={iosDisplay === 'inline' ? FILL : undefined}
-                {...pickerProps?.ios}
                 value={draft}
                 mode={mode}
                 display={iosDisplay}

@@ -6,6 +6,7 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 import { defineSlotRecipe, useRecipe, type SlotOverrides } from '@eoria/core'
 import { Chip, type ChipProps } from '@/components/ui/chip'
 import {
+  clampDate,
   formatDateValue,
   openAndroidPicker,
   type DatePickerNativeOptions,
@@ -93,7 +94,6 @@ export function DateTimeChips({
   is24Hour,
   minuteInterval,
   display,
-  pickerProps,
   styles,
   style,
   children,
@@ -119,7 +119,6 @@ export function DateTimeChips({
       is24Hour,
       minuteInterval,
       display,
-      pickerProps,
       onPick: (picked) => {
         onValueChange?.(picked)
         setExpanded(null)
@@ -180,7 +179,6 @@ export function DateTimeChips({
             textColor={theme.colors.foreground}
             style={iosDisplay === 'inline' ? FILL : undefined}
             accessibilityLabel={expanded === 'date' ? dateLabel : timeLabel}
-            {...pickerProps?.ios}
             value={value}
             mode={expanded}
             display={iosDisplay}
@@ -189,7 +187,9 @@ export function DateTimeChips({
             locale={locale}
             timeZoneName={timeZoneName}
             minuteInterval={minuteInterval}
-            onValueChange={(_event, picked) => onValueChange?.(picked)}
+            onValueChange={(_event, picked) =>
+              onValueChange?.(clampDate(picked, minimumDate, maximumDate))
+            }
           />
         </Animated.View>
       ) : null}

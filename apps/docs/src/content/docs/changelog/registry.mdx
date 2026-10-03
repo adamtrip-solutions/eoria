@@ -23,8 +23,12 @@ lists what was added or changed and when. The packages have their own pages:
 ### Changed
 
 - [Date Picker](/components/date-picker/) takes `locale`, `timeZoneName`, `is24Hour`,
-  `minuteInterval`, `display` and `pickerProps` and passes them to the native picker. The
-  default text follows the same locale, zone and clock, and `formatDateValue` is exported.
+  `minuteInterval` and `display` and passes them to the native picker. The default text
+  follows the same locale, zone and clock, and `formatDateValue` is exported.
+- Date Picker clamps the picked instant to `minimumDate` and `maximumDate`. The Android time
+  dialog has no bounds, so a time before the minimum could get through before.
+- On iOS, a value the parent changes while the Date Picker dialog is open replaces the draft,
+  so Done no longer commits the value from when the dialog opened.
 - Date Picker is controlled whenever the `value` key is present, as Select and Combobox are.
   Setting a controlled value back to `undefined` or `null` now clears the field. Before, the
   last picked date came back.

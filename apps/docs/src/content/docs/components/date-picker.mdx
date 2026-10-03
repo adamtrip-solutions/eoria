@@ -58,7 +58,6 @@ A departure in Tokyo time, on a 24-hour clock, in 5 minute steps:
 | `is24Hour`                               | boolean, for the text and the Android time dialog                | locale's clock    |
 | `minuteInterval`                         | `1`, `2`, `3`, `4`, `5`, `6`, `10`, `12`, `15`, `20`, `30`       | `1`               |
 | `display`                                | `{ ios?, android? }`, the picker style per platform              | see below         |
-| `pickerProps`                            | `{ ios?, android? }`, other native picker props                  |                   |
 | `placeholder`                            | text shown with no value                                         | `Select a date`   |
 | `formatValue`                            | `(date) => string`                                               | `formatDateValue` |
 | `title`                                  | iOS dialog title and the field's label                           | `Select a date`   |
@@ -95,7 +94,22 @@ The field is controlled as soon as you pass the `value` key, even as `undefined`
 
 `display` picks the picker style per platform. iOS defaults to `inline` for `date`, a calendar, and `spinner` for `time` and `datetime`. Android defaults to `default`, a calendar for dates and a clock for times. Android's `calendar` and `clock` values are left out because its dialog treats them as `default`.
 
-`pickerProps` passes the rest of the native picker's props, per platform, such as `firstDayOfWeek`, button labels or `design: 'material'` on Android. It cannot set the props above, nor `value`, `mode` or the callbacks.
+The field sends nothing else to the native picker. On Android that means the default dialog design, with no neutral button.
+
+| Prop                         | iOS                                       | Android                               |
+| ---------------------------- | ----------------------------------------- | ------------------------------------- |
+| `timeZoneName`               | picker and text                           | both dialogs and text                 |
+| `locale`                     | picker and text                           | text only, dialogs follow the system  |
+| `is24Hour`                   | text only, wheels follow `locale`         | time dialog and text                  |
+| `minuteInterval`             | wheels only                               | time dialog                           |
+| `display`                    | `default`, `compact`, `inline`, `spinner` | `default`, `spinner`                  |
+| `minimumDate`, `maximumDate` | enforced by the picker                    | date dialog limits days, then clamped |
+
+## Bounds
+
+`minimumDate` and `maximumDate` hold for the instant, not only the day. iOS enforces them in the picker. The Android time dialog takes no bounds, and its date dialog limits calendar days, so a minimum of today at 15:00 still lets the user choose today at 09:00. The field clamps the picked instant to the bounds after the pick, so `onValueChange` gets today at 15:00 in that case. The exported `clampDate(date, minimumDate, maximumDate)` does the same for your own code.
+
+## Format
 
 The default text comes from `formatDateValue(date, mode, { locale, timeZoneName, is24Hour })`, exported from the same file. It formats with `Intl.DateTimeFormat` as a medium date and a short time, in the zone and on the clock you passed. Hermes ships `Intl` on iOS and Android. An unknown zone name makes it throw a `RangeError`. Pass `formatValue` for any other format.
 

@@ -18,6 +18,10 @@
       "import": "./dist/jest.js",
       "require": "./dist/jest.cjs"
     },
+    "./vitest": {
+      "types": "./dist/vitest.d.ts",
+      "import": "./dist/vitest.js"
+    },
     "./tokens": {
       "types": "./dist/tokens.d.ts",
       "import": "./dist/tokens.js",

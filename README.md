@@ -151,7 +151,9 @@ state and stops the Skeleton pulse.
 ## Testing your components
 
 `@eoria/core/jest` mocks Unistyles with variant resolution, unlike the official mock which
-strips variants. Add it to `setupFiles` in your Jest config.
+strips variants. Add it to `setupFiles` in your Jest config. For Vitest, add
+`@eoria/core/vitest` to `setupFiles` and `@eoria/core` to `server.deps.inline`; the
+[installation page](https://eoria.adamtrip.pt/start/installation/#vitest) says why.
 
 ## Using eoria with agents
 
@@ -183,7 +185,7 @@ have a different API, so the skill treats installed source as authoritative.
 | Path            | Purpose                                                                                      |
 | --------------- | -------------------------------------------------------------------------------------------- |
 | `registry/ui`   | Component sources. The source of truth for what users copy.                                  |
-| `packages/core` | `@eoria/core`: recipe engine, theme tokens, Jest mock.                                       |
+| `packages/core` | `@eoria/core`: recipe engine, theme tokens, Jest and Vitest mocks.                           |
 | `packages/cli`  | `@eoria/cli`: the `eoria` binary.                                                            |
 | `apps/docs`     | Astro docs site styled from the core tokens. Also serves the registry JSON under `/r/`.      |
 | `apps/example`  | Expo app with a screen per component group, showcase screens, and the routes the docs shoot. |

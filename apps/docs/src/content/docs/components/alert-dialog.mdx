@@ -46,13 +46,13 @@ import {
 
 ## Props
 
-| Part                 | Props                                                                                     |
-| -------------------- | ----------------------------------------------------------------------------------------- |
-| `AlertDialog`        | `open`, `defaultOpen`, `onOpenChange`, `styles` (the [Dialog](/components/dialog/) slots) |
-| `AlertDialogTrigger` | `asChild` injects `onPress` into a single child                                           |
-| `AlertDialogContent` | any `View` prop. There is no `dismissable`; a mounted Cancel decides it                   |
-| `AlertDialogAction`  | every Button prop, plus `closeOnPress` (default `true`). `width` defaults to `full`       |
-| `AlertDialogCancel`  | every Button prop. `variant` defaults to `ghost`, `width` to `full`                       |
+| Part                 | Props                                                                                                                             |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `AlertDialog`        | `open`, `defaultOpen`, `onOpenChange`, `styles` (the [Dialog](/components/dialog/) slots)                                         |
+| `AlertDialogTrigger` | `asChild` injects `onPress` into a single child                                                                                   |
+| `AlertDialogContent` | `closeLabel` for the overlay (default `Close dialog`) and any `View` prop. There is no `dismissable`; a mounted Cancel decides it |
+| `AlertDialogAction`  | every Button prop, plus `closeOnPress` (default `true`). `width` defaults to `full`                                               |
+| `AlertDialogCancel`  | every Button prop. `variant` defaults to `ghost`, `width` to `full`                                                               |
 
 `AlertDialogHeader`, `AlertDialogTitle`, `AlertDialogDescription` and `AlertDialogFooter` take the same props as the Dialog parts.
 

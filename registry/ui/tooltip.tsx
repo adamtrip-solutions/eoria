@@ -124,7 +124,7 @@ export function TooltipTrigger({ asChild, children, ...rest }: TooltipTriggerPro
   )
 }
 
-export type TooltipContentProps = Omit<PopperContentProps, 'onDismiss' | 'modal'> & {
+export type TooltipContentProps = Omit<PopperContentProps, 'onDismiss' | 'closeLabel' | 'modal'> & {
   children: string | ReactNode
 }
 

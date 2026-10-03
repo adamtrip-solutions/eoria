@@ -30,6 +30,8 @@ import { Input } from '@/components/ui/input'
 
 Focus is tracked internally and drives the ring colour. Every `TextInput` prop passes through.
 
+`TextInputContext` decides which text field Input, [Textarea](/components/textarea/) and [InputGroup](/components/input-group/) render. It defaults to React Native's `TextInput`. [Sheet](/components/sheet/) provides `BottomSheetTextInput` inside its content, so these fields work with the sheet's keyboard handling without changes. Provide your own value for a container that needs a different input.
+
 ## Notes
 
 - The frame is a 1.5pt transparent border over the `muted` fill, so the focus and error borders appear without a layout shift.

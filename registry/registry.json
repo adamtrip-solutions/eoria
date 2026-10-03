@@ -497,14 +497,14 @@
       "name": "sheet",
       "type": "registry:ui",
       "title": "Sheet",
-      "description": "Draggable bottom sheet with snap points, on @gorhom/bottom-sheet.",
+      "description": "Draggable bottom sheet with snap points, a pinned footer and a list body, on @gorhom/bottom-sheet.",
       "dependencies": [
         "@eoria/core",
         "@gorhom/bottom-sheet",
         "react-native-reanimated",
         "react-native-gesture-handler"
       ],
-      "registryDependencies": ["text"],
+      "registryDependencies": ["input", "text"],
       "files": [
         {
           "path": "registry/ui/sheet.tsx",

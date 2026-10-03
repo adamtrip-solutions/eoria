@@ -155,6 +155,8 @@ export type PopperContentProps = ViewProps & {
   matchAnchorWidth?: boolean
   /** Tap outside or Android back. Omit for non-dismissable content (Tooltip). */
   onDismiss?: () => void
+  /** Read out for the tap-outside layer that `onDismiss` adds. Default `"Close"`. */
+  closeLabel?: string
   /** Hide the rest of the app from screen readers while open. */
   modal?: boolean
   children?: ReactNode
@@ -169,6 +171,7 @@ export function PopperContent({
   alignOffset = 0,
   matchAnchorWidth = false,
   onDismiss,
+  closeLabel = 'Close',
   modal = false,
   style,
   onLayout,
@@ -223,7 +226,7 @@ export function PopperContent({
         {onDismiss ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Close"
+            accessibilityLabel={closeLabel}
             onPress={onDismiss}
             style={StyleSheet.absoluteFill}
           />

@@ -15,8 +15,8 @@ import {
 import {
   Pressable,
   StyleSheet,
-  TextInput,
   View,
+  type TextInput,
   type PressableProps,
   type TextInputProps,
   type ViewProps,
@@ -30,7 +30,7 @@ import {
   type SlotOverrides,
   type SlotStyles,
 } from '@eoria/core'
-import { inputRecipe } from '@/components/ui/input'
+import { TextInputContext, inputRecipe } from '@/components/ui/input'
 import { Text, bodyFont } from '@/components/ui/text'
 
 /**
@@ -215,6 +215,7 @@ export const InputGroupInput = forwardRef<TextInput, InputGroupInputProps>(funct
 ) {
   const { styles, disabled, setFocused, inputRef, control } = useInputGroup('InputGroupInput')
   const { theme } = useUnistyles()
+  const Field = useContext(TextInputContext)
   const setRef = useCallback(
     (node: TextInput | null) => {
       inputRef.current = node
@@ -228,7 +229,7 @@ export const InputGroupInput = forwardRef<TextInput, InputGroupInputProps>(funct
     fontSize: getStyleValue(styles.root, 'fontSize'),
   }
   return (
-    <TextInput
+    <Field
       ref={setRef}
       style={[styles.input, text, style]}
       editable={!disabled}

@@ -37,7 +37,7 @@ export function CountryPicker() {
 
 `Combobox` takes `options`, `value`, `defaultValue`, `onValueChange(value, option)`, `open`, `onOpenChange`, `filter`, `size` (`sm`, `md`, `lg`), `invalid` and `disabled`. Unlike [Select](/components/select/), the value is a plain string because the options are known up front; passing `value={undefined}` clears the selection, and the presence of the `value` key marks the component controlled.
 
-`ComboboxTrigger` takes a `placeholder` or custom children. `ComboboxContent` takes `searchPlaceholder`, `emptyText`, `renderOption(option, selected)` for a custom row body, `listProps` for the underlying `FlatList`, and the [Popper](/components/popper/) placement props with `align` defaulting to `start`.
+`ComboboxTrigger` takes a `placeholder` or custom children. `ComboboxContent` takes `searchPlaceholder`, `emptyText`, `renderOption(option, selected)` for a custom row body, `listProps` for the underlying `FlatList`, `closeLabel` for the tap-outside layer (default `Close`), and the [Popper](/components/popper/) placement props with `align` defaulting to `start`.
 
 Each option has `value`, `label`, optional `disabled` and optional `keywords`. The default filter is a case- and accent-insensitive substring match over the label and keywords; pass `filter` to replace it. `defaultComboboxFilter` is exported if you want to extend it.
 

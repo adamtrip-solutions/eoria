@@ -130,6 +130,8 @@ export type DatePickerProps = Omit<PressableProps, 'style' | 'children' | 'disab
     /** Title of the iOS dialog, also read by screen readers. */
     title?: string
     doneLabel?: string
+    /** Read out for the iOS dialog's backdrop, which closes it without a change. Default `"Close dialog"`. */
+    closeLabel?: string
     /** Any element accepting `size` and `color` props, e.g. a lucide calendar icon. */
     icon?: ReactElement<{ size?: number; color?: string }>
     invalid?: boolean
@@ -151,6 +153,7 @@ export function DatePicker({
   formatValue,
   title = mode === 'time' ? 'Select a time' : 'Select a date',
   doneLabel = 'Done',
+  closeLabel,
   icon,
   size,
   invalid = false,
@@ -239,7 +242,7 @@ export function DatePicker({
       </Pressable>
       {Platform.OS !== 'android' && (
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
+          <DialogContent closeLabel={closeLabel}>
             <DialogHeader>
               <DialogTitle>{title}</DialogTitle>
             </DialogHeader>

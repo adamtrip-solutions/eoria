@@ -51,15 +51,15 @@ import {
 
 ## Props
 
-`Dialog` takes `open`, `defaultOpen`, `onOpenChange` and `placement` (`bottom` default, `center`). `DialogContent` takes `dismissable` (tap outside closes, default true). Trigger and Close accept `asChild` to inject `onPress` into a single child.
+`Dialog` takes `open`, `defaultOpen`, `onOpenChange` and `placement` (`bottom` default, `center`). `DialogContent` takes `dismissable` (tap outside closes, default true) and `closeLabel`, what TalkBack reads for the overlay (default `Close dialog`). Trigger and Close accept `asChild` to inject `onPress` into a single child.
 
 ## Notes
 
 - The footer stacks actions full width, primary first, which is the pattern on phones. Center placement keeps the same order.
 - Bottom placement slides 24pt and fades in 120 ms. Center scales from 0.97. No springs.
-- Android back closes it. The overlay is a "Close dialog" button for TalkBack; on iOS the portal host is marked modal so VoiceOver stays inside.
+- Android back closes it. The overlay is a button named by `closeLabel` for TalkBack; on iOS the portal host is marked modal so VoiceOver stays inside. Pass a translated `closeLabel` in a localised app.
 - Context does not cross the portal, so `DialogContent` re-provides it. If you build your own portal content, do the same.
-- For draggable sheets with snap points, a separate `sheet` item wrapping `@gorhom/bottom-sheet` is planned. Dialog stays dependency-free.
+- For a draggable sheet with snap points, use [Sheet](/components/sheet/), which wraps `@gorhom/bottom-sheet`. Dialog stays dependency-free.
 
 ## Source
 

@@ -275,12 +275,14 @@ the names are the `id` values in the JSON:
   `react-native-worklets/plugin`. Reanimated wants the Worklets plugin last, which is how `init`
   writes it, so any other order is a warning. From Expo SDK 54, `babel-preset-expo` adds the
   Worklets plugin itself when `react-native-worklets` is installed and runs it after your own
-  plugins. A config with that preset and only the Unistyles plugin passes, unless the preset's
-  options, or their `native` or `web` object, set `worklets` or `reanimated` to `false`.
-  `doctor` reads the SDK from the installed `expo` package. Without one it reads the range in
-  `package.json`, and only a single range starting at 54 or later counts, such as `~54.0.0`.
-  If `doctor` cannot read the preset entry or the version, for example options held in a
-  variable, it asks for the Worklets plugin to be listed.
+  plugins. So a config with only the Unistyles plugin passes when all of these hold: the project
+  is on SDK 54 or later, the file names `babel-preset-expo` or `expo`, it names no React Native
+  preset (`@react-native/babel-preset` or `metro-react-native-babel-preset`), and no
+  `worklets: false` or `reanimated: false` appears anywhere in it. `doctor` does not parse the
+  file, so a comment that says `worklets: false` counts too. Otherwise it asks you to list the
+  Worklets plugin, which is always valid. The SDK comes from the installed `expo` package, or
+  else from the range in `package.json`, where only a single range starting at 54 or later
+  counts, such as `~54.0.0`.
 - `peers`. `package.json` lists `@eoria/core` and every peer `init` installs.
 - `installed-files`. Every file recorded in `eoria.json` exists.
 - `registry-dependencies`. Every item that an installed item depends on is installed too.

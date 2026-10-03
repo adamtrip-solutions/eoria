@@ -230,11 +230,16 @@ async function inspect(root: string, options: ReadOptions): Promise<Findings> {
       ...(hasWorklets ? [] : [WORKLETS_PLUGIN]),
     ]
     const unistylesLine = `['${UNISTYLES_PLUGIN}', { root: '${srcRoot}' }]`
+    // An Expo 54+ config that still lands here names another preset or a `false` option.
+    const doubt =
+      !hasWorklets && babel.expoPreset
+        ? ` The config may turn off the Worklets plugin babel-preset-expo adds, so list it.`
+        : ''
     checks.push(
       problem(
         'fail',
         'babel',
-        `${BABEL_CONFIG} does not list ${absent.join(' or ')}.`,
+        `${BABEL_CONFIG} does not list ${absent.join(' or ')}.${doubt}`,
         hasWorklets
           ? `Add ${unistylesLine} to its plugins.`
           : `Add ${babel.unistyles ? '' : `${unistylesLine} and `}'${WORKLETS_PLUGIN}' to its plugins, with the Worklets plugin last.`,

@@ -6,7 +6,7 @@ import { add } from '../commands/add'
 import { doctor, runDoctor, type DoctorReport } from '../commands/doctor'
 import { init } from '../commands/init'
 import { defaultConfig, writeConfig } from '../config'
-import { REQUIRED_PACKAGES, babelState } from '../setup'
+import { REQUIRED_PACKAGES, babelState, ensureBabelConfig } from '../setup'
 
 const registryDir = resolve(__dirname, '../../../../registry/dist')
 const hasRegistry = existsSync(join(registryDir, 'index.json'))
@@ -169,6 +169,7 @@ test('babelState finds the plugins and whether Worklets comes last', async () =>
     unistyles: false,
     worklets: false,
     workletsLast: null,
+    expoPreset: false,
     presetWorklets: false,
   })
   const write = (plugins: string) =>
@@ -225,7 +226,8 @@ maybe('doctor accepts the Worklets plugin that babel-preset-expo adds from SDK 5
   await babel("[['babel-preset-expo', { worklets: false }]]", unistylesOnly)
   expect(await check()).toMatchObject({
     status: 'fail',
-    message: 'babel.config.js does not list react-native-worklets/plugin.',
+    message:
+      'babel.config.js does not list react-native-worklets/plugin. The config may turn off the Worklets plugin babel-preset-expo adds, so list it.',
   })
 
   // SDK 53 and apps without Expo still need the plugin listed.
@@ -260,57 +262,68 @@ maybe('doctor accepts the Worklets plugin that babel-preset-expo adds from SDK 5
   })
 })
 
-test('babelState reads the Worklets options from the active Expo preset entry only', async () => {
+test('babelState trusts the Expo preset with Worklets only when nothing in the file doubts it', async () => {
   const root = await mkdtemp(join(tmpdir(), 'eoria-'))
   await writeFile(join(root, 'package.json'), JSON.stringify({ dependencies: { expo: '~57.0.0' } }))
   const uni = "['react-native-unistyles/plugin', { root: 'src' }]"
-  const presetWorklets = async (config: string) => {
+  const state = async (config: string) => {
     await writeFile(join(root, 'babel.config.js'), config)
-    return (await babelState(root)).presetWorklets
+    return babelState(root)
+  }
+  const rn = "'module:@react-native/babel-preset'"
+
+  const doubted = [
+    // An env block that is not the one in use, with the main preset turned off.
+    `module.exports = { env: { test: { presets: ['babel-preset-expo'] } }, presets: [['babel-preset-expo', { worklets: false }]], plugins: [${uni}] }`,
+    // The Expo preset only inside a string or a template literal, with React Native's active.
+    `const note = "presets: ['expo']"\nmodule.exports = { presets: [${rn}], plugins: [${uni}] }`,
+    `const note = \`presets: ['expo']\`\nmodule.exports = { presets: [${rn}], plugins: [${uni}] }`,
+    // Regex literals that confuse a hand-written scanner.
+    `module.exports = { ignore: [/}/], presets: [['babel-preset-expo', { worklets: false }]], plugins: [${uni}] }`,
+    `module.exports = { ignore: [/"/], presets: [['expo', { reanimated: false }]], plugins: [${uni}] }`,
+    `module.exports = { presets: [['expo', {} && { worklets: false }]], plugins: [${uni}] }`,
+    `module.exports = { presets: [['babel-preset-expo', { 'worklets': false }]], plugins: [${uni}] }`,
+    `module.exports = {\n  // presets: ['babel-preset-expo'],\n  presets: [${rn}],\n  plugins: [${uni}],\n}`,
+    `module.exports = { presets: ['metro-react-native-babel-preset', 'babel-preset-expo'], plugins: [${uni}] }`,
+  ]
+  for (const config of doubted) {
+    expect((await state(config)).presetWorklets).toBe(false)
   }
 
-  // A quoted key turns the plugin off as surely as a bare one.
-  expect(
-    await presetWorklets(
-      `module.exports = { presets: [['babel-preset-expo', { 'worklets': false }]], plugins: [${uni}] }`,
-    ),
-  ).toBe(false)
-  expect(
-    await presetWorklets(
-      `module.exports = { presets: [['expo', { native: { "reanimated": false } }]], plugins: [${uni}] }`,
-    ),
-  ).toBe(false)
+  const trusted = [
+    `module.exports = { presets: ['babel-preset-expo'], plugins: [${uni}] }`,
+    `module.exports = { presets: [require.resolve("babel-preset-expo")], plugins: [${uni}] }`,
+    `module.exports = {\n  // babel-preset-expo adds the worklets plugin itself.\n  presets: ['expo'],\n  plugins: [${uni}],\n}`,
+  ]
+  for (const config of trusted) {
+    expect(await state(config)).toMatchObject({ expoPreset: true, presetWorklets: true })
+  }
 
-  // A commented-out Expo preset is not the active one.
+  // A comment that mentions `worklets: false` is enough to make doctor strict.
   expect(
-    await presetWorklets(
-      `module.exports = {\n  // presets: ['babel-preset-expo'],\n  presets: ['module:@react-native/babel-preset'],\n  plugins: [${uni}],\n}`,
-    ),
+    (
+      await state(
+        `// worklets: false is not set here\nmodule.exports = { presets: ['babel-preset-expo'], plugins: [${uni}] }`,
+      )
+    ).presetWorklets,
   ).toBe(false)
+})
 
-  // `worklets: false` in a comment or in another object says nothing about the preset.
-  expect(
-    await presetWorklets(
-      `module.exports = {\n  // worklets: false, see below\n  presets: ['babel-preset-expo'],\n  plugins: [${uni}],\n}`,
-    ),
-  ).toBe(true)
-  expect(
-    await presetWorklets(
-      `const other = { reanimated: false }\nmodule.exports = {\n  presets: [['babel-preset-expo', { jsxRuntime: 'automatic', worklets: true }]],\n  plugins: [${uni}],\n}`,
-    ),
-  ).toBe(true)
-
-  // Options it cannot read count as a config that needs the plugin listed.
-  expect(
-    await presetWorklets(
-      `module.exports = { presets: [['babel-preset-expo', expoOptions]], plugins: [${uni}] }`,
-    ),
-  ).toBe(false)
-  expect(
-    await presetWorklets(
-      `module.exports = { presets: [['babel-preset-expo', { ...shared }]], plugins: [${uni}] }`,
-    ),
-  ).toBe(false)
+test('babelState finds the plugins in a config with a regex literal, as before', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'eoria-'))
+  await writeFile(
+    join(root, 'babel.config.js'),
+    "module.exports = {\n  ignore: [/[/*]/],\n  presets: ['babel-preset-expo'],\n  plugins: [['react-native-unistyles/plugin', { root: 'src' }], 'react-native-worklets/plugin'],\n}\n",
+  )
+  expect(await babelState(root)).toMatchObject({
+    unistyles: true,
+    worklets: true,
+    workletsLast: true,
+  })
+  // init leaves the existing config alone and has nothing to ask for.
+  const text = await quiet(() => ensureBabelConfig(root, 'src'))
+  expect(text.result).toBeUndefined()
+  expect(text.text).not.toContain('Add [')
 })
 
 test('babelState trusts a declared Expo range only when its lower bound is SDK 54 or later', async () => {

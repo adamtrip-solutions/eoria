@@ -160,11 +160,11 @@ export interface BabelState {
    * what `init` writes. Null when the plugin is absent or the array cannot be read.
    */
   workletsLast: boolean | null
+  /** Whether the project is on Expo SDK 54 or later and the config names the Expo preset. */
+  expoPreset: boolean
   /**
-   * Whether `babel-preset-expo` adds the Worklets plugin itself. From Expo SDK 54 it does when
-   * `react-native-worklets` is installed, unless its options say `worklets: false` or
-   * `reanimated: false`. Babel runs preset plugins after the config's own, so it comes last.
-   * False whenever the config or the Expo version cannot be read with confidence.
+   * Whether `babel-preset-expo` can be trusted to add the Worklets plugin, so the config need
+   * not list it. See `presetAddsWorklets`.
    */
   presetWorklets: boolean
 }
@@ -177,53 +177,39 @@ export async function babelState(root: string): Promise<BabelState> {
       unistyles: false,
       worklets: false,
       workletsLast: null,
+      expoPreset: false,
       presetWorklets: false,
     }
   }
-  const text = stripComments(await readFile(file, 'utf8'))
+  const text = await readFile(file, 'utf8')
   const worklets = text.includes(WORKLETS_PLUGIN)
-  const last = worklets ? (arrayAt(text, 'plugins')?.at(-1) ?? null) : null
+  const last = worklets ? lastPlugin(text) : null
+  const expoPreset = EXPO_PRESET.test(text) && ((await expoMajor(root)) ?? 0) >= 54
   return {
     exists: true,
     unistyles: text.includes(UNISTYLES_PLUGIN),
     worklets,
     workletsLast: last === null ? null : last.includes(WORKLETS_PLUGIN),
-    presetWorklets: expoPresetKeepsWorklets(text) && ((await expoMajor(root)) ?? 0) >= 54,
+    expoPreset,
+    presetWorklets: expoPreset && presetAddsWorklets(text),
   }
 }
 
-const EXPO_PRESET = /^(['"])(babel-preset-)?expo\1$/
+const EXPO_PRESET = /['"](babel-preset-)?expo['"]/
+const OTHER_PRESET = /@react-native\/babel-preset|metro-react-native-babel-preset/
+const WORKLETS_OFF = /['"]?\b(worklets|reanimated)['"]?\s*:\s*false\b/
 
 /**
- * Whether the `presets` array lists babel-preset-expo with options that leave its Worklets
- * plugin on. Options are read from that entry only, including the `native` and `web` objects
- * the preset merges in. Anything it cannot read, such as a variable or a spread, counts as no.
+ * From SDK 54 `babel-preset-expo` adds the Worklets plugin when `react-native-worklets` is
+ * installed, after the config's own plugins, unless its options set `worklets` or
+ * `reanimated` to false. This reads the raw text without parsing it, so it only says yes when
+ * nothing in the file could mean otherwise: no React Native preset is named, and no
+ * `worklets: false` or `reanimated: false` appears anywhere, comments included. A comment that
+ * mentions `worklets: false` therefore makes doctor ask for the plugin. That costs one line,
+ * which is always valid, while a wrong yes would hide a build without worklets.
  */
-function expoPresetKeepsWorklets(text: string): boolean {
-  for (const element of arrayAt(text, 'presets') ?? []) {
-    const entry = element.trim()
-    if (EXPO_PRESET.test(entry)) return true
-    if (!entry.startsWith('[')) continue
-    const [name, options] = listElements(entry, 1) ?? []
-    if (name === undefined || !EXPO_PRESET.test(name.trim())) continue
-    return options === undefined || optionsKeepWorklets(options.trim())
-  }
-  return false
-}
-
-function optionsKeepWorklets(options: string): boolean {
-  if (!options.startsWith('{')) return false
-  const properties = listElements(options, 1)
-  if (!properties) return false
-  return properties.every((property) => {
-    const match = /^\s*(['"]?)([\w$-]+)\1\s*:([\s\S]*)$/.exec(property)
-    if (!match) return false
-    const key = match[2]!
-    const value = match[3]!.trim()
-    if (key === 'worklets' || key === 'reanimated') return value === 'true'
-    if (key === 'native' || key === 'web') return optionsKeepWorklets(value)
-    return true
-  })
+function presetAddsWorklets(text: string): boolean {
+  return !OTHER_PRESET.test(text) && !WORKLETS_OFF.test(text)
 }
 
 /**
@@ -252,50 +238,16 @@ async function expoMajor(root: string): Promise<number | null> {
   return major === undefined ? null : Number(major)
 }
 
-/** The source without comments. Strings are kept as they are. */
-function stripComments(source: string): string {
-  let out = ''
-  let quote: string | null = null
-  for (let i = 0; i < source.length; i++) {
-    const char = source[i]!
-    if (quote) {
-      out += char
-      if (char === '\\') out += source[++i] ?? ''
-      else if (char === quote) quote = null
-      continue
-    }
-    if (char === '/' && source[i + 1] === '/') {
-      while (i + 1 < source.length && source[i + 1] !== '\n') i++
-      continue
-    }
-    if (char === '/' && source[i + 1] === '*') {
-      const close = source.indexOf('*/', i + 2)
-      i = close === -1 ? source.length : close + 1
-      out += ' '
-      continue
-    }
-    if (char === '"' || char === "'" || char === '`') quote = char
-    out += char
-  }
-  return out
-}
-
-/** Elements of the first `key: [...]` array, as source text, or null. */
-function arrayAt(text: string, key: string): string[] | null {
-  const start = new RegExp(`(['"]?)\\b${key}\\1\\s*:\\s*\\[`).exec(text)
-  return start ? listElements(text, start.index + start[0].length) : null
-}
-
-/**
- * The comma-separated elements of the array or object whose contents start at `start`, up to
- * its closing bracket, as source text. Null when it never closes.
- */
-function listElements(text: string, start: number): string[] | null {
+/** Source text of the last element of the first `plugins: [...]` array, or null. */
+function lastPlugin(source: string): string | null {
+  const text = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/.*$/gm, '$1')
+  const start = /\bplugins\s*:\s*\[/.exec(text)
+  if (!start) return null
   const elements: string[] = []
   let depth = 0
   let quote: string | null = null
   let current = ''
-  for (let i = start; i < text.length; i++) {
+  for (let i = start.index + start[0].length; i < text.length; i++) {
     const char = text[i]!
     if (quote) {
       current += char
@@ -308,7 +260,7 @@ function listElements(text: string, start: number): string[] | null {
     if (char === ']' || char === '}' || char === ')') {
       if (depth === 0) {
         if (current.trim()) elements.push(current)
-        return elements
+        return elements[elements.length - 1] ?? null
       }
       depth--
     }

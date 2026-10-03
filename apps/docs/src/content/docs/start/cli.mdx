@@ -25,7 +25,10 @@ Writes `eoria.json` next to your `package.json`, then sets up what Unistyles nee
 
 - `src/unistyles.ts`, which registers the light and dark themes, and an `import '@/unistyles'`
   line at the top of your root layout. It looks for `app/_layout.tsx`, `App.tsx` and `index.js`
-  under the source root and the project root, and tells you if it finds none.
+  under the source root and the project root, and tells you if it finds none. If the file that
+  `main` in `package.json` names already imports the theme, as in the Unistyles setup for Expo
+  Router with a custom `index.ts`, `init` leaves the layout alone. A `main` of
+  `expo-router/entry` is a package, so it does not count.
 - `babel.config.js` with the Unistyles and Worklets plugins, if you have no Babel config yet.
   If you do, it prints the two plugin lines for you to paste. An existing `unistyles.ts` is
   reported and kept.
@@ -269,8 +272,8 @@ the names are the `id` values in the JSON:
 - `alias`. `tsconfig.json` has a path for the alias prefix, such as `@/*`. A project without a
   `tsconfig.json` gets a warning.
 - `unistyles-file`. `unistyles.ts` exists under the source root.
-- `theme-import`. The root layout `init` looks for imports it. If `doctor` finds no layout, it
-  warns.
+- `theme-import`. The root layout that `init` looks for imports the theme, or the project file
+  that `main` in `package.json` names does. If `doctor` finds neither file, it warns.
 - `babel`. `babel.config.js` lists `react-native-unistyles/plugin` and
   `react-native-worklets/plugin`. Reanimated wants the Worklets plugin last, which is how `init`
   writes it, so any other order is a warning. From Expo SDK 54, `babel-preset-expo` adds the

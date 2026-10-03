@@ -9,6 +9,7 @@ import { add } from '../commands/add'
 import { extend } from '../commands/extend'
 import { ensureThemeImport } from '../commands/init'
 import { writeConfig, defaultConfig, aliasToDirectory } from '../config'
+import { findMainFile, findThemeImport } from '../setup'
 
 const registryDir = resolve(__dirname, '../../../../registry/dist')
 const hasRegistry = existsSync(join(registryDir, 'index.json'))
@@ -113,4 +114,49 @@ test('ensureThemeImport prepends the import to the root layout once', async () =
   await writeFile(join(root, 'App.tsx'), 'export default function App() {}\n')
   await ensureThemeImport(root, 'src', { ...config, alias: 'components/ui' })
   expect(await readFile(join(root, 'src/app/_layout.tsx'), 'utf8')).toBe(once)
+})
+
+test('ensureThemeImport accepts the import in the custom entry that main points to', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'eoria-'))
+  await mkdir(join(root, 'src/app'), { recursive: true })
+  const layout = "import { Stack } from 'expo-router'\n"
+  await writeFile(join(root, 'src/app/_layout.tsx'), layout)
+  await writeFile(join(root, 'index.ts'), "import 'expo-router/entry'\nimport './src/unistyles'\n")
+  await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'app', main: 'index.ts' }))
+  const config = { ...defaultConfig, alias: '@/components/ui', components: 'src/components/ui' }
+
+  expect(await findThemeImport(root, 'src')).toEqual({
+    target: 'src/app/_layout.tsx',
+    importedBy: 'index.ts',
+  })
+  expect(await ensureThemeImport(root, 'src', config)).toBeUndefined()
+  expect(await readFile(join(root, 'src/app/_layout.tsx'), 'utf8')).toBe(layout)
+
+  // The stock Expo Router entry is a package, not a project file, so the layout gets the import.
+  await writeFile(
+    join(root, 'package.json'),
+    JSON.stringify({ name: 'app', main: 'expo-router/entry' }),
+  )
+  expect(await findThemeImport(root, 'src')).toEqual({ target: 'src/app/_layout.tsx' })
+  expect(await ensureThemeImport(root, 'src', config)).toBe('src/app/_layout.tsx')
+})
+
+test('findMainFile resolves main to a project file only', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'eoria-'))
+  const main = async (value?: string) => {
+    await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'app', main: value }))
+    return findMainFile(root)
+  }
+  await writeFile(join(root, 'index.js'), "import './src/unistyles'\n")
+  await mkdir(join(root, 'node_modules/expo-router'), { recursive: true })
+  await writeFile(join(root, 'node_modules/expo-router/entry.js'), '')
+
+  expect(await main('index.js')).toBe('index.js')
+  expect(await main('./index')).toBe('index.js')
+  expect(await main(undefined)).toBeUndefined()
+  expect(await main('expo-router/entry')).toBeUndefined()
+  expect(await main('node_modules/expo-router/entry')).toBeUndefined()
+  expect(await main('../index.js')).toBeUndefined()
+  await writeFile(join(root, 'package.json'), '{ not json')
+  expect(findMainFile(root)).toBeUndefined()
 })

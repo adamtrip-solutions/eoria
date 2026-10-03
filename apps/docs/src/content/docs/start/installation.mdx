@@ -29,7 +29,9 @@ Five minutes on an existing Expo project. New projects can start from
 
     `src/unistyles.ts` registers the themes and has to run before any component renders. `init`
     imports it at the top of `app/_layout.tsx`, `App.tsx` or `index.js`, whichever it finds. If
-    your entry file lives somewhere else, add the import yourself and keep it first.
+    your entry file lives somewhere else, add the import yourself and keep it first. A custom
+    entry named by `main` in `package.json` that imports the theme after `expo-router/entry`
+    also counts.
 
     ```ts title="src/unistyles.ts"
     import { configureUnistyles, defaultThemes, type EoriaTheme } from '@eoria/core'

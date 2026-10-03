@@ -65,7 +65,12 @@ A file that already exists is left alone and reported. `add` records a hash of e
 writes, so it can tell "you changed this" from "it was already there". Files it skipped get no
 hash, so `diff` will not pretend to know what they looked like. Pass `--overwrite` to
 replace either. npm dependencies the items declare are installed unless you pass
-`--no-install`. A failed install makes `add` exit with 1, after the files are written. The error
+`--no-install`.
+
+`--overwrite` reaches only the items you name. `eoria add stepper button --overwrite` replaces
+`stepper.tsx` and `button.tsx`, and still skips a `text.tsx` you edited, because you did not
+name `text`. Add it to the list to replace it too. A replaced file gets the hash of the new
+content. A skipped one keeps the hash it had, so `diff` still reports it as edited locally. A failed install makes `add` exit with 1, after the files are written. The error
 names them and prints the install command to run again.
 
 ```sh

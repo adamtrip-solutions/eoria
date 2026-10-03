@@ -36,7 +36,7 @@ program
   .command('add')
   .description('Copy components and blocks, and everything they depend on')
   .argument('<names...>', 'item names, e.g. button select sign-in')
-  .option('--overwrite', 'replace files that already exist')
+  .option('--overwrite', 'replace existing files of the named items, not of their dependencies')
   .option('--no-install', 'skip installing npm dependencies')
   .option('--dry-run', 'print what add would write, skip, overwrite and install, and write nothing')
   .option('--diff', 'print the hunks between existing files and the registry, and write nothing')

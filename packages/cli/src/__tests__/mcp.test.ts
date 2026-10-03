@@ -373,7 +373,11 @@ maybe(
       const forced = JSON.parse(
         (await client.call('add_components', { names: ['button'], overwrite: true })).text,
       )
-      expect(forced.written).toEqual(['src/ui/text.tsx', 'src/ui/button.tsx'])
+      // Only the named item is replaced. Its dependency already matches and is left alone.
+      expect(forced).toMatchObject({
+        written: ['src/ui/button.tsx'],
+        unchanged: ['src/ui/text.tsx'],
+      })
       expect(await readFile(join(root, 'src/ui/button.tsx'), 'utf8')).toBe(button)
 
       // Two adds at once both end up in eoria.json.

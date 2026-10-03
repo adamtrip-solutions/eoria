@@ -194,7 +194,7 @@ const TOOLS: Tool[] = [
     name: 'add_components',
     title: 'Add components',
     description:
-      'Copies components and blocks, with every registry item they depend on, into the app, and records them in eoria.json. Components land in the components folder and blocks in the blocks folder. It never installs npm packages. `installCommand` in the result is the command for you to run afterwards, or null when package.json already lists everything. A file that exists and differs from the registry is skipped unless `overwrite` is true, and overwriting discards the edits in that file. Set `dryRun` to get the plan with nothing written. The app needs an eoria.json, which `npx @eoria/cli init` writes.',
+      'Copies components and blocks, with every registry item they depend on, into the app, and records them in eoria.json. Components land in the components folder and blocks in the blocks folder. It never installs npm packages. `installCommand` in the result is the command for you to run afterwards, or null when package.json already lists everything. A file that exists and differs from the registry is skipped unless `overwrite` is true and its item is in `names`. Overwriting discards the edits in that file. Dependencies that were not named are never overwritten; name them too to replace them. Set `dryRun` to get the plan with nothing written. The app needs an eoria.json, which `npx @eoria/cli init` writes.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -207,7 +207,8 @@ const TOOLS: Tool[] = [
         },
         overwrite: {
           type: 'boolean',
-          description: 'Replace files that already exist. Defaults to false.',
+          description:
+            'Replace existing files of the items in `names`. Dependencies that are not named keep their files. Defaults to false.',
         },
         dryRun: {
           type: 'boolean',

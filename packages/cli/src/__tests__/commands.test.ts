@@ -349,6 +349,36 @@ maybe('add --dry-run writes nothing, eoria.json included', async () => {
   expect(plan.missingPackages).toContain('@eoria/core')
 })
 
+maybe('add --overwrite replaces the named items and keeps edited dependencies', async () => {
+  const root = await project()
+  await capture(() => add(root, ['button'], { install: false }))
+  const button = join(root, 'src/ui/button.tsx')
+  const text = join(root, 'src/ui/text.tsx')
+  const registryButton = await readFile(button, 'utf8')
+  const registryText = await readFile(text, 'utf8')
+  const recorded = (await readConfig(root))!.installed
+  await writeFile(button, registryButton + '\n// edited')
+  await writeFile(text, registryText + '\n// edited')
+
+  const plan = await planAdd(root, (await readConfig(root))!, ['button'], { overwrite: true })
+  expect(plan.files.map((file) => [file.target, file.action, file.edited])).toEqual([
+    ['src/ui/text.tsx', 'skip', true],
+    ['src/ui/button.tsx', 'overwrite', true],
+  ])
+
+  const out = await capture(() => add(root, ['button'], { install: false, overwrite: true }))
+  expect(await readFile(button, 'utf8')).toBe(registryButton)
+  expect(await readFile(text, 'utf8')).toBe(registryText + '\n// edited')
+  expect(out).toContain('src/ui/text.tsx (you edited it)')
+  expect(out).toContain('npx @eoria/cli add text --overwrite')
+  // The skipped dependency keeps its old hash, so it still reads as edited.
+  expect((await readConfig(root))!.installed).toEqual(recorded)
+
+  await capture(() => add(root, ['button', 'text'], { install: false, overwrite: true }))
+  expect(await readFile(text, 'utf8')).toBe(registryText)
+  expect((await readConfig(root))!.installed).toEqual(recorded)
+})
+
 maybe('add --diff prints hunks for existing files and writes nothing', async () => {
   const root = await project()
   await capture(() => add(root, ['text'], { install: false }))

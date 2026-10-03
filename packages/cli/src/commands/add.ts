@@ -12,6 +12,7 @@ import { installOrFail } from '../setup'
 import { fileStatus } from '../status'
 
 export interface AddOptions {
+  /** Replace the files of the named items. Dependencies that were not named are never replaced. */
   overwrite?: boolean
   install?: boolean
   registry?: string
@@ -24,8 +25,9 @@ export interface PlannedFile {
   /** Path relative to the project root. */
   target: string
   /**
-   * `write` creates the file. `overwrite` replaces it, which needs `--overwrite`. `skip` leaves
-   * a file that differs from the registry alone. `same` means the file already matches.
+   * `write` creates the file. `overwrite` replaces it, which needs `--overwrite` and the item
+   * named on the command line. `skip` leaves a file that differs from the registry alone. `same`
+   * means the file already matches.
    */
   action: 'write' | 'overwrite' | 'skip' | 'same'
   /** True when the file no longer matches the hash `add` recorded for it. */
@@ -69,6 +71,8 @@ export async function planAdd(
   const items = await registry.resolve(names)
   const files: PlannedFile[] = []
   for (const item of items) {
+    // `--overwrite` reaches the items the user named, not the dependencies they pull in.
+    const replace = options.overwrite === true && names.includes(item.name)
     for (const file of item.files) {
       const target = localPath(config, file)
       const abs = resolve(root, target)
@@ -76,13 +80,7 @@ export async function planAdd(
       const current = existsSync(abs) ? await readFile(abs, 'utf8') : null
       const recorded = config.installed[item.name]?.[target]
       const action =
-        current === null
-          ? 'write'
-          : options.overwrite
-            ? 'overwrite'
-            : current === content
-              ? 'same'
-              : 'skip'
+        current === null ? 'write' : replace ? 'overwrite' : current === content ? 'same' : 'skip'
       const edited = current !== null && recorded !== undefined && recorded !== hashContent(current)
       files.push({ item: item.name, target, action, edited, content, current })
     }
@@ -158,7 +156,7 @@ export async function add(root: string, names: string[], options: AddOptions): P
 
   const { written, skipped } = await writePlan(root, config, plan)
   for (const file of written) log.ok(file)
-  for (const file of skipped) log.warn(skipMessage(file))
+  for (const file of skipped) log.warn(skipMessage(file, options))
 
   if (plan.installCommand) {
     if (options.install === false) {
@@ -169,8 +167,12 @@ export async function add(root: string, names: string[], options: AddOptions): P
   }
 }
 
-function skipMessage(file: PlannedFile): string {
-  return `${file.target} ${file.edited ? '(you edited it)' : '(exists)'}. Pass --overwrite to replace it.`
+function skipMessage(file: PlannedFile, options: AddOptions): string {
+  const state = `${file.target} ${file.edited ? '(you edited it)' : '(exists)'}.`
+  // With --overwrite, only a dependency that was not named can end up here.
+  return options.overwrite
+    ? `${state} --overwrite skips dependencies you did not name. Run \`npx @eoria/cli add ${file.item} --overwrite\` to replace it.`
+    : `${state} Pass --overwrite to replace it.`
 }
 
 /** Prints the plan for `--dry-run`. */
@@ -180,7 +182,7 @@ function printDryRun(plan: AddPlan, options: AddOptions): void {
     if (file.action === 'overwrite') {
       log.step(`would overwrite ${file.target}${file.edited ? ' (you edited it)' : ''}`)
     }
-    if (file.action === 'skip') log.warn(`would skip ${skipMessage(file)}`)
+    if (file.action === 'skip') log.warn(`would skip ${skipMessage(file, options)}`)
     if (file.action === 'same')
       log.step(`${file.target} ${log.dim('already matches the registry')}`)
   }

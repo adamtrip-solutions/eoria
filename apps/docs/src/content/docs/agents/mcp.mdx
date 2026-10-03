@@ -65,7 +65,8 @@ the command behind each tool.
 
 `add_components` is the only tool that writes. It writes the files `add` would write, blocks
 included, and records the same hashes in `eoria.json`. It takes 1 to 20 names and skips a file
-that differs from the registry unless `overwrite` is true. With `dryRun` it returns the plan and
+that differs from the registry unless `overwrite` is true and the file's item is in `names`.
+Dependencies it pulls in without being named keep their files, as with `add --overwrite`. With `dryRun` it returns the plan and
 writes nothing.
 
 It never runs your package manager. The result has an `installCommand`, such as

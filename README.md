@@ -34,17 +34,17 @@ qualifies. The example app and the previews run on SDK 57 and React Native 0.86.
 `@eoria/cli` installs an `eoria` binary. Run it with `npx @eoria/cli`, or add the package as
 a dev dependency and call `pnpm eoria`.
 
-| Command                        | What it does                                                                                                                         |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `eoria init`                   | Writes `eoria.json`, `src/unistyles.ts`, the theme import in your root layout, the Babel config and the `@/*` alias. Installs peers. |
-| `eoria add <name…>`            | Copies components and their registry dependencies. Never overwrites without `--overwrite`. `--dry-run` and `--diff` preview it.      |
-| `eoria diff [name]`            | Shows what changed between your copies and the registry, and tells local edits from upstream ones.                                   |
-| `eoria extend <base> <name>`   | Creates a new component whose recipe extends a local base, so base edits flow into it.                                               |
-| `eoria list`, `search <query>` | Lists the registry, or finds items by name, title and description. Marks what you have installed.                                    |
-| `eoria view <item>`            | Shows an item's packages, registry dependencies and files before you add it. `--source` prints the code.                             |
-| `eoria info`                   | Prints the project as the CLI sees it: config, registry, installed items and whether you edited them, peer versions.                 |
-| `eoria docs [topic]`           | Prints a docs page as Markdown in the terminal. With no topic it prints `llms.txt`.                                                  |
-| `eoria doctor`                 | Checks the setup `init` made and what installed items need. `--fix` repairs the alias, the theme file and missing packages.          |
+| Command                        | What it does                                                                                                                                                     |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `eoria init`                   | Writes `eoria.json`, `src/unistyles.ts`, the theme import in your root layout, the Babel config and the `@/*` alias. Installs peers.                             |
+| `eoria add <name…>`            | Copies components and their registry dependencies. Skips files you edited; `--overwrite` replaces those of the named items. `--dry-run` and `--diff` preview it. |
+| `eoria diff [name]`            | Shows what changed between your copies and the registry, and tells local edits from upstream ones.                                                               |
+| `eoria extend <base> <name>`   | Creates a new component whose recipe extends a local base, so base edits flow into it.                                                                           |
+| `eoria list`, `search <query>` | Lists the registry, or finds items by name, title and description. Marks what you have installed.                                                                |
+| `eoria view <item>`            | Shows an item's packages, registry dependencies and files before you add it. `--source` prints the code.                                                         |
+| `eoria info`                   | Prints the project as the CLI sees it: config, registry, installed items and whether you edited them, peer versions.                                             |
+| `eoria docs [topic]`           | Prints a docs page as Markdown in the terminal. With no topic it prints `llms.txt`.                                                                              |
+| `eoria doctor`                 | Checks the setup `init` made and what installed items need. `--fix` repairs the alias, the theme file and missing packages.                                      |
 
 `eoria.json` records a hash of every file the CLI wrote. That is how `diff` can say "you
 changed this" instead of just "this differs". Commit it.

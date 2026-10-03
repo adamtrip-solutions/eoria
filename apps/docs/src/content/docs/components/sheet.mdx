@@ -70,7 +70,7 @@ Give `Sheet` a ref when nothing on screen owns the open state. `present()` and `
 
 ```tsx
 import { useRef, useState } from 'react'
-import { Sheet, SheetContent, SheetFooter, SheetTitle, type SheetRef } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTitle, type SheetRef } from '@/components/ui/sheet'
 
 export function RenameSheet({ onSave }: { onSave: (name: string) => void }) {
   const sheet = useRef<SheetRef>(null)
@@ -79,10 +79,8 @@ export function RenameSheet({ onSave }: { onSave: (name: string) => void }) {
     <>
       <Button onPress={() => sheet.current?.present()}>Rename</Button>
       <Sheet ref={sheet}>
-        <SheetContent>
-          <SheetTitle>Rename list</SheetTitle>
-          <Input value={name} onChangeText={setName} accessibilityLabel="List name" />
-          <SheetFooter pinned>
+        <SheetContent
+          footer={
             <Button
               width="full"
               onPress={() => {
@@ -92,7 +90,10 @@ export function RenameSheet({ onSave }: { onSave: (name: string) => void }) {
             >
               Save
             </Button>
-          </SheetFooter>
+          }
+        >
+          <SheetTitle>Rename list</SheetTitle>
+          <Input value={name} onChangeText={setName} accessibilityLabel="List name" />
         </SheetContent>
       </Sheet>
     </>
@@ -135,7 +136,7 @@ export function RenameSheet({ onSave }: { onSave: (name: string) => void }) {
 
 ### After it closes
 
-`onDismiss` on `Sheet` runs once the close animation has finished, whether a drag, the backdrop, Android back, the ref or `open` closed it. Chain the next step there: open another sheet, focus a field, or navigate.
+`onDismiss` on `Sheet` runs once the close animation has finished, whether a drag, the backdrop, Android back, the ref, `open` or another sheet closed it. It runs once per close. Chain the next step there: open another sheet, focus a field, or navigate.
 
 ```tsx
 <Sheet
@@ -146,14 +147,19 @@ export function RenameSheet({ onSave }: { onSave: (name: string) => void }) {
 >
 ```
 
-`onOpenChange(false)` fires when the close starts. `onDismiss` fires when it ends.
+`onOpenChange(false)` means two things depending on who closes the sheet:
+
+- The backdrop, Android back, the escape gesture, `SheetClose` and the ref request a close. `onOpenChange(false)` fires first, and the sheet starts closing only once `open` is false. A controlled sheet can refuse by keeping it true.
+- A drag, or the library closing it for another sheet (`stackBehavior` of `switch` or `replace`), is already done. `onOpenChange(false)` then fires after the close animation, just before `onDismiss`, to bring `open` in line. Refusing it does not bring the sheet back.
+
+`onDismiss` is not called when `Sheet` or `SheetContent` unmounts while the sheet is open. The sheet then closes on its own, and nothing is reported. Put cleanup that must run on unmount in your own effect.
 
 ## Props
 
 | Part                         | Prop                                  | Values                                                                                              | Default                 |
 | ---------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------- |
 | `Sheet`                      | `open`, `defaultOpen`, `onOpenChange` | controlled or uncontrolled                                                                          | closed                  |
-| `Sheet`                      | `onDismiss`                           | called after the close animation                                                                    |                         |
+| `Sheet`                      | `onDismiss`                           | called after the close animation, not on unmount                                                    |                         |
 | `Sheet`                      | `ref`                                 | `present()`, `dismiss()`, `snapToIndex(index)`                                                      |                         |
 | `Sheet`                      | `inset`                               | `padded`, `flush`                                                                                   | `padded`                |
 | `Sheet`                      | `styles`                              | override `background`, `handle`, `header`, `title`, `description`, `footer`, `pinnedFooter`, `list` |                         |
@@ -161,11 +167,13 @@ export function RenameSheet({ onSave }: { onSave: (name: string) => void }) {
 | `SheetContent`               | `closeLabel`                          | read out for the backdrop                                                                           | `Close`                 |
 | `SheetContent`               | `accessibilityLabel`                  | names a sheet without a `SheetTitle`                                                                |                         |
 | `SheetContent`               | `scroll`                              | wraps the content in the library's scroll view                                                      | `false`                 |
+| `SheetContent`               | `footer`                              | node kept on the bottom edge and above the keyboard                                                 |                         |
+| `SheetContent`               | `stackBehavior`                       | `push`, `switch`, `replace`                                                                         | `push`                  |
 | `SheetContent`               | `snapPoints`, `index`                 | heights in points or percent strings, and the one to open at                                        | content height, 0       |
 | `SheetContent`               | `enableDynamicSizing`                 | add the content height as a snap point                                                              | on without `snapPoints` |
 | `SheetContent`               | `keyboardBlurBehavior`                | `none`, `restore`                                                                                   | `restore`               |
-| `SheetContent`               | `keyboardBehavior`, `topInset`, …     | every other `BottomSheetModal` prop passes through                                                  |                         |
-| `SheetFooter`                | `pinned`                              | keep it at the bottom edge and above the keyboard                                                   | `false`                 |
+| `SheetContent`               | `keyboardBehavior`, `topInset`, …     | every other `BottomSheetModal` prop passes through, except `enableDismissOnClose`, which stays on   |                         |
+| `SheetFooter`                | `View` props                          | stacked actions in the content, scrolling with it                                                   |                         |
 | `SheetList`                  | `FlatList` props                      | virtualised list body                                                                               |                         |
 | `SheetTrigger`, `SheetClose` | `asChild`                             | inject `onPress` into the child                                                                     | `false`                 |
 
@@ -179,13 +187,13 @@ With `snapPoints`, dynamic sizing is off unless you pass `enableDynamicSizing`. 
 
 ## Footers
 
-A plain `SheetFooter` sits in the content and scrolls with it. With `pinned` it renders in the library's footer slot instead. It stays on the bottom edge while the content scrolls under it, and rides on top of the keyboard. You can write it anywhere inside `SheetContent`. It renders outside your tree, so context from between `SheetContent` and the footer does not reach it. The sheet's own context and the text input switch do.
+`SheetFooter` sits in the content and scrolls with it. For actions that must stay put, pass them to `SheetContent` as `footer`. That node renders in the library's footer slot, stays on the bottom edge while the content scrolls under it, and rides on top of the keyboard. It renders outside the sheet body, so a provider you put inside `SheetContent` does not reach it; the sheet's own context and its text input do. The `footer` and `pinnedFooter` slots style the bar.
 
-`scroll` and `SheetList` pad their content by the pinned footer's height, so the last row clears it.
+`scroll` and `SheetList` pad their content by the footer's height, so the last row clears it.
 
 ## The keyboard
 
-Gorhom moves the sheet for the keyboard only when the focused field is its `BottomSheetTextInput`. `SheetContent` and pinned footers provide that input to [Input](/components/input/), [Textarea](/components/textarea/), [InputGroup](/components/input-group/), [SearchBar](/components/search-bar/) and [PasswordInput](/components/password-input/), so you write the usual eoria field. A plain `TextInput` still needs `BottomSheetTextInput` by hand.
+Gorhom moves the sheet for the keyboard only when the focused field is its `BottomSheetTextInput`. `SheetContent` and its `footer` provide that input to [Input](/components/input/), [Textarea](/components/textarea/), [InputGroup](/components/input-group/), [SearchBar](/components/search-bar/) and [PasswordInput](/components/password-input/), so you write the usual eoria field. A plain `TextInput` still needs `BottomSheetTextInput` by hand.
 
 Three props decide what happens:
 
@@ -197,23 +205,29 @@ Three props decide what happens:
 
 A lifted sheet never goes above `topInset`, so pass the safe-area top inset: `topInset={insets.top}`. A sheet taller than the room left keeps its top edge there and loses its bottom behind the keyboard, which is why a list sheet works best at 60 to 70%.
 
-Opening a sheet, or closing it any way but a drag, dismisses the keyboard first.
+Sheet does not dismiss the keyboard for you. A field on the screen behind can keep it open while a sheet opens, so call `Keyboard.dismiss()` before `present()` if your app wants it gone.
 
 ## Dismissal and Android back
 
-Dragging down, tapping the backdrop, Android back, the VoiceOver escape gesture, `SheetClose`, the ref and `open` all close the sheet. Everything except the drag asks through `onOpenChange(false)` first, so a controlled sheet can refuse by keeping `open` true. `dismissable={false}` removes the drag and the backdrop. Back and escape still ask, as they do for [Dialog](/components/dialog/).
+Dragging down, tapping the backdrop, Android back, the VoiceOver escape gesture, `SheetClose`, the ref and `open` all close the sheet. [After it closes](#after-it-closes) lists which of them a controlled sheet can refuse. `dismissable={false}` removes the drag and the backdrop. Back and escape still ask, as they do for [Dialog](/components/dialog/).
 
-Each open sheet listens for Android back. React Native calls the newest listener first and stops at the first that handles the press. The most recently opened sheet closes, the one under it stays, and the press never reaches the navigator. When the keyboard is up, Android uses the first press to hide it before any listener runs, so the sheet closes on the second.
+Each open sheet listens for Android back. React Native calls the newest listener first and stops at the first that handles the press. The most recently opened sheet closes, the one under it stays, and the press never reaches the navigator. The sheet keeps the listener until its close animation has finished, so a press in that window does nothing. When the keyboard is up, Android uses the first press to hide it before any listener runs, so the sheet closes on the second.
 
 ## Stacked sheets
 
-Opening a sheet while another is open follows `stackBehavior`. The default `switch` lowers the first sheet out of sight and brings it back when the second closes. `push` keeps both visible. `replace` closes the first, which fires its `onOpenChange(false)` and `onDismiss`. A lowered sheet is hidden from screen readers.
+Opening a sheet while another is open follows `stackBehavior`. Sheet defaults to `push`: the first sheet stays open under the second and is on top again when the second closes. Screen readers skip a sheet with another sheet above it, and focus returns to its title when it is on top again.
+
+In `@gorhom/bottom-sheet` 5.2, `switch` and `replace` both dismiss the lower sheet. `switch` is meant to bring it back, but the lower sheet unmounts once it has moved out of sight, so its `onOpenChange(false)` and `onDismiss` fire and it does not return.
 
 ## Accessibility
 
 When the sheet has finished opening, focus moves to `SheetTitle`. Without a title, pass `accessibilityLabel` to `SheetContent`. The grabber becomes a header with that label and takes focus instead. With neither, focus stays where the screen reader left it.
 
 On iOS the layer around the sheet is marked modal, so VoiceOver stays inside, and the escape gesture closes it. The backdrop is a button named by `closeLabel`. The library's own English labels on the backdrop, grabber and container are turned off, so pass translated `closeLabel` and `accessibilityLabel` strings.
+
+## Upgrading
+
+Earlier versions left dynamic sizing on when you passed `snapPoints`, so the content height joined your snap points. It is now off unless you pass `enableDynamicSizing`. A sheet that relied on the extra content-height stop needs `enableDynamicSizing` back, and `index` values written against the merged list need checking. The old default `stackBehavior` was the library's `switch`; it is now `push`.
 
 ## Notes
 

@@ -29,8 +29,8 @@ import { HStack } from '@/components/ui/stack'
 import { Text } from '@/components/ui/text'
 import { toast } from '@/components/ui/toast'
 
-// Ref-driven sheet with a field and a pinned footer, a searchable list stacked on top of it,
-// and focus that waits for the list to finish closing.
+// Ref-driven sheet with a field and a pinned footer, a searchable list pushed on top of it
+// (the note sheet stays underneath), and focus that waits for the list to finish closing.
 function TripNoteSheets() {
   const { theme } = useUnistyles()
   const note = useRef<SheetRef>(null)
@@ -49,7 +49,20 @@ function TripNoteSheets() {
         Note for a stop
       </Button>
       <Sheet ref={note}>
-        <SheetContent>
+        <SheetContent
+          footer={
+            <Button
+              width="full"
+              disabled={!stop || !text}
+              onPress={() => {
+                toast({ title: 'Note saved', description: stop })
+                note.current?.dismiss()
+              }}
+            >
+              Save note
+            </Button>
+          }
+        >
           <SheetHeader>
             <SheetTitle>Trip note</SheetTitle>
             <SheetDescription>
@@ -65,18 +78,6 @@ function TripNoteSheets() {
             value={text}
             onChangeText={setText}
           />
-          <SheetFooter pinned>
-            <Button
-              width="full"
-              disabled={!stop || !text}
-              onPress={() => {
-                toast({ title: 'Note saved', description: stop })
-                note.current?.dismiss()
-              }}
-            >
-              Save note
-            </Button>
-          </SheetFooter>
         </SheetContent>
       </Sheet>
       <Sheet
@@ -84,7 +85,7 @@ function TripNoteSheets() {
         inset="flush"
         onDismiss={() => {
           setQuery('')
-          // The list has finished closing, so the note sheet is back and its field can focus.
+          // The list has finished closing, so the note sheet is on top and its field can focus.
           if (stop) noteField.current?.focus()
         }}
       >

@@ -9,6 +9,7 @@ import {
   useEffect,
   useId,
   useImperativeHandle,
+  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -21,7 +22,6 @@ import {
 import {
   AccessibilityInfo,
   BackHandler,
-  Keyboard,
   Pressable,
   StyleSheet,
   View,
@@ -29,7 +29,13 @@ import {
   type PressableProps,
   type ViewProps,
 } from 'react-native'
-import { Easing } from 'react-native-reanimated'
+import {
+  Easing,
+  runOnJS,
+  useAnimatedReaction,
+  useSharedValue,
+  type SharedValue,
+} from 'react-native-reanimated'
 import {
   BottomSheetBackdrop,
   BottomSheetFlatList,
@@ -97,9 +103,11 @@ export const sheetRecipe = defineSlotRecipe((theme) => ({
     },
     /** Stacked full-width actions, primary first. */
     footer: { gap: theme.space[2] },
-    /** A `pinned` footer. Opaque, so content scrolling under it stays hidden. */
+    /**
+     * Bar around `SheetContent`'s `footer`, on top of the `footer` slot. Opaque, so content
+     * scrolling under it stays hidden.
+     */
     pinnedFooter: {
-      gap: theme.space[2],
       paddingHorizontal: theme.space[6],
       paddingTop: theme.space[3],
       paddingBottom: theme.space[10],
@@ -121,7 +129,27 @@ export const sheetRecipe = defineSlotRecipe((theme) => ({
 type SheetSlots =
   'background' | 'handle' | 'header' | 'title' | 'description' | 'footer' | 'pinnedFooter' | 'list'
 
-/** A value that components outside React's tree position can subscribe to, as Portal does. */
+type Ctx = {
+  open: boolean
+  setOpen: (open: boolean) => void
+  styles: SlotStyles<SheetSlots>
+  titleId: string
+  /** Title node, the focus target once the sheet has opened. */
+  titleRef: RefObject<View | null>
+  modalRef: RefObject<BottomSheetModal | null>
+  onDismissRef: RefObject<(() => void) | undefined>
+  /** Set inside the sheet when `SheetContent` has a `footer`, so lists pad for it. */
+  hasFooter?: boolean
+}
+const SheetContext = createContext<Ctx | null>(null)
+
+function useSheet(part: string) {
+  const ctx = useContext(SheetContext)
+  if (!ctx) throw new Error(`${part} must be rendered inside <Sheet>`)
+  return ctx
+}
+
+/** A value that components rendered by the library can subscribe to, as Portal does. */
 type Store<T> = { get: () => T; set: (next: T) => void; subscribe: (l: () => void) => () => void }
 
 function createStore<T>(initial: T): Store<T> {
@@ -141,25 +169,11 @@ function createStore<T>(initial: T): Store<T> {
   }
 }
 
-type Ctx = {
-  open: boolean
-  setOpen: (open: boolean) => void
-  styles: SlotStyles<SheetSlots>
-  titleId: string
-  /** Title node, the focus target once the sheet has opened. */
-  titleRef: RefObject<View | null>
-  modalRef: RefObject<BottomSheetModal | null>
-  onDismissRef: RefObject<(() => void) | undefined>
-  /** The `pinned` footer, rendered by the library's footer slot. */
-  footer: Store<ReactNode>
-}
-const SheetContext = createContext<Ctx | null>(null)
-
-function useSheet(part: string) {
-  const ctx = useContext(SheetContext)
-  if (!ctx) throw new Error(`${part} must be rendered inside <Sheet>`)
-  return ctx
-}
+/** Open sheets, oldest first. Only the newest is reachable by screen readers. */
+const openSheets = createStore<readonly object[]>([])
+const pushSheet = (token: object) =>
+  openSheets.set([...openSheets.get().filter((t) => t !== token), token])
+const dropSheet = (token: object) => openSheets.set(openSheets.get().filter((t) => t !== token))
 
 /** Methods on the `Sheet` ref. They go through `onOpenChange` like a trigger press does. */
 export type SheetRef = {
@@ -173,7 +187,10 @@ export type SheetProps = RecipeVariants<typeof sheetRecipe> & {
   open?: boolean
   defaultOpen?: boolean
   onOpenChange?: (open: boolean) => void
-  /** Called once the sheet has finished closing, however it was closed. */
+  /**
+   * Called once the sheet has finished closing, however it was closed. Not called when
+   * `Sheet` or `SheetContent` unmounts while the sheet is open.
+   */
   onDismiss?: () => void
   styles?: SlotOverrides<SheetSlots>
   children?: ReactNode
@@ -198,8 +215,9 @@ export const Sheet = forwardRef<SheetRef, SheetProps>(function Sheet(
   const titleRef = useRef<View>(null)
   const modalRef = useRef<BottomSheetModal>(null)
   const onDismissRef = useRef(onDismiss)
-  onDismissRef.current = onDismiss
-  const [footer] = useState(() => createStore<ReactNode>(null))
+  useLayoutEffect(() => {
+    onDismissRef.current = onDismiss
+  })
 
   useImperativeHandle(
     ref,
@@ -213,16 +231,7 @@ export const Sheet = forwardRef<SheetRef, SheetProps>(function Sheet(
 
   return (
     <SheetContext.Provider
-      value={{
-        open,
-        setOpen,
-        styles: s,
-        titleId,
-        titleRef,
-        modalRef,
-        onDismissRef,
-        footer,
-      }}
+      value={{ open, setOpen, styles: s, titleId, titleRef, modalRef, onDismissRef }}
     >
       {children}
     </SheetContext.Provider>
@@ -280,6 +289,7 @@ export type SheetContentProps = Omit<
   | 'backdropComponent'
   | 'footerComponent'
   | 'onDismiss'
+  | 'enableDismissOnClose'
 > & {
   /** Drag down or tap the backdrop to close. Default true. */
   dismissable?: boolean
@@ -292,11 +302,25 @@ export type SheetContentProps = Omit<
   accessibilityLabel?: string
   /** Wrap the content in a scroll view that hands its gesture to the sheet at the top. */
   scroll?: boolean
+  /**
+   * Stays on the bottom edge and above the keyboard while the content scrolls under it.
+   * It renders outside the content, so a provider placed inside the sheet body does not
+   * reach it.
+   */
+  footer?: ReactNode
   style?: ViewProps['style']
   children?: ReactNode
 }
 
 const TIMING = { duration: 220, easing: Easing.out(Easing.cubic) }
+
+type Latest = {
+  open: boolean
+  setOpen: (open: boolean) => void
+  containerComponent?: ComponentType<PropsWithChildren>
+  focus: () => void
+  frameMounted: (mounted: boolean) => void
+}
 
 /**
  * The sheet itself. Without `snapPoints` it sizes to its content. The library portals the
@@ -308,110 +332,161 @@ export function SheetContent({
   closeLabel = 'Close',
   accessibilityLabel,
   scroll = false,
+  footer,
   snapPoints,
+  index: initialIndex = 0,
+  animateOnMount = true,
   enableDynamicSizing = snapPoints == null,
   keyboardBlurBehavior = 'restore',
+  stackBehavior = 'push',
+  animatedIndex: providedIndex,
   containerComponent,
   onChange,
-  onAnimate,
   style,
   children,
   ...rest
 }: SheetContentProps) {
   const ctx = useSheet('SheetContent')
-  const { open, setOpen, styles, modalRef, titleRef, onDismissRef, footer } = ctx
+  const { open, setOpen, styles, modalRef, titleRef, onDismissRef } = ctx
+  const handleRef = useRef<View>(null)
+  const [token] = useState(() => ({}))
 
-  // Latest values for callbacks the library holds on to.
-  const latest = useRef({ open, setOpen, containerComponent, dismissable })
-  latest.current = { open, setOpen, containerComponent, dismissable }
-
-  // `shown`: present() was called and onDismiss has not fired yet.
-  // `started`: the library has begun animating it, so it can take a dismiss().
+  // `shown`: present() was called and the library has not reported the dismissal yet.
+  // `ready`: the library has laid the sheet out, so dismiss() can animate it closed.
   // `closing`: this component asked for the dismissal.
   const shown = useRef(false)
-  const started = useRef(false)
+  const ready = useRef(false)
   const closing = useRef(false)
+  const portal = useRef(false)
+  const unmounted = useRef(false)
   const index = useRef(-1)
-  const handleRef = useRef<View>(null)
-  const [frame] = useState(() => createFrame(latest))
+  // Keeps Android back consumed until the close animation has finished.
+  const [visible, setVisible] = useState(false)
+
+  const focus = useCallback(() => {
+    const target = titleRef.current ?? (accessibilityLabel ? handleRef.current : null)
+    if (target) AccessibilityInfo.sendAccessibilityEvent(target, 'focus')
+  }, [titleRef, accessibilityLabel])
+
+  // Values the library's callbacks read later. Written after commit, never during render.
+  const latest = useRef<Latest>({
+    open,
+    setOpen,
+    containerComponent,
+    focus,
+    frameMounted: () => {},
+  })
+  useLayoutEffect(() => {
+    latest.current = {
+      open,
+      setOpen,
+      containerComponent,
+      focus,
+      frameMounted: (mounted) => {
+        portal.current = mounted
+      },
+    }
+  })
+  const [frame] = useState(() => createFrame(token, latest))
+
+  const present = useCallback(() => {
+    shown.current = true
+    setVisible(true)
+    pushSheet(token)
+    modalRef.current?.present()
+  }, [modalRef, token])
 
   useEffect(() => {
-    if (open && !shown.current) {
-      shown.current = true
-      Keyboard.dismiss()
-      frame.active.set(true)
-      modalRef.current?.present()
-    } else if (!open && shown.current && !closing.current) {
+    if (open && !shown.current) present()
+    else if (!open && shown.current && !closing.current) {
       closing.current = true
-      Keyboard.dismiss()
-      // Before its first frame the library would drop the dismissal and never show the
-      // sheet again, so a close that early waits for `start` below.
-      if (started.current) modalRef.current?.dismiss()
+      // Before layout the library drops a dismissal and never shows the sheet again, so a
+      // close that early waits for `onLaidOut` below.
+      if (ready.current) modalRef.current?.dismiss()
     }
-  }, [open, frame, modalRef])
+  }, [open, present, modalRef])
 
-  const start = useCallback(() => {
-    if (started.current) return
-    started.current = true
-    if (closing.current) modalRef.current?.dismiss()
-  }, [modalRef])
+  // The modal's ref is still attached during layout-effect cleanup, not in a passive one.
+  useLayoutEffect(() => {
+    unmounted.current = false
+    // A remount in Strict Mode keeps the presentation, so it goes back on the stack.
+    if (shown.current) pushSheet(token)
+    const modal = modalRef
+    return () => {
+      unmounted.current = true
+      dropSheet(token)
+      // Once the library has rendered the sheet, close it, or it can stay in the host.
+      // Before that there is nothing on screen to remove.
+      if (shown.current && (ready.current || portal.current)) {
+        closing.current = true
+        modal.current?.dismiss()
+      }
+    }
+  }, [modalRef, token])
 
   // Android back closes the most recently opened sheet. React Native calls the newest
-  // listener first and stops at the first that returns true, so stacked sheets close
-  // top down and the press never reaches the navigator. The keyboard takes the first
-  // press on its own, before any listener runs.
+  // listener first and stops at the first that returns true, so stacked sheets close top
+  // down and the press never reaches the navigator. A press while it is closing is
+  // swallowed. The keyboard takes the first press on its own, before any listener runs.
+  const guarding = open || visible
   useEffect(() => {
-    if (!open) return
+    if (!guarding) return
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      latest.current.setOpen(false)
+      if (latest.current.open) latest.current.setOpen(false)
       return true
     })
     return () => sub.remove()
-  }, [open])
+  }, [guarding])
+
+  // The library reports no callback when it shows a sheet without animating, so readiness
+  // follows the index, which stays -1 until the sheet is laid out.
+  const ownIndex = useSharedValue(-1)
+  const animatedIndex: SharedValue<number> = providedIndex ?? ownIndex
+  const onLaidOut = useCallback(() => {
+    if (!shown.current || ready.current) return
+    ready.current = true
+    if (closing.current) {
+      modalRef.current?.dismiss()
+    } else if (!animateOnMount) {
+      index.current = initialIndex
+      latest.current.focus()
+    }
+  }, [modalRef, animateOnMount, initialIndex])
+  useAnimatedReaction(
+    () => animatedIndex.value > -1,
+    (laidOut, previous) => {
+      if (laidOut && !previous) runOnJS(onLaidOut)()
+    },
+    [animatedIndex, onLaidOut],
+  )
 
   const handleDismiss = useCallback(() => {
     shown.current = false
-    started.current = false
+    ready.current = false
+    portal.current = false
     index.current = -1
-    frame.active.set(false)
+    dropSheet(token)
+    if (unmounted.current) return
+    setVisible(false)
     const requested = closing.current
     closing.current = false
     if (latest.current.open) {
       // Opened again while it was closing: show it again.
-      if (requested) {
-        shown.current = true
-        frame.active.set(true)
-        modalRef.current?.present()
-      } else {
-        // Closed by a drag or by the library, without passing through `open`.
-        latest.current.setOpen(false)
-      }
+      if (requested) present()
+      // Closed by a drag or by the library, without passing through `open`.
+      else latest.current.setOpen(false)
     }
     onDismissRef.current?.()
-  }, [frame, modalRef, onDismissRef])
-
-  const handleAnimate = useCallback<NonNullable<BottomSheetModalProps['onAnimate']>>(
-    (...args) => {
-      start()
-      onAnimate?.(...args)
-    },
-    [start, onAnimate],
-  )
+  }, [token, present, onDismissRef])
 
   const handleChange = useCallback<NonNullable<BottomSheetModalProps['onChange']>>(
     (next, position, type) => {
-      start()
       const previous = index.current
       index.current = next
-      // -1 while mounted means another sheet minimised this one.
-      if (shown.current) frame.active.set(next >= 0)
-      if (next >= 0 && previous < 0) {
-        const target = titleRef.current ?? (accessibilityLabel ? handleRef.current : null)
-        if (target) AccessibilityInfo.sendAccessibilityEvent(target, 'focus')
-      }
+      if (next >= 0 && previous < 0) focus()
       onChange?.(next, position, type)
     },
-    [frame, titleRef, accessibilityLabel, onChange, start],
+    [focus, onChange],
   )
 
   // The library springs by default. A timing keeps the sheet in step with the rest of the kit.
@@ -457,18 +532,29 @@ export function SheetContent({
     [accessibilityLabel, handleStyle],
   )
 
-  const hasFooter = useSyncExternalStore(
-    footer.subscribe,
-    () => footer.get() != null,
-    () => false,
-  )
-  const [Footer] = useState(() => createFooter(footer))
+  const hasFooter = footer != null
+  const inner: Ctx = { ...ctx, hasFooter }
+
+  // The library wants a stable footer component; the node reaches it through a store, so a
+  // new `footer` re-renders the bar without remounting the sheet.
+  const [footerStore] = useState(() => createStore<ReactNode>(null))
+  const [Footer] = useState(() => createFooter(footerStore))
+  const footerNode = hasFooter ? (
+    <SheetContext.Provider value={inner}>
+      <TextInputContext.Provider value={SheetTextInput}>
+        <View style={[styles.footer, styles.pinnedFooter]}>{footer}</View>
+      </TextInputContext.Provider>
+    </SheetContext.Provider>
+  ) : null
+  useLayoutEffect(() => {
+    footerStore.set(footerNode)
+  })
 
   const items = Children.toArray(children)
   const list = items.some((child) => isValidElement(child) && child.type === SheetList)
 
   const body = (
-    <SheetContext.Provider value={ctx}>
+    <SheetContext.Provider value={inner}>
       <TextInputContext.Provider value={SheetTextInput}>
         {list ? (
           // The list is the sheet's scrollable. A BottomSheetView around it would claim that role.
@@ -495,9 +581,12 @@ export function SheetContent({
       ref={modalRef}
       animationConfigs={animationConfigs}
       snapPoints={snapPoints}
+      index={initialIndex}
+      animateOnMount={animateOnMount}
       enableDynamicSizing={enableDynamicSizing}
       enablePanDownToClose={dismissable}
       keyboardBlurBehavior={keyboardBlurBehavior}
+      stackBehavior={stackBehavior}
       backdropComponent={backdrop}
       backgroundStyle={styles.background}
       handleComponent={handle}
@@ -505,9 +594,10 @@ export function SheetContent({
       // The library makes its content one accessible element. Children need their own.
       accessible={false}
       {...rest}
-      containerComponent={frame.Frame}
+      animatedIndex={animatedIndex}
+      enableDismissOnClose
+      containerComponent={frame}
       onChange={handleChange}
-      onAnimate={handleAnimate}
       onDismiss={handleDismiss}
     >
       {body}
@@ -518,27 +608,41 @@ export function SheetContent({
 const LIST_BODY = { flex: 1, paddingBottom: 0 } as const
 
 /**
- * The layer around backdrop and sheet. It marks the sheet modal for VoiceOver, closes it on
- * the escape gesture, and hides a sheet that another one has minimised. The library wants a
- * stable component here, so each SheetContent creates one and feeds it through a store.
+ * The layer around backdrop and sheet. The newest open sheet is modal for VoiceOver and
+ * closes on the escape gesture; a sheet with another one above it is hidden from screen
+ * readers, and gets focus back when it is on top again. The library wants a stable
+ * component here, so each SheetContent creates one.
  */
-function createFrame(
-  latest: RefObject<{
-    setOpen: (open: boolean) => void
-    containerComponent?: ComponentType<PropsWithChildren>
-  }>,
-) {
-  const active = createStore(false)
-  function Frame({ children }: PropsWithChildren) {
-    const on = useSyncExternalStore(active.subscribe, active.get, active.get)
+function createFrame(token: object, latest: RefObject<Latest>) {
+  return function SheetFrame({ children }: PropsWithChildren) {
+    const top = useSyncExternalStore(
+      openSheets.subscribe,
+      () => {
+        const all = openSheets.get()
+        return all[all.length - 1] === token
+      },
+      () => true,
+    )
+    const covered = useRef(false)
+    useLayoutEffect(() => {
+      latest.current.frameMounted(true)
+      return () => latest.current.frameMounted(false)
+    }, [])
+    useEffect(() => {
+      if (!top) covered.current = true
+      else if (covered.current) {
+        covered.current = false
+        latest.current.focus()
+      }
+    }, [top])
     const Outer = latest.current.containerComponent
     const layer = (
       <View
         pointerEvents="box-none"
         style={StyleSheet.absoluteFill}
-        accessibilityViewIsModal={on}
-        accessibilityElementsHidden={!on}
-        importantForAccessibility={on ? 'auto' : 'no-hide-descendants'}
+        accessibilityViewIsModal={top}
+        accessibilityElementsHidden={!top}
+        importantForAccessibility={top ? 'auto' : 'no-hide-descendants'}
         onAccessibilityEscape={() => latest.current.setOpen(false)}
       >
         {children}
@@ -546,11 +650,10 @@ function createFrame(
     )
     return Outer ? <Outer>{layer}</Outer> : layer
   }
-  return { active, Frame }
 }
 
 function createFooter(store: Store<ReactNode>) {
-  return function Footer(props: BottomSheetFooterProps) {
+  return function SheetPinnedFooter(props: BottomSheetFooterProps) {
     const node = useSyncExternalStore(store.subscribe, store.get, store.get)
     return <BottomSheetFooter {...props}>{node}</BottomSheetFooter>
   }
@@ -579,34 +682,8 @@ export function SheetDescription({ style, ...rest }: TextProps) {
   return <Text style={[useSheet('SheetDescription').styles.description, style]} {...rest} />
 }
 
-export type SheetFooterProps = ViewProps & {
-  /**
-   * Keep the footer at the bottom edge of the sheet and above the keyboard, outside the
-   * scrolling content. Write it anywhere inside `SheetContent`; it renders in the library's
-   * footer slot, so context from between the two does not reach it.
-   */
-  pinned?: boolean
-}
-
-export function SheetFooter({ pinned = false, style, ...rest }: SheetFooterProps) {
-  const ctx = useSheet('SheetFooter')
-  const { styles, footer } = ctx
-  const node = pinned ? (
-    <SheetContext.Provider value={ctx}>
-      <TextInputContext.Provider value={SheetTextInput}>
-        <View style={[styles.pinnedFooter, style]} {...rest} />
-      </TextInputContext.Provider>
-    </SheetContext.Provider>
-  ) : null
-  useEffect(() => {
-    if (pinned) footer.set(node)
-  })
-  useEffect(() => {
-    if (!pinned) return
-    return () => footer.set(null)
-  }, [pinned, footer])
-  if (pinned) return null
-  return <View style={[styles.footer, style]} {...rest} />
+export function SheetFooter({ style, ...rest }: ViewProps) {
+  return <View style={[useSheet('SheetFooter').styles.footer, style]} {...rest} />
 }
 
 export type SheetListProps<T> = Omit<FlatListProps<T>, 'decelerationRate' | 'scrollEventThrottle'>
@@ -621,12 +698,7 @@ export function SheetList<T>({
   contentContainerStyle,
   ...rest
 }: SheetListProps<T>) {
-  const { styles, footer } = useSheet('SheetList')
-  const hasFooter = useSyncExternalStore(
-    footer.subscribe,
-    () => footer.get() != null,
-    () => false,
-  )
+  const { styles, hasFooter = false } = useSheet('SheetList')
   const List = BottomSheetFlatList as unknown as ComponentType<
     FlatListProps<T> & { enableFooterMarginAdjustment?: boolean }
   >

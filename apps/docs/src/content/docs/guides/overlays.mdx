@@ -133,13 +133,13 @@ An overlay does not prevent the navigator from removing its route. See [Navigati
 
 ## The keyboard inside a sheet
 
-Gorhom moves a sheet for the keyboard only when the focused field is its `BottomSheetTextInput`. `SheetContent` provides that input to the eoria fields through `TextInputContext`, so Input, Textarea, InputGroup, PasswordInput and SearchBar work as written. A pinned `SheetFooter` stays above the keyboard. The [Sheet page](/components/sheet/#the-keyboard) covers `keyboardBehavior`, `keyboardBlurBehavior` and `android_keyboardInputMode`.
+Gorhom moves a sheet for the keyboard only when the focused field is its `BottomSheetTextInput`. `SheetContent` provides that input to the eoria fields through `TextInputContext`, so Input, Textarea, InputGroup, PasswordInput and SearchBar work as written. A `footer` passed to `SheetContent` stays above the keyboard. The [Sheet page](/components/sheet/#the-keyboard) covers `keyboardBehavior`, `keyboardBlurBehavior` and `android_keyboardInputMode`.
 
 ```tsx
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Sheet, SheetContent, SheetFooter, SheetTitle } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 
 export function AddressSheet({
   open, onOpenChange, address, onAddressChange, onSave,
@@ -153,18 +153,21 @@ export function AddressSheet({
   const insets = useSafeAreaInsets()
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent scroll topInset={insets.top}>
+      <SheetContent
+        scroll
+        topInset={insets.top}
+        footer={
+          <Button width="full" onPress={onSave}>
+            Save address
+          </Button>
+        }
+      >
         <SheetTitle>Delivery address</SheetTitle>
         <Input
           accessibilityLabel="Street address"
           value={address}
           onChangeText={onAddressChange}
         />
-        <SheetFooter pinned>
-          <Button width="full" onPress={onSave}>
-            Save address
-          </Button>
-        </SheetFooter>
       </SheetContent>
     </Sheet>
   )

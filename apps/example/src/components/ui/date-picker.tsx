@@ -164,7 +164,9 @@ export function clampDate(date: Date, minimumDate?: Date, maximumDate?: Date): D
  * options reach the dialog, so it is always the default design with a time zone name, no
  * offset and no neutral button. The picked instant reaches `onPick` clamped to the bounds.
  * A dialog that fails to open, for example with no Activity during a transition, calls
- * `onDismiss`, since nothing is on screen, and then `onError` with the reason.
+ * `onDismiss`, since nothing is on screen, and then `onError` with the reason. The library
+ * also reports an error thrown by `onPick` or `onDismiss` through `onError`. That one reaches
+ * `onError` alone, since the dialog has already closed; without `onError` it is swallowed.
  */
 export function openAndroidPicker(
   step: 'date' | 'time',
@@ -184,10 +186,17 @@ export function openAndroidPicker(
     maximumDate?: Date
     onPick: (date: Date) => void
     onDismiss: () => void
-    /** The native open failed. Runs after `onDismiss`. */
+    /** The native open failed, after `onDismiss`, or `onPick` or `onDismiss` threw. */
     onError?: (error: unknown) => void
   },
 ): () => void {
+  // Whether a pick or a dismissal reached the caller. The library sends a failed open and an
+  // error thrown by those callbacks to the same `onError`, and only a failed open needs closing.
+  let settled = false
+  const dismiss = () => {
+    settled = true
+    onDismiss()
+  }
   DateTimePickerAndroid.open({
     value,
     mode: step,
@@ -197,14 +206,17 @@ export function openAndroidPicker(
     timeZoneName,
     is24Hour,
     minuteInterval,
-    onValueChange: (_event, picked) => onPick(clampDate(picked, minimumDate, maximumDate)),
-    onDismiss,
+    onValueChange: (_event, picked) => {
+      settled = true
+      onPick(clampDate(picked, minimumDate, maximumDate))
+    },
+    onDismiss: dismiss,
     // No neutral button is set. Should one appear anyway, it closes like a cancel.
-    onNeutralButtonPress: onDismiss,
-    // The library catches a failed open and reports it here only, so without this the
-    // caller would wait for a pick or a dismissal that never comes.
+    onNeutralButtonPress: dismiss,
+    // The library catches a failed open and reports it here only, so without the dismissal
+    // the caller would wait for a pick or a dismissal that never comes.
     onError: (error) => {
-      onDismiss()
+      if (!settled) dismiss()
       onError?.(error)
     },
   })

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.3](https://github.com/adamtrip-solutions/eoria/compare/cli-v0.2.2...cli-v0.2.3) (2026-10-03)
+
+
+### Bug Fixes
+
+* **cli:** add --overwrite replaces only the items named ([#55](https://github.com/adamtrip-solutions/eoria/issues/55)) ([e077b85](https://github.com/adamtrip-solutions/eoria/commit/e077b8546b5838dbf9f124429f2923cf42328289))
+* **cli:** find the unistyles import in a custom entry file ([#50](https://github.com/adamtrip-solutions/eoria/issues/50)) ([d708f96](https://github.com/adamtrip-solutions/eoria/commit/d708f96cc86bb2b7a8b9a58405470a4c0babbbbd))
+
 ## [0.2.2](https://github.com/adamtrip-solutions/eoria/compare/cli-v0.2.1...cli-v0.2.2) (2026-10-03)
 
 

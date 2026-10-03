@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import type { TextInput } from 'react-native'
 import { Calendar, Clock, ImageOff } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useUnistyles } from 'react-native-unistyles'
@@ -9,6 +10,7 @@ import { Field, FieldControl, FieldDescription, FieldLabel } from '@/components/
 import { haptic, withHaptic } from '@/components/ui/haptics'
 import { Image } from '@/components/ui/image'
 import { Input } from '@/components/ui/input'
+import { Item, ItemContent, ItemTitle } from '@/components/ui/item'
 import { KeyboardFooter, KeyboardScrollView, KeyboardToolbar } from '@/components/ui/keyboard'
 import {
   Sheet,
@@ -17,12 +19,107 @@ import {
   SheetDescription,
   SheetFooter,
   SheetHeader,
+  SheetList,
   SheetTitle,
   SheetTrigger,
+  type SheetRef,
 } from '@/components/ui/sheet'
+import { SearchBar } from '@/components/ui/search-bar'
 import { HStack } from '@/components/ui/stack'
 import { Text } from '@/components/ui/text'
 import { toast } from '@/components/ui/toast'
+
+// Ref-driven sheet with a field and a pinned footer, a searchable list stacked on top of it,
+// and focus that waits for the list to finish closing.
+function TripNoteSheets() {
+  const { theme } = useUnistyles()
+  const note = useRef<SheetRef>(null)
+  const picker = useRef<SheetRef>(null)
+  const noteField = useRef<TextInput>(null)
+  const [stop, setStop] = useState<string>()
+  const [text, setText] = useState('')
+  const [query, setQuery] = useState('')
+  const matches = useMemo(
+    () => stops.filter((s) => s.toLowerCase().includes(query.trim().toLowerCase())),
+    [query],
+  )
+  return (
+    <>
+      <Button variant="secondary" onPress={() => note.current?.present()}>
+        Note for a stop
+      </Button>
+      <Sheet ref={note}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Trip note</SheetTitle>
+            <SheetDescription>
+              {stop ? `For ${stop}` : 'Pick the stop it belongs to.'}
+            </SheetDescription>
+          </SheetHeader>
+          <Button variant="outline" onPress={() => picker.current?.present()}>
+            {stop ?? 'Choose a stop'}
+          </Button>
+          <Input
+            ref={noteField}
+            placeholder="What to remember"
+            value={text}
+            onChangeText={setText}
+          />
+          <SheetFooter pinned>
+            <Button
+              width="full"
+              disabled={!stop || !text}
+              onPress={() => {
+                toast({ title: 'Note saved', description: stop })
+                note.current?.dismiss()
+              }}
+            >
+              Save note
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+      <Sheet
+        ref={picker}
+        inset="flush"
+        onDismiss={() => {
+          setQuery('')
+          // The list has finished closing, so the note sheet is back and its field can focus.
+          if (stop) noteField.current?.focus()
+        }}
+      >
+        <SheetContent snapPoints={['65%']}>
+          <SheetHeader style={{ paddingHorizontal: theme.space[6] }}>
+            <SheetTitle>Stops</SheetTitle>
+          </SheetHeader>
+          <SearchBar
+            style={{ paddingHorizontal: theme.space[6] }}
+            placeholder="Search stops"
+            value={query}
+            onChangeText={setQuery}
+          />
+          <SheetList
+            data={matches}
+            keyExtractor={(item) => item}
+            renderItem={({ item }) => (
+              <Item
+                accessibilityState={{ selected: item === stop }}
+                onPress={() => {
+                  setStop(item)
+                  picker.current?.dismiss()
+                }}
+              >
+                <ItemContent>
+                  <ItemTitle>{item}</ItemTitle>
+                </ItemContent>
+              </Item>
+            )}
+          />
+        </SheetContent>
+      </Sheet>
+    </>
+  )
+}
 
 const stops = ['Lisbon', 'Évora', 'Monsaraz', 'Mértola', 'Tavira', 'Sagres', 'Aljezur', 'Sines']
 
@@ -117,6 +214,7 @@ export default function NativeScreen() {
               ))}
             </SheetContent>
           </Sheet>
+          <TripNoteSheets />
         </Section>
 
         <Section block title="Haptics">

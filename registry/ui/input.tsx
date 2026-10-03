@@ -1,4 +1,11 @@
-import { forwardRef, useState } from 'react'
+import {
+  createContext,
+  forwardRef,
+  useContext,
+  useState,
+  type ComponentType,
+  type RefAttributes,
+} from 'react'
 import { TextInput, type TextInputProps } from 'react-native'
 import { useUnistyles } from 'react-native-unistyles'
 import { defineSlotRecipe, useRecipe, type RecipeVariants, type SlotOverrides } from '@eoria/core'
@@ -53,6 +60,17 @@ export const inputRecipe = defineSlotRecipe((theme) => ({
   defaultVariants: { size: 'md', focused: false, invalid: false, disabled: false },
 }))
 
+/** A component that renders a native text field and takes TextInput props and ref. */
+export type TextInputComponent = ComponentType<TextInputProps & RefAttributes<TextInput>>
+
+/**
+ * The text field that Input, Textarea and InputGroupInput render. Defaults to
+ * React Native's TextInput. A container with its own keyboard handling
+ * provides a replacement: SheetContent provides the bottom sheet's input, so
+ * any of these fields inside a sheet works with its keyboard handling.
+ */
+export const TextInputContext = createContext<TextInputComponent>(TextInput)
+
 export type InputProps = Omit<TextInputProps, 'editable'> &
   Pick<RecipeVariants<typeof inputRecipe>, 'size'> & {
     invalid?: boolean
@@ -67,8 +85,9 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
   const [focused, setFocused] = useState(false)
   const { theme } = useUnistyles()
   const s = useRecipe(inputRecipe, { size, focused, invalid, disabled }, styles)
+  const Field = useContext(TextInputContext)
   return (
-    <TextInput
+    <Field
       ref={ref}
       style={[s.root, style]}
       editable={!disabled}

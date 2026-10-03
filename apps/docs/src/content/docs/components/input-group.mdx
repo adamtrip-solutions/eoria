@@ -80,6 +80,7 @@ The slots are `input`, `addon`, `addonText`, `icon`, `button`, `buttonStart`, `b
 - Inside a [Field](/components/field/), make the group the child of `FieldControl`. The group passes `nativeID`, `accessibilityLabel`, `accessibilityLabelledBy` and `accessibilityHint` to the input and keeps `invalid` and `disabled` for the frame.
 - In a `ScrollView`, set `keyboardShouldPersistTaps="handled"`. Without it the first tap on a button only dismisses the keyboard.
 - [PasswordInput](/components/password-input/) and [SearchBar](/components/search-bar/) are built from these parts.
+- Inside a [Sheet](/components/sheet/) the input renders the sheet's `BottomSheetTextInput`, picked up from `TextInputContext` in [Input](/components/input/), so the sheet moves for the keyboard.
 
 ## Source
 

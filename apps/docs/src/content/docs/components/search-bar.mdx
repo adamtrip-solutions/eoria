@@ -55,6 +55,7 @@ Every other `TextInput` prop passes through, and the ref points at the `TextInpu
 - Cancel stays while there is text even after the keyboard goes away. Otherwise a tap that dismisses the keyboard would also remove the button under the finger.
 - In a `ScrollView`, set `keyboardShouldPersistTaps="handled"` so clear and Cancel take the first tap.
 - The field has the `search` role. Clear and Cancel are buttons with their own labels.
+- Inside a [Sheet](/components/sheet/) the bar works as written. Its field becomes the sheet's text input, so the sheet lifts with the keyboard. The sheet page has a searchable list example.
 
 ## Source
 

@@ -117,15 +117,15 @@ Portal entries draw in mount order. A newly opened dialog appears above earlier 
 
 ## Dismissal is part of the flow
 
-| Component              | Backdrop                                               | Android back                                                                     | Drag or back gesture                                                            |
-| ---------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Dialog and ActionSheet | Closes unless content has `dismissable={false}`        | Still closes when `dismissable` is false                                         | No drag dismissal. A route's edge-back gesture belongs to the navigator.        |
-| AlertDialog            | Closes only with a mounted `AlertDialogCancel`         | Same rule, otherwise consumes the press                                          | No drag dismissal.                                                              |
-| Sheet                  | Closes unless `SheetContent` has `dismissable={false}` | The wrapper installs no back listener. Handle the controlled state in the route. | Pan down closes when dismissable. This is separate from a route's back gesture. |
-| Popover                | Closes by default                                      | Closes by default                                                                | No drag dismissal. `dismissable={false}` removes both dismissal handlers.       |
-| DropdownMenu           | Closes                                                 | Closes                                                                           | No drag dismissal.                                                              |
-| Tooltip                | No backdrop                                            | No back handler                                                                  | Release the trigger to close.                                                   |
-| Toast                  | No backdrop                                            | No back handler                                                                  | Tap the toast or wait for its timer. `toast.dismiss()` closes all toasts.       |
+| Component              | Backdrop                                               | Android back                                                            | Drag or back gesture                                                            |
+| ---------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Dialog and ActionSheet | Closes unless content has `dismissable={false}`        | Still closes when `dismissable` is false                                | No drag dismissal. A route's edge-back gesture belongs to the navigator.        |
+| AlertDialog            | Closes only with a mounted `AlertDialogCancel`         | Same rule, otherwise consumes the press                                 | No drag dismissal.                                                              |
+| Sheet                  | Closes unless `SheetContent` has `dismissable={false}` | Closes the most recently opened sheet, even when `dismissable` is false | Pan down closes when dismissable. This is separate from a route's back gesture. |
+| Popover                | Closes by default                                      | Closes by default                                                       | No drag dismissal. `dismissable={false}` removes both dismissal handlers.       |
+| DropdownMenu           | Closes                                                 | Closes                                                                  | No drag dismissal.                                                              |
+| Tooltip                | No backdrop                                            | No back handler                                                         | Release the trigger to close.                                                   |
+| Toast                  | No backdrop                                            | No back handler                                                         | Tap the toast or wait for its timer. `toast.dismiss()` closes all toasts.       |
 
 Put cleanup in `onOpenChange`, since backdrop and back dismissal do not call a Cancel button's `onPress`. Disabling `AlertDialogCancel` does not remove it, so it still permits backdrop and Android back requests. To reject those requests while saving, guard `onOpenChange` as in the delete example below.
 
@@ -133,47 +133,45 @@ An overlay does not prevent the navigator from removing its route. See [Navigati
 
 ## The keyboard inside a sheet
 
-Use `BottomSheetTextInput` so the sheet knows which input has focus. `SheetContent` forwards `keyboardBehavior` and `keyboardBlurBehavior` to Gorhom. `scroll` uses its sheet-aware scroll view, which hands a downward gesture back to the sheet at the top.
+Gorhom moves a sheet for the keyboard only when the focused field is its `BottomSheetTextInput`. `SheetContent` provides that input to the eoria fields through `TextInputContext`, so Input, Textarea, InputGroup, PasswordInput and SearchBar work as written. A pinned `SheetFooter` stays above the keyboard. The [Sheet page](/components/sheet/#the-keyboard) covers `keyboardBehavior`, `keyboardBlurBehavior` and `android_keyboardInputMode`.
 
 ```tsx
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
-import { StyleSheet } from 'react-native-unistyles'
-import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Sheet, SheetContent, SheetFooter, SheetTitle } from '@/components/ui/sheet'
 
 export function AddressSheet({
-  open, onOpenChange, address, onAddressChange,
+  open, onOpenChange, address, onAddressChange, onSave,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   address: string
   onAddressChange: (address: string) => void
+  onSave: () => void
 }) {
+  const insets = useSafeAreaInsets()
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent scroll keyboardBehavior="interactive" keyboardBlurBehavior="restore">
+      <SheetContent scroll topInset={insets.top}>
         <SheetTitle>Delivery address</SheetTitle>
-        <BottomSheetTextInput
+        <Input
           accessibilityLabel="Street address"
           value={address}
           onChangeText={onAddressChange}
-          style={styles.input}
         />
+        <SheetFooter pinned>
+          <Button width="full" onPress={onSave}>
+            Save address
+          </Button>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   )
 }
-
-const styles = StyleSheet.create((theme) => ({
-  input: {
-    minHeight: theme.control.md,
-    padding: theme.space[3],
-    borderRadius: theme.radius.control,
-    backgroundColor: theme.colors.muted,
-    color: theme.colors.foreground,
-    fontSize: theme.fontSize.md,
-  },
-}))
 ```
+
+A plain React Native `TextInput` inside a sheet still needs `BottomSheetTextInput` by hand.
 
 For a full-screen form, use [KeyboardScrollView](/components/keyboard/) instead. Mounting `KeyboardProvider` alone does not give a plain input Gorhom's focus handling.
 

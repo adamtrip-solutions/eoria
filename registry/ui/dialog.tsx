@@ -267,6 +267,8 @@ export function DialogClose({
 export type DialogContentProps = ViewProps & {
   /** Tap on the overlay closes the dialog. Default true. */
   dismissable?: boolean
+  /** Read out for the overlay when it closes the dialog. Default `"Close dialog"`. */
+  closeLabel?: string
   children?: ReactNode
 }
 
@@ -278,6 +280,7 @@ export type DialogContentProps = ViewProps & {
  */
 export function DialogContent({
   dismissable = true,
+  closeLabel = 'Close dialog',
   style,
   children,
   ...rest
@@ -296,7 +299,7 @@ export function DialogContent({
           {dismissable ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Close dialog"
+              accessibilityLabel={closeLabel}
               onPress={() => setOpen(false)}
               style={StyleSheet.absoluteFill}
             />

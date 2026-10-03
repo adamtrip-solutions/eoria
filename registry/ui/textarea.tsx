@@ -1,8 +1,8 @@
-import { forwardRef, useState } from 'react'
-import { TextInput, type TextInputProps } from 'react-native'
+import { forwardRef, useContext, useState } from 'react'
+import type { TextInput, TextInputProps } from 'react-native'
 import { useUnistyles } from 'react-native-unistyles'
 import { extendSlotRecipe, useRecipe, type RecipeVariants, type SlotOverrides } from '@eoria/core'
-import { inputRecipe } from '@/components/ui/input'
+import { TextInputContext, inputRecipe } from '@/components/ui/input'
 
 /** Input recipe with multiline sizing. Edits to the Input base flow through. */
 export const textareaRecipe = extendSlotRecipe(inputRecipe, (theme) => ({
@@ -38,8 +38,9 @@ export const Textarea = forwardRef<TextInput, TextareaProps>(function Textarea(
   const [focused, setFocused] = useState(false)
   const { theme } = useUnistyles()
   const s = useRecipe(textareaRecipe, { size, focused, invalid, disabled }, styles)
+  const Field = useContext(TextInputContext)
   return (
-    <TextInput
+    <Field
       ref={ref}
       multiline
       style={[s.root, style]}

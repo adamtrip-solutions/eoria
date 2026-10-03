@@ -1,6 +1,9 @@
 import { isValidElement } from 'react'
 
-// Vitest is not installed here, so stand in for `vi.mock` and keep what it is given.
+// Vitest is not installed here, so `vi.mock` is a stand-in that keeps what it is given. This
+// checks which modules the entry registers and what the factories return. It does not cover
+// Vitest itself: hoisting, setup-file loading, `server.deps.inline`, or ESM resolution of the
+// entry. Those were checked by hand against a packed tarball and real Vitest.
 const mockRegistered: Record<string, () => unknown> = {}
 jest.mock(
   'vitest',

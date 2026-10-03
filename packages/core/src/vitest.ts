@@ -4,10 +4,13 @@
  *
  * Usage in vitest config: `setupFiles: ['@eoria/core/vitest']`, with `@eoria/core` in
  * `server.deps.inline` so its own import of Unistyles reaches the mock too.
+ *
+ * ESM only: package.json exports no `require` condition for it, because Vitest refuses to be
+ * required from CommonJS. Vitest imports setup files as ESM anyway.
  */
 
 import { createElement } from 'react'
-// @ts-expect-error vitest is an optional peer and is not installed in this package.
+// @ts-expect-error vitest is not a dependency of this package, so it has no types here.
 import { vi } from 'vitest'
 import { mockNitroModules, mockUnistyles } from './mock'
 

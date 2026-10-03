@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/adamtrip-solutions/eoria/compare/cli-v0.2.1...cli-v0.2.2) (2026-10-03)
+
+
+### Bug Fixes
+
+* **cli:** workspace package manager, failed installs and expo's worklets plugin ([#44](https://github.com/adamtrip-solutions/eoria/issues/44)) ([0fef48f](https://github.com/adamtrip-solutions/eoria/commit/0fef48f133519b7c9be486e823076d689685a542))
+
 ## [0.2.1](https://github.com/adamtrip-solutions/eoria/compare/cli-v0.2.0...cli-v0.2.1) (2026-09-19)
 
 

@@ -213,7 +213,8 @@ async function inspect(root: string, options: ReadOptions): Promise<Findings> {
   }
 
   const babel = await babelState(root)
-  const pluginLines = `['${UNISTYLES_PLUGIN}', { root: '${srcRoot}' }] and '${WORKLETS_PLUGIN}'`
+  // babel-preset-expo from SDK 54 adds the Worklets plugin, so the config need not list it.
+  const hasWorklets = babel.worklets || babel.presetWorklets
   if (!babel.exists) {
     checks.push(
       problem(
@@ -223,17 +224,20 @@ async function inspect(root: string, options: ReadOptions): Promise<Findings> {
         'Run `eoria init --yes` to write it. Existing files are kept.',
       ),
     )
-  } else if (!babel.unistyles || !babel.worklets) {
+  } else if (!babel.unistyles || !hasWorklets) {
     const absent = [
       ...(babel.unistyles ? [] : [UNISTYLES_PLUGIN]),
-      ...(babel.worklets ? [] : [WORKLETS_PLUGIN]),
+      ...(hasWorklets ? [] : [WORKLETS_PLUGIN]),
     ]
+    const unistylesLine = `['${UNISTYLES_PLUGIN}', { root: '${srcRoot}' }]`
     checks.push(
       problem(
         'fail',
         'babel',
         `${BABEL_CONFIG} does not list ${absent.join(' or ')}.`,
-        `Add ${pluginLines} to its plugins, with the Worklets plugin last.`,
+        hasWorklets
+          ? `Add ${unistylesLine} to its plugins.`
+          : `Add ${babel.unistyles ? '' : `${unistylesLine} and `}'${WORKLETS_PLUGIN}' to its plugins, with the Worklets plugin last.`,
       ),
     )
   } else if (babel.workletsLast === false) {
@@ -243,6 +247,13 @@ async function inspect(root: string, options: ReadOptions): Promise<Findings> {
         'babel',
         `${WORKLETS_PLUGIN} is not the last plugin in ${BABEL_CONFIG}.`,
         'Move it to the end of the plugins array. Reanimated asks for that order.',
+      ),
+    )
+  } else if (!babel.worklets) {
+    checks.push(
+      pass(
+        'babel',
+        `${BABEL_CONFIG} lists the Unistyles plugin, and babel-preset-expo adds the Worklets plugin.`,
       ),
     )
   } else {
@@ -363,7 +374,9 @@ export async function runDoctor(
       if (check.id === 'unistyles-file') await ensureUnistylesFile(root, findings.srcRoot)
     }
     if (findings.missingPackages.length > 0) {
-      await installPackages(root, findings.missingPackages)
+      const { code } = await installPackages(root, findings.missingPackages)
+      const failure = code === null ? 'did not start' : code !== 0 ? `exited with ${code}` : null
+      if (failure) log.warn(`Install ${failure}. Run it again by hand.`)
     }
     if (broken.length > 0) {
       findings = await inspect(root, options)

@@ -169,6 +169,7 @@ test('babelState finds the plugins and whether Worklets comes last', async () =>
     unistyles: false,
     worklets: false,
     workletsLast: null,
+    presetWorklets: false,
   })
   const write = (plugins: string) =>
     writeFile(join(root, 'babel.config.js'), `module.exports = { plugins: ${plugins} }\n`)
@@ -189,4 +190,72 @@ test('babelState finds the plugins and whether Worklets comes last', async () =>
 
   await write('[]')
   expect(await babelState(root)).toMatchObject({ exists: true, unistyles: false, worklets: false })
+})
+
+maybe('doctor accepts the Worklets plugin that babel-preset-expo adds from SDK 54', async () => {
+  const root = await project()
+  await quiet(() => init(root, { registry: registryDir, install: false }))
+  const withExpo = (expo: string | undefined) => {
+    const dependencies = Object.fromEntries(REQUIRED_PACKAGES.map((name) => [name, '*']))
+    return writeFile(
+      join(root, 'package.json'),
+      JSON.stringify({
+        name: 'app',
+        dependencies: expo ? { ...dependencies, expo } : dependencies,
+      }),
+    )
+  }
+  const babel = (presets: string, plugins: string) =>
+    writeFile(
+      join(root, 'babel.config.js'),
+      `module.exports = (api) => {\n  api.cache(true)\n  return { presets: ${presets}, plugins: ${plugins} }\n}\n`,
+    )
+  const check = async () => (await runDoctor(root)).checks.find((c) => c.id === 'babel')!
+  const unistylesOnly = "[['react-native-unistyles/plugin', { root: 'src' }]]"
+
+  await withExpo('~54.0.0')
+  await babel("['babel-preset-expo']", unistylesOnly)
+  expect(await check()).toMatchObject({
+    status: 'pass',
+    message:
+      'babel.config.js lists the Unistyles plugin, and babel-preset-expo adds the Worklets plugin.',
+  })
+
+  // The preset adds nothing when told not to.
+  await babel("[['babel-preset-expo', { worklets: false }]]", unistylesOnly)
+  expect(await check()).toMatchObject({
+    status: 'fail',
+    message: 'babel.config.js does not list react-native-worklets/plugin.',
+  })
+
+  // SDK 53 and apps without Expo still need the plugin listed.
+  await babel("['babel-preset-expo']", unistylesOnly)
+  await withExpo('~53.0.0')
+  expect((await check()).status).toBe('fail')
+  await withExpo(undefined)
+  expect((await check()).status).toBe('fail')
+
+  // The installed version counts over a range that names none.
+  await withExpo('*')
+  await mkdir(join(root, 'node_modules/expo'), { recursive: true })
+  await writeFile(
+    join(root, 'node_modules/expo/package.json'),
+    '{"name":"expo","version":"57.0.22"}',
+  )
+  expect((await check()).status).toBe('pass')
+
+  // A Worklets plugin that is listed is still held to coming last.
+  await babel(
+    "['babel-preset-expo']",
+    "['react-native-worklets/plugin', ['react-native-unistyles/plugin', { root: 'src' }]]",
+  )
+  expect((await check()).status).toBe('warn')
+
+  // Without Unistyles the remedy names only the plugin that is missing.
+  await babel("['babel-preset-expo']", '[]')
+  expect(await check()).toMatchObject({
+    status: 'fail',
+    message: 'babel.config.js does not list react-native-unistyles/plugin.',
+    remedy: "Add ['react-native-unistyles/plugin', { root: 'src' }] to its plugins.",
+  })
 })

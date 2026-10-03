@@ -33,6 +33,15 @@ Writes `eoria.json` next to your `package.json`, then sets up what Unistyles nee
 - The peer packages, through `expo install` on Expo projects and your package manager
   otherwise. Pass `--no-install` to only print the command.
 
+The CLI picks the package manager from the `packageManager` field in `package.json`, then from
+the lockfile (`pnpm-workspace.yaml` also counts as pnpm). It looks in the app folder first, then
+in each folder above it, and stops at the first answer or at the folder that holds `.git`. So an
+app inside a pnpm workspace installs with pnpm even though the lockfile sits at the workspace
+root. With no answer it uses npm. `expo install` does its own lookup and finds the same root.
+
+If the install fails, `init` exits with 1. The error lists the files it already wrote, which it
+leaves in place, and the install command to run once you fix the cause.
+
 If a shadcn `components.json` exists, `init` reads its `aliases.ui` so the components land in
 the folder you already use.
 
@@ -51,7 +60,8 @@ A file that already exists is left alone and reported. `add` records a hash of e
 writes, so it can tell "you changed this" from "it was already there". Files it skipped get no
 hash, so `diff` will not pretend to know what they looked like. Pass `--overwrite` to
 replace either. npm dependencies the items declare are installed unless you pass
-`--no-install`.
+`--no-install`. A failed install makes `add` exit with 1, after the files are written. The error
+names them and prints the install command to run again.
 
 ```sh
 npx @eoria/cli add button --dry-run
@@ -234,7 +244,7 @@ The keys keep their names and types between releases, and new ones may appear. `
 `diff` section lists them, and `label` is the text `diff` prints. A sixth value, `unknown`, means the
 registry could not supply the item, so `info` could only check the file against its hash.
 `registry.source` is `flag`, `eoria.json` or `default`. `packageManager` is `pnpm`, `yarn`,
-`bun` or `npm`, read from the lockfile. `blocks.directory` is where block files go, and
+`bun` or `npm`, found the way [`init`](#init) finds it. `blocks.directory` is where block files go, and
 `blocks.exists` stays `false` until you add the first block. Outside a project `config.path`,
 `config.values`, `components` and `blocks` are `null` and `installed` is empty. A package that `package.json` does not list
 is `null`.
@@ -261,7 +271,11 @@ the names are the `id` values in the JSON:
   warns.
 - `babel`. `babel.config.js` lists `react-native-unistyles/plugin` and
   `react-native-worklets/plugin`. Reanimated wants the Worklets plugin last, which is how `init`
-  writes it, so any other order is a warning.
+  writes it, so any other order is a warning. From Expo SDK 54, `babel-preset-expo` adds the
+  Worklets plugin itself when `react-native-worklets` is installed and runs it after your own
+  plugins. A config with that preset and only the Unistyles plugin passes, unless it gives the
+  preset `worklets: false` or `reanimated: false`. `doctor` reads the SDK from the installed
+  `expo` package, or from the range in `package.json`.
 - `peers`. `package.json` lists `@eoria/core` and every peer `init` installs.
 - `installed-files`. Every file recorded in `eoria.json` exists.
 - `registry-dependencies`. Every item that an installed item depends on is installed too.

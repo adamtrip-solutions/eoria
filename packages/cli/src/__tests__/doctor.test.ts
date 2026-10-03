@@ -259,3 +259,74 @@ maybe('doctor accepts the Worklets plugin that babel-preset-expo adds from SDK 5
     remedy: "Add ['react-native-unistyles/plugin', { root: 'src' }] to its plugins.",
   })
 })
+
+test('babelState reads the Worklets options from the active Expo preset entry only', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'eoria-'))
+  await writeFile(join(root, 'package.json'), JSON.stringify({ dependencies: { expo: '~57.0.0' } }))
+  const uni = "['react-native-unistyles/plugin', { root: 'src' }]"
+  const presetWorklets = async (config: string) => {
+    await writeFile(join(root, 'babel.config.js'), config)
+    return (await babelState(root)).presetWorklets
+  }
+
+  // A quoted key turns the plugin off as surely as a bare one.
+  expect(
+    await presetWorklets(
+      `module.exports = { presets: [['babel-preset-expo', { 'worklets': false }]], plugins: [${uni}] }`,
+    ),
+  ).toBe(false)
+  expect(
+    await presetWorklets(
+      `module.exports = { presets: [['expo', { native: { "reanimated": false } }]], plugins: [${uni}] }`,
+    ),
+  ).toBe(false)
+
+  // A commented-out Expo preset is not the active one.
+  expect(
+    await presetWorklets(
+      `module.exports = {\n  // presets: ['babel-preset-expo'],\n  presets: ['module:@react-native/babel-preset'],\n  plugins: [${uni}],\n}`,
+    ),
+  ).toBe(false)
+
+  // `worklets: false` in a comment or in another object says nothing about the preset.
+  expect(
+    await presetWorklets(
+      `module.exports = {\n  // worklets: false, see below\n  presets: ['babel-preset-expo'],\n  plugins: [${uni}],\n}`,
+    ),
+  ).toBe(true)
+  expect(
+    await presetWorklets(
+      `const other = { reanimated: false }\nmodule.exports = {\n  presets: [['babel-preset-expo', { jsxRuntime: 'automatic', worklets: true }]],\n  plugins: [${uni}],\n}`,
+    ),
+  ).toBe(true)
+
+  // Options it cannot read count as a config that needs the plugin listed.
+  expect(
+    await presetWorklets(
+      `module.exports = { presets: [['babel-preset-expo', expoOptions]], plugins: [${uni}] }`,
+    ),
+  ).toBe(false)
+  expect(
+    await presetWorklets(
+      `module.exports = { presets: [['babel-preset-expo', { ...shared }]], plugins: [${uni}] }`,
+    ),
+  ).toBe(false)
+})
+
+test('babelState trusts a declared Expo range only when its lower bound is SDK 54 or later', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'eoria-'))
+  await writeFile(
+    join(root, 'babel.config.js'),
+    "module.exports = { presets: ['babel-preset-expo'], plugins: [['react-native-unistyles/plugin', { root: 'src' }]] }",
+  )
+  const presetWorklets = async (expo: string) => {
+    await writeFile(join(root, 'package.json'), JSON.stringify({ dependencies: { expo } }))
+    return (await babelState(root)).presetWorklets
+  }
+  for (const range of ['54.0.0', '54.x', '^54.0.0', '~54.0.1', '>=54', '57']) {
+    expect(await presetWorklets(range)).toBe(true)
+  }
+  for (const range of ['<54.0.0', '^54.0.0 || ^53.0.0', '~53.0.0', '>53', 'catalog:', '*']) {
+    expect(await presetWorklets(range)).toBe(false)
+  }
+})

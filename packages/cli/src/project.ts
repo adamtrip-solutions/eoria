@@ -66,10 +66,13 @@ export async function usesExpo(root: string): Promise<boolean> {
   return Boolean(pkg?.dependencies?.expo)
 }
 
-/** `expo install` picks SDK-compatible versions, so prefer it when Expo is present. */
+/**
+ * `expo install` picks SDK-compatible versions, so prefer it when Expo is present. Expo only
+ * looks for lockfiles and falls back to npm, so it gets the detected manager as a flag.
+ */
 export async function installCommand(root: string, deps: string[]): Promise<string[]> {
   const pm = detectPackageManager(root)
-  if (await usesExpo(root)) return ['npx', 'expo', 'install', ...deps]
+  if (await usesExpo(root)) return ['npx', 'expo', 'install', `--${pm}`, ...deps]
   return pm === 'npm' ? ['npm', 'install', ...deps] : [pm, 'add', ...deps]
 }
 

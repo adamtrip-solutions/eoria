@@ -73,15 +73,28 @@ test('detectPackageManager stops at the git root and falls back to npm', async (
   expect(await installCommand(join(root, 'repo/app'), ['a'])).toEqual(['npm', 'install', 'a'])
 })
 
-test('Expo apps install through expo install, workspace or not', async () => {
+test('Expo apps install through expo install, told which manager to use', async () => {
+  const expoApp = JSON.stringify({ dependencies: { expo: '~57.0.0' } })
+  // A new workspace has no lockfile yet, which leaves Expo's own lookup on npm.
   const root = await tree({
-    'pnpm-lock.yaml': '',
-    'apps/mobile/package.json': JSON.stringify({ dependencies: { expo: '~57.0.0' } }),
+    'package.json': JSON.stringify({ private: true, packageManager: 'pnpm@11.8.0' }),
+    'pnpm-workspace.yaml': '',
+    'apps/mobile/package.json': expoApp,
   })
   expect(await installCommand(join(root, 'apps/mobile'), ['a'])).toEqual([
     'npx',
     'expo',
     'install',
+    '--pnpm',
+    'a',
+  ])
+
+  const plain = await tree({ 'repo/.git/HEAD': '', 'repo/app/package.json': expoApp })
+  expect(await installCommand(join(plain, 'repo/app'), ['a'])).toEqual([
+    'npx',
+    'expo',
+    'install',
+    '--npm',
     'a',
   ])
 })

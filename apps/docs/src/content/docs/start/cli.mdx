@@ -37,7 +37,9 @@ The CLI picks the package manager from the `packageManager` field in `package.js
 the lockfile (`pnpm-workspace.yaml` also counts as pnpm). It looks in the app folder first, then
 in each folder above it, and stops at the first answer or at the folder that holds `.git`. So an
 app inside a pnpm workspace installs with pnpm even though the lockfile sits at the workspace
-root. With no answer it uses npm. `expo install` does its own lookup and finds the same root.
+root. With no answer it uses npm. On Expo projects the CLI passes its choice to `expo install`
+as `--pnpm`, `--yarn`, `--bun` or `--npm`. Expo's own lookup only reads lockfiles and falls
+back to npm, so a new workspace without a lockfile would otherwise install with npm.
 
 If the install fails, `init` exits with 1. The error lists the files it already wrote, which it
 leaves in place, and the install command to run once you fix the cause.
@@ -273,9 +275,12 @@ the names are the `id` values in the JSON:
   `react-native-worklets/plugin`. Reanimated wants the Worklets plugin last, which is how `init`
   writes it, so any other order is a warning. From Expo SDK 54, `babel-preset-expo` adds the
   Worklets plugin itself when `react-native-worklets` is installed and runs it after your own
-  plugins. A config with that preset and only the Unistyles plugin passes, unless it gives the
-  preset `worklets: false` or `reanimated: false`. `doctor` reads the SDK from the installed
-  `expo` package, or from the range in `package.json`.
+  plugins. A config with that preset and only the Unistyles plugin passes, unless the preset's
+  options, or their `native` or `web` object, set `worklets` or `reanimated` to `false`.
+  `doctor` reads the SDK from the installed `expo` package. Without one it reads the range in
+  `package.json`, and only a single range starting at 54 or later counts, such as `~54.0.0`.
+  If `doctor` cannot read the preset entry or the version, for example options held in a
+  variable, it asks for the Worklets plugin to be listed.
 - `peers`. `package.json` lists `@eoria/core` and every peer `init` installs.
 - `installed-files`. Every file recorded in `eoria.json` exists.
 - `registry-dependencies`. Every item that an installed item depends on is installed too.

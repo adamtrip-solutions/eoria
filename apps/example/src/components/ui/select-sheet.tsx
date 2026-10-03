@@ -552,9 +552,14 @@ export type SelectSheetContentProps<T extends SelectSheetValue = SelectSheetValu
   emptyAction?: { label: string; onPress: (query: string) => void }
   /**
    * Row above the options while the query has no option with the same label. Receives the
-   * trimmed query.
+   * trimmed query. `alwaysShow` keeps it for a query that matches a label, for records whose
+   * labels can repeat.
    */
-  createAction?: { label: (query: string) => string; onPress: (query: string) => void }
+  createAction?: {
+    label: (query: string) => string
+    onPress: (query: string) => void
+    alwaysShow?: boolean
+  }
   /** Read out for the spinner while `loading`. Default `"Loading"`. */
   loadingLabel?: string
   /** Custom row body. The row keeps its press, role, state and selection mark. */
@@ -677,7 +682,7 @@ export function SelectSheetContent<T extends SelectSheetValue = SelectSheetValue
     createAction !== undefined &&
     !loading &&
     trimmed !== '' &&
-    !options.some((o) => fold(o.label) === fold(trimmed))
+    (createAction.alwaysShow === true || !options.some((o) => fold(o.label) === fold(trimmed)))
 
   // The create and empty actions count as a choice: they close the sheet when a row would.
   const afterAction = () => {

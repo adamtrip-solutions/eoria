@@ -140,6 +140,20 @@ The trigger shows the labels of the selected values it can find in `options`. Se
 
 `createAction` adds a row above the options while the trimmed query is not empty and no option has that label, compared without case or accents. The row stays hidden while `loading`, so stale results cannot offer to create a record that exists. `label` builds the text from the query. `emptyAction` puts a button under `emptyText` when no row is left. Both `onPress` callbacks receive the trimmed query.
 
+Some records can share a label, such as two customers called Ana Silva. Set `alwaysShow: true` and the create row stays for any query that is not empty, including one that matches an option. It still hides while `loading`.
+
+```tsx
+<SelectSheetContent
+  title="Customer"
+  searchable
+  createAction={{
+    label: (q) => `Add "${q}"`,
+    onPress: addCustomer,
+    alwaysShow: true,
+  }}
+/>
+```
+
 Both actions count as a choice. They close the sheet when picking a row would, and otherwise clear the query. To show the new option as selected, add it to `options` and set `value` in `onPress`.
 
 ### Custom rows
@@ -188,7 +202,7 @@ Both actions count as a choice. They close the sheet when picking a row would, a
 | `SelectSheetContent` | `searchPlaceholder`, `searchProps`              | SearchBar placeholder and other props, such as `autoFocus`                                         | SearchBar's `Search`              |
 | `SelectSheetContent` | `emptyText`                                     | shown when no row is left                                                                          | `No results`                      |
 | `SelectSheetContent` | `emptyAction`                                   | `{ label, onPress(query) }`                                                                        |                                   |
-| `SelectSheetContent` | `createAction`                                  | `{ label(query), onPress(query) }`                                                                 |                                   |
+| `SelectSheetContent` | `createAction`                                  | `{ label(query), onPress(query), alwaysShow? }`. `alwaysShow` keeps the row when a label matches   |                                   |
 | `SelectSheetContent` | `loadingLabel`                                  | read out for the spinner                                                                           | `Loading`                         |
 | `SelectSheetContent` | `renderOption`                                  | `(option, selected) => ReactNode`, the row body                                                    |                                   |
 | `SelectSheetContent` | `footer`, `doneLabel`                           | pinned node. A multiple select gets a Done button                                                  | Done on multiple, `Done`          |

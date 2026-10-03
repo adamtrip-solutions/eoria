@@ -66,4 +66,4 @@ Omit the name to compare all tracked components; use `--full` for whole-file out
 
 The `installed` entries are content hashes recorded when files were copied. They help distinguish local edits from registry changes, but do not pin a release or retain the original source for a three-way merge. Preserve that history when changing paths, and do not infer an installed API version from a hash.
 
-After changes, run the consuming app's relevant type checks and exercise the affected behavior. Native setup changes need a native build check; overlay and toast changes need a mounted-host check. Report any checks the environment could not run.
+After changes, run the consuming app's relevant type checks and exercise the affected behavior. Unit tests that import copied components or `@eoria/core` should load `@eoria/core/jest` or `@eoria/core/vitest` as a setup file; Vitest also needs `@eoria/core` in `server.deps.inline`. Native setup changes need a native build check; overlay and toast changes need a mounted-host check. Report any checks the environment could not run.

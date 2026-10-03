@@ -127,3 +127,24 @@ module.exports = {
   setupFiles: ['@eoria/core/jest'],
 }
 ```
+
+## Vitest
+
+`@eoria/core/vitest` registers the same mock with `vi.mock`. Add it to `setupFiles` and put
+`@eoria/core` in `server.deps.inline`:
+
+```ts title="vitest.config.ts"
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  test: {
+    setupFiles: ['@eoria/core/vitest'],
+    server: { deps: { inline: ['@eoria/core'] } },
+  },
+})
+```
+
+The inline entry matters. Vitest hands packages in `node_modules` to Node's own loader, and
+`vi.mock` never sees the imports that happen there. Without it, `@eoria/core` loads the real
+Unistyles, which fails on `react-native`. Vitest does not run React Native itself, so mock or
+alias the other native modules your tests reach.

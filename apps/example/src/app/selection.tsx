@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch'
 export default function SelectionScreen() {
   const [checked, setChecked] = useState(true)
   const [on, setOn] = useState(false)
+  const [alerts, setAlerts] = useState([true, false])
   const [plan, setPlan] = useState<string | undefined>('pro')
   return (
     <Screen>
@@ -35,6 +36,25 @@ export default function SelectionScreen() {
         </HStack>
         <Switch size="sm" checked={on} onCheckedChange={setOn} />
         <Switch checked disabled />
+        <HStack gap={2}>
+          <Switch
+            checked={alerts.every(Boolean) ? true : alerts.some(Boolean) ? 'mixed' : false}
+            onCheckedChange={(next) => setAlerts(alerts.map(() => next))}
+            accessibilityLabel="All alerts"
+          />
+          <Label>All alerts</Label>
+        </HStack>
+        {alerts.map((alert, i) => (
+          <HStack key={i} gap={2}>
+            <Switch
+              size="sm"
+              checked={alert}
+              onCheckedChange={(next) => setAlerts(alerts.map((a, j) => (j === i ? next : a)))}
+              accessibilityLabel={`Alert ${i + 1}`}
+            />
+            <Label>Alert {i + 1}</Label>
+          </HStack>
+        ))}
       </Section>
       <Section title="RadioGroup">
         <RadioGroup value={plan} onValueChange={setPlan}>

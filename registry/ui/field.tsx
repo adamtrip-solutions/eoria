@@ -150,7 +150,11 @@ export function FieldLabel({ children, style, ...rest }: LabelProps) {
   const { styles, ids, disabled, setLabelText } = useField('FieldLabel')
   const text = typeof children === 'string' ? children : undefined
   // Share the label text so the control can use it as its accessibilityLabel.
-  useEffect(() => setLabelText(text), [text, setLabelText])
+  // Clear it on unmount so a removed part leaves nothing behind on the control.
+  useEffect(() => {
+    setLabelText(text)
+    return () => setLabelText(undefined)
+  }, [text, setLabelText])
   return (
     <Label nativeID={ids.label} disabled={disabled} style={[styles.label, style]} {...rest}>
       {children}
@@ -169,7 +173,10 @@ export function FieldControl({ children }: { children: ReactElement<Partial<Fiel
 export function FieldDescription({ children, style, ...rest }: TextProps) {
   const { styles, ids, setHintText } = useField('FieldDescription')
   const text = typeof children === 'string' ? children : undefined
-  useEffect(() => setHintText(text), [text, setHintText])
+  useEffect(() => {
+    setHintText(text)
+    return () => setHintText(undefined)
+  }, [text, setHintText])
   return (
     <Text nativeID={ids.description} style={[styles.description, style]} {...rest}>
       {children}
@@ -185,7 +192,10 @@ export function FieldError({ children, style, ...rest }: TextProps) {
   const { styles, ids, invalid, setErrorText } = useField('FieldError')
   const text = typeof children === 'string' ? children : undefined
   const shown = invalid && children !== null && children !== undefined && children !== false
-  useEffect(() => setErrorText(text), [text, setErrorText])
+  useEffect(() => {
+    setErrorText(text)
+    return () => setErrorText(undefined)
+  }, [text, setErrorText])
   useEffect(() => {
     if (shown && text !== undefined) AccessibilityInfo.announceForAccessibility(text)
   }, [shown, text])

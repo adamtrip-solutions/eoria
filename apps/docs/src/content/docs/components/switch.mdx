@@ -20,12 +20,27 @@ import { Switch } from '@/components/ui/switch'
 
 ## Props
 
-| Prop              | Values                       | Default |
-| ----------------- | ---------------------------- | ------- |
-| `checked`         | boolean, required            |         |
-| `onCheckedChange` | `(checked: boolean) => void` |         |
-| `size`            | `sm` 40x24, `md` 51x31       | `md`    |
-| `disabled`        | boolean                      |         |
+| Prop              | Values                         | Default |
+| ----------------- | ------------------------------ | ------- |
+| `checked`         | boolean or `'mixed'`, required |         |
+| `onCheckedChange` | `(checked: boolean) => void`   |         |
+| `size`            | `sm` 40x24, `md` 51x31         | `md`    |
+| `disabled`        | boolean                        |         |
+
+`checked="mixed"` is for a switch that controls a group where only some items are on. The thumb
+rests halfway on the off track and screen readers hear "mixed". A press calls
+`onCheckedChange(true)`.
+
+```tsx
+const all = alerts.every((a) => a.on)
+const some = alerts.some((a) => a.on)
+
+<Switch
+  checked={all ? true : some ? 'mixed' : false}
+  onCheckedChange={(on) => setAlerts(alerts.map((a) => ({ ...a, on })))}
+  accessibilityLabel="All alerts"
+/>
+```
 
 The thumb travel is computed from the recipe with `getStyleValue`, so resizing the track in an extension keeps the thumb aligned. The thumb takes `primaryForeground` when on, so it stays visible on light primaries in dark mode.
 

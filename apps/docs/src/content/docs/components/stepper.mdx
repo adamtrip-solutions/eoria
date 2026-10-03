@@ -52,7 +52,7 @@ A press moves the value by one `step`. Holding a button for 400 ms starts a repe
 
 The value is set in tabular figures with a minimum width, so the buttons hold still while the digits change. Steps such as 0.1 are rounded to the decimals of `step` and `min`, so 0.1 plus 0.2 shows 0.3.
 
-For screen readers the whole control is one `adjustable` element. It reports `formatValue(value)` as its value and answers the increment and decrement actions by one `step`. The two buttons are for touch only. Give the Stepper an `accessibilityLabel`. The defaults of 0 to 100 follow UIStepper.
+For screen readers the whole control is one `adjustable` element. It reports `formatValue(value)` as its value and answers the increment and decrement actions by one `step`. When disabled it does not offer those actions and ignores them. The two buttons are for touch only. Give the Stepper an `accessibilityLabel`. The defaults of 0 to 100 follow UIStepper.
 
 The minus and plus are drawn with bars from the `glyph` slot, so the file has no icon dependency. Buttons under 44pt get `hitSlop` upwards, downwards and outwards.
 

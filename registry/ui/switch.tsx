@@ -55,11 +55,14 @@ export const switchRecipe = defineSlotRecipe((theme) => ({
 
 export type SwitchProps = Omit<PressableProps, 'style' | 'onPress' | 'children'> &
   Pick<RecipeVariants<typeof switchRecipe>, 'size'> & {
-    checked: boolean
+    /** `'mixed'` rests the thumb halfway, for a switch that stands for a partly on group. */
+    checked: boolean | 'mixed'
     onCheckedChange?: (checked: boolean) => void
     disabled?: boolean
     styles?: SlotOverrides<'thumb' | 'rootDisabled'>
   }
+
+const progressOf = (checked: boolean | 'mixed') => (checked === 'mixed' ? 0.5 : checked ? 1 : 0)
 
 export function Switch({
   checked,
@@ -70,15 +73,18 @@ export function Switch({
   hitSlop = 8,
   ...rest
 }: SwitchProps) {
-  const s = useRecipe(switchRecipe, { checked, size }, styles)
+  const s = useRecipe(switchRecipe, { checked: checked === true, size }, styles)
   const travel =
     (getStyleValue(s.root, 'width') as number) -
     (getStyleValue(s.thumb, 'width') as number) -
     2 * (getStyleValue(s.root, 'padding') as number)
 
-  const progress = useSharedValue(checked ? 1 : 0)
+  const progress = useSharedValue(progressOf(checked))
   useEffect(() => {
-    progress.value = withTiming(checked ? 1 : 0, { duration: 120, easing: Easing.out(Easing.quad) })
+    progress.value = withTiming(progressOf(checked), {
+      duration: 120,
+      easing: Easing.out(Easing.quad),
+    })
   }, [checked, progress])
 
   const thumbStyle = useAnimatedStyle(() => ({
@@ -91,7 +97,8 @@ export function Switch({
       accessibilityState={{ checked, disabled: disabled === true }}
       disabled={disabled}
       hitSlop={hitSlop}
-      onPress={() => onCheckedChange?.(!checked)}
+      // A mixed switch turns on.
+      onPress={() => onCheckedChange?.(checked !== true)}
       style={[s.root, disabled && s.rootDisabled]}
       {...rest}
     >

@@ -15,7 +15,7 @@ import {
   ensureBabelConfig,
   ensureThemeImport,
   ensureUnistylesFile,
-  installPackages,
+  installOrFail,
   sourceRoot,
 } from '../setup'
 
@@ -52,10 +52,13 @@ export async function init(root: string, options: InitOptions): Promise<void> {
   await mkdir(resolve(root, config.components), { recursive: true })
   const srcRoot = await sourceRoot(root, config)
 
-  await ensureUnistylesFile(root, srcRoot)
-  await ensureThemeImport(root, srcRoot, config)
-  await ensureBabelConfig(root, srcRoot)
-  await ensureAlias(root, config)
+  const written = [
+    'eoria.json',
+    await ensureUnistylesFile(root, srcRoot),
+    await ensureThemeImport(root, srcRoot, config),
+    await ensureBabelConfig(root, srcRoot),
+    await ensureAlias(root, config),
+  ].filter((file): file is string => file !== undefined)
 
   const missing = await missingDependencies(root, REQUIRED_PACKAGES)
   if (missing.length === 0) {
@@ -63,7 +66,7 @@ export async function init(root: string, options: InitOptions): Promise<void> {
   } else if (options.install === false) {
     log.step(`Install the peers when ready:\n  ${(await installCommand(root, missing)).join(' ')}`)
   } else {
-    await installPackages(root, missing)
+    await installOrFail(root, missing, written)
   }
 
   log.info('')

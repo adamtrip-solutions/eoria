@@ -8,7 +8,7 @@ import { Registry } from '../registry'
 import { installCommand, missingDependencies } from '../project'
 import { CliError, log } from '../log'
 import { printDiff, printFileStatus } from '../print'
-import { installPackages } from '../setup'
+import { installOrFail } from '../setup'
 import { fileStatus } from '../status'
 
 export interface AddOptions {
@@ -164,7 +164,7 @@ export async function add(root: string, names: string[], options: AddOptions): P
     if (options.install === false) {
       log.step(`Install the packages these need:\n  ${plan.installCommand.join(' ')}`)
     } else {
-      await installPackages(root, plan.missingPackages)
+      await installOrFail(root, plan.missingPackages, [...written, 'eoria.json'])
     }
   }
 }

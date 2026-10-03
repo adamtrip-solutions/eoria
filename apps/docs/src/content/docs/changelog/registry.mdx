@@ -32,6 +32,15 @@ lists what was added or changed and when. The packages have their own pages:
 - Date Picker is controlled whenever the `value` key is present, as Select and Combobox are.
   Setting a controlled value back to `undefined` or `null` now clears the field. Before, the
   last picked date came back.
+- A controlled [Stepper](/components/stepper/) steps from the parent's value. A parent holding
+  `value={4}` that ignores changes got 5, 6, 5 from plus, plus, minus, and now gets 5, 5, 3.
+  A held button reads the current `min`, `max`, `step` and `disabled` on every tick, so it
+  stops at a bound the parent narrowed during the hold. The file no longer touches a ref
+  during render.
+- [Button](/components/button/) and [Icon Button](/components/icon-button/) keep a caller's
+  `accessibilityState.busy`. Before, `busy: true` without `loading` was announced as not busy.
+- [Select Sheet](/components/select-sheet/) `createAction` takes `alwaysShow`, which keeps the
+  create row when the query matches an option's label, for records that can share a name.
 
 ## 2026-09-22
 

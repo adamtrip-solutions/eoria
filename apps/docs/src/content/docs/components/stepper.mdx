@@ -48,7 +48,9 @@ export function Quantity() {
 
 ## Notes
 
-A press moves the value by one `step`. Holding a button for 400 ms starts a repeat at 160 ms that shortens by 15% per tick down to 40 ms. It stops on release and at a bound. A button at its bound dims and stops taking presses.
+A press moves the value by one `step`. A step that would pass `min` or `max` lands on it. Holding a button for 400 ms starts a repeat at 160 ms that shortens by 15% per tick down to 40 ms. It stops on release, at a bound and when `disabled` turns on. A button at its bound dims and stops taking presses.
+
+Every press and every repeat tick reads the current `min`, `max` and `step`. A controlled Stepper steps from the `value` the parent last rendered. With `value={4}` and a parent that ignores `onValueChange`, plus, plus, minus reports 5, 5, 3. An uncontrolled Stepper steps from the last value it set, so a fast hold counts every tick even before the screen catches up. A parent that narrows `max` during a hold stops the repeat at the new bound.
 
 The value is set in tabular figures with a minimum width, so the buttons hold still while the digits change. Steps such as 0.1 are rounded to the decimals of `step` and `min`, so 0.1 plus 0.2 shows 0.3.
 

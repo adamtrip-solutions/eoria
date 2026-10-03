@@ -218,7 +218,8 @@ export function createButton<S extends string, V>(recipe: SlotRecipe<S, V>) {
         {...pressableProps}
         accessibilityState={{
           ...accessibilityState,
-          busy: loading,
+          // A caller can report busy work of its own without the spinner.
+          busy: loading || accessibilityState?.busy === true,
           disabled: disabled === true || loading,
         }}
         disabled={disabled === true || loading}

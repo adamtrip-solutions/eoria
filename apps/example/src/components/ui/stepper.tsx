@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   I18nManager,
   Pressable,
@@ -125,25 +125,33 @@ export function Stepper({
   const s = useRecipe(stepperRecipe, { size }, styles)
   const [uncontrolled, setUncontrolled] = useState(defaultValue ?? min)
   const value = clamp(controlled ?? uncontrolled, min, max)
-  const places = Math.max(decimals(step), decimals(min))
 
-  // Latest props for the repeat timer, which outlives the render. `value` moves
-  // ahead of React during a hold so two fast ticks never read the same number.
-  const latest = useRef({ value, controlled, onValueChange })
-  latest.current = { value, controlled, onValueChange }
+  // Committed props for presses and the repeat timer, which outlives the render. Written
+  // after commit, so a render React throws away never reaches the ref. A controlled step
+  // builds on the parent's value, so a parent that rejects a change keeps it.
+  const latest = useRef({ value, controlled, min, max, step, disabled, onValueChange })
+  useLayoutEffect(() => {
+    latest.current = { value, controlled, min, max, step, disabled, onValueChange }
+  })
+  // Uncontrolled, the stepper owns the value: the last one it set, before React commits it,
+  // so hold ticks that outpace renders still add up. Only `stepBy` writes it.
+  const own = useRef(uncontrolled)
 
-  const stepBy = useCallback(
-    (direction: 1 | -1) => {
-      const l = latest.current
-      const next = clamp(Number((l.value + direction * step).toFixed(places)), min, max)
-      if (next === l.value) return false
-      l.value = next
-      if (l.controlled === undefined) setUncontrolled(next)
-      l.onValueChange?.(next)
-      return true
-    },
-    [min, max, step, places],
-  )
+  const stepBy = useCallback((direction: 1 | -1) => {
+    const l = latest.current
+    if (l.disabled) return false
+    const uncontrolledMode = l.controlled === undefined
+    const from = uncontrolledMode ? clamp(own.current, l.min, l.max) : l.value
+    const places = Math.max(decimals(l.step), decimals(l.min))
+    const next = clamp(Number((from + direction * l.step).toFixed(places)), l.min, l.max)
+    if (next === from) return false
+    if (uncontrolledMode) {
+      own.current = next
+      setUncontrolled(next)
+    }
+    l.onValueChange?.(next)
+    return true
+  }, [])
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const stop = useCallback(() => {
@@ -153,7 +161,7 @@ export function Stepper({
   const repeat = (direction: 1 | -1) => {
     let interval = REPEAT_START
     const tick = () => {
-      // Stops by itself at a bound.
+      // Reads the latest bounds each time, so it stops at a bound or when disabled.
       if (!stepBy(direction)) return stop()
       interval = Math.max(REPEAT_FLOOR, interval * REPEAT_ACCELERATION)
       timer.current = setTimeout(tick, interval)

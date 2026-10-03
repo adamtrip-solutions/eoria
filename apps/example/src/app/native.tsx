@@ -232,6 +232,8 @@ function SelectSheetDemos() {
               setGuests((list) => [...list, created])
               setGuest(created.value)
             },
+            // Two guests can share a name, so the row stays when the search matches one.
+            alwaysShow: true,
           }}
         />
       </SelectSheet>

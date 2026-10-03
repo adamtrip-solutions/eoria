@@ -43,7 +43,7 @@ import { Plus } from 'lucide-react-native'
 
 `style` is not accepted. Use `styles={{ root: … }}` so overrides go through the recipe.
 
-`loading` is for a press that starts work, such as a form submit. The button keeps its colours, which `disabled` does not, and a screen reader hears it as busy. It uses the platform spinner, so Button needs no extra package.
+`loading` is for a press that starts work, such as a form submit. The button keeps its colours, which `disabled` does not, and a screen reader hears it as busy. It uses the platform spinner, so Button needs no extra package. `accessibilityState={{ busy: true }}` without `loading` is announced as busy too, with no spinner and presses still allowed.
 
 ```tsx
 <Button loading={saving} onPress={save}>

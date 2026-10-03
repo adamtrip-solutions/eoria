@@ -20,7 +20,7 @@ lists what was added or changed and when. The packages have their own pages:
 - `Toaster` takes `dismissHint`, the screen-reader hint for tapping a toast, so it can be
   translated. The default is still `"Dismisses this notification"`.
 - A toast action closes the toast before it calls `onPress`, so an `onPress` that throws no
-  longer leaves the toast up. The action has a `hitSlop` that brings its 36pt height to 44pt.
+  longer leaves the toast up. The action is at least 36pt wide as well as tall, and a `hitSlop` brings it to 44pt.
 - Each toast is announced once. Under Strict Mode the announcement used to run twice.
 - [Chip](/components/chip/) takes `labelProps` for its string label, such as
   `{ numberOfLines: 1 }`. [Date Time Chips](/components/date-time-chips/) triggers pass it on.

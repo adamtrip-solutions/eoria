@@ -60,6 +60,8 @@ export const toastRecipe = defineSlotRecipe((theme) => ({
     action: {
       paddingHorizontal: theme.space[3],
       minHeight: 36,
+      minWidth: 36,
+      alignItems: 'center',
       justifyContent: 'center',
       borderRadius: theme.radius.full,
       backgroundColor: theme.colors.background,
@@ -182,11 +184,12 @@ function ToastItem({
   const { id, title, description, icon, action } = record
   // Live regions are Android-only and do not fire on mount, so announce explicitly.
   useEffect(() => {
-    if (announced.has(id)) return
+    // Skip a toast dismissed before this effect ran, so its id is never left in the set.
+    if (announced.has(id) || !records.some((t) => t.id === id)) return
     announced.add(id)
     AccessibilityInfo.announceForAccessibility(description ? `${title}. ${description}` : title)
   }, [id, title, description])
-  // The action is shorter than a touch target. The slop makes up the difference.
+  // The action is shorter and narrower than a touch target. The slop makes up the difference.
   const actionHeight = (getStyleValue(styles.action, 'minHeight') as number | undefined) ?? 0
   const slop = Math.max(0, Math.ceil((MIN_TARGET - actionHeight) / 2))
   return (
@@ -218,7 +221,7 @@ function ToastItem({
       {action ? (
         <Pressable
           accessibilityRole="button"
-          hitSlop={{ top: slop, bottom: slop }}
+          hitSlop={slop}
           onPress={() => {
             // Closes first, so an action that throws does not leave the toast up.
             dismiss(id)

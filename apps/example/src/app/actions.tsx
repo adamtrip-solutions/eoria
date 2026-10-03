@@ -4,6 +4,7 @@ import {
   Bell,
   Copy,
   Heart,
+  Lock,
   Pencil,
   Plus,
   SearchX,
@@ -237,6 +238,9 @@ export default function ActionsScreen() {
           autoComplete="new-password"
           textContentType="newPassword"
         />
+        <PasswordInput placeholder="With a lock">
+          <InputGroupAddon icon={<Lock />} />
+        </PasswordInput>
         <PasswordInput invalid defaultValue="short" />
         <PasswordInput disabled placeholder="Disabled" />
       </Section>

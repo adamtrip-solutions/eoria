@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react'
+import { forwardRef, useState, type ReactElement, type ReactNode } from 'react'
 import type { TextInput } from 'react-native'
 import { Eye, EyeOff } from 'lucide-react-native'
 import {
@@ -10,7 +10,10 @@ import {
   type InputGroupProps,
 } from '@/components/ui/input-group'
 
-export type PasswordInputProps = Omit<InputGroupInputProps, 'secureTextEntry' | 'style'> &
+export type PasswordInputProps = Omit<
+  InputGroupInputProps,
+  'secureTextEntry' | 'style' | 'children'
+> &
   Pick<InputGroupProps, 'size' | 'invalid' | 'disabled' | 'styles' | 'style'> & {
     /** Whether the characters show. Leave it out and the toggle keeps its own state. */
     visible?: boolean
@@ -20,11 +23,21 @@ export type PasswordInputProps = Omit<InputGroupInputProps, 'secureTextEntry' | 
     showLabel?: string
     /** Read out for the toggle while the password shows. */
     hideLabel?: string
+    /** Toggle icon while the password is hidden. Any element accepting `size` and `color`. */
+    showIcon?: ReactElement<{ size?: number; color?: string }>
+    /** Toggle icon while the password shows. */
+    hideIcon?: ReactElement<{ size?: number; color?: string }>
+    /**
+     * `InputGroupAddon` elements, such as a lock icon. They go into the group, which puts each
+     * on its `align` edge. An `end` addon sits before the toggle.
+     */
+    children?: ReactNode
   }
 
 /**
  * Secure field with a reveal toggle, built from the InputGroup parts. It has
- * no recipe of its own; `styles` and `style` go to the group. The autofill
+ * no recipe of its own; `styles` and `style` go to the group, and children go
+ * in as addons. The autofill
  * hints default to an existing password, so pass `autoComplete="new-password"`
  * and `textContentType="newPassword"` on a sign-up form.
  */
@@ -40,6 +53,9 @@ export const PasswordInput = forwardRef<TextInput, PasswordInputProps>(function 
     onVisibleChange,
     showLabel = 'Show password',
     hideLabel = 'Hide password',
+    showIcon = <Eye />,
+    hideIcon = <EyeOff />,
+    children,
     ...rest
   },
   ref,
@@ -62,10 +78,11 @@ export const PasswordInput = forwardRef<TextInput, PasswordInputProps>(function 
         spellCheck={false}
         {...rest}
       />
+      {children}
       <InputGroupAddon align="end">
         {/* The icon and the label both name what a press does next. */}
         <InputGroupButton
-          icon={visible ? <EyeOff /> : <Eye />}
+          icon={visible ? hideIcon : showIcon}
           accessibilityLabel={visible ? hideLabel : showLabel}
           onPress={toggle}
         />

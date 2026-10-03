@@ -1,9 +1,16 @@
-import { useEffect, useState, type ReactElement, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from 'react'
 import { Platform, View, type ViewProps } from 'react-native'
 import Animated, { Easing, FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated'
 import { useUnistyles } from 'react-native-unistyles'
 import DateTimePicker from '@react-native-community/datetimepicker'
-import { defineSlotRecipe, useRecipe, type SlotOverrides } from '@eoria/core'
+import { defineSlotRecipe, useRecipe, type SlotOverrides, type SlotStyles } from '@eoria/core'
 import { Chip, type ChipProps } from '@/components/ui/chip'
 import {
   clampDate,
@@ -17,16 +24,30 @@ import {
  * other: the system calendar for the date and the wheels for the time on iOS, the system
  * dialog on Android, which has no picker to show inline. Changes apply as the user picks;
  * there is no Done step. Content passed as children sits between the chips and the picker.
+ *
+ * `DateTimeChips` lays the parts out for you. For your own layout, put a
+ * `DateTimeChipsTrigger` per section and a `DateTimeChipsPicker` anywhere inside a
+ * `DateTimeChipsRoot`.
  */
 export const dateTimeChipsRecipe = defineSlotRecipe((theme) => ({
   slots: {
     root: { gap: theme.space[3] },
-    /** The row holding both chips. */
+    /** The row holding both chips in `DateTimeChips`. The parts leave the row to you. */
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.space[2] },
     /** Passed to each Chip's `root`. */
     chip: {},
     /** Passed to each Chip's `label`. Tabular digits keep the width steady while the time changes. */
     chipLabel: { fontVariant: ['tabular-nums'] },
+    /** Passed to each Chip's `icon`, which reads `width` as the size and `color` as the colour. */
+    chipIcon: {},
+    /** The date chip's `root`, after `chip`. */
+    dateChip: {},
+    /** The time chip's `root`, after `chip`. */
+    timeChip: {},
+    /** The open chip's `root`, `label` and `icon`. Merged last, so it wins over the slots above. */
+    chipSelected: {},
+    chipLabelSelected: {},
+    chipIconSelected: {},
     /** Wraps the iOS picker. */
     picker: { alignItems: 'center' },
   },
@@ -34,7 +55,17 @@ export const dateTimeChipsRecipe = defineSlotRecipe((theme) => ({
   defaultVariants: {},
 }))
 
-type DateTimeChipsSlots = 'chips' | 'chip' | 'chipLabel' | 'picker'
+type DateTimeChipsSlots =
+  | 'chips'
+  | 'chip'
+  | 'chipLabel'
+  | 'chipIcon'
+  | 'dateChip'
+  | 'timeChip'
+  | 'chipSelected'
+  | 'chipLabelSelected'
+  | 'chipIconSelected'
+  | 'picker'
 export type DateTimeChipsSection = 'date' | 'time'
 
 // Same motion as collapsible.tsx.
@@ -44,7 +75,28 @@ const EASING = Easing.out(Easing.cubic)
 // not override, so this makes it fill the row, as in date-picker.tsx.
 const FILL = { minWidth: '100%' } as const
 
-export type DateTimeChipsProps = Omit<ViewProps, 'children'> &
+type Ctx = Pick<ChipProps, 'variant' | 'size'> &
+  DatePickerNativeOptions & {
+    styles: SlotStyles<DateTimeChipsSlots>
+    value: Date
+    onValueChange?: (date: Date) => void
+    expanded: DateTimeChipsSection | null
+    setExpanded: (section: DateTimeChipsSection | null) => void
+    minimumDate?: Date
+    maximumDate?: Date
+    labels: Record<DateTimeChipsSection, string>
+    texts: Record<DateTimeChipsSection, string>
+    disabled: boolean
+  }
+const DateTimeChipsContext = createContext<Ctx | null>(null)
+
+function useDateTimeChips(part: string) {
+  const ctx = useContext(DateTimeChipsContext)
+  if (!ctx) throw new Error(`${part} must be rendered inside <DateTimeChipsRoot>`)
+  return ctx
+}
+
+export type DateTimeChipsRootProps = Omit<ViewProps, 'children'> &
   Pick<ChipProps, 'variant' | 'size'> &
   DatePickerNativeOptions & {
     value: Date
@@ -63,16 +115,17 @@ export type DateTimeChipsProps = Omit<ViewProps, 'children'> &
     formatDate?: (date: Date) => string
     /** Text of the time chip. Defaults to `formatDateValue` with the same locale, zone and clock. */
     formatTime?: (date: Date) => string
-    /** Any element accepting `size` and `color` props, e.g. a lucide calendar icon. */
-    dateIcon?: ReactElement<{ size?: number; color?: string }>
-    timeIcon?: ReactElement<{ size?: number; color?: string }>
     disabled?: boolean
-    /** Shown under the chips, above the open picker. */
+    /** The triggers, the picker and anything you lay out around them. */
     children?: ReactNode
     styles?: SlotOverrides<DateTimeChipsSlots>
   }
 
-export function DateTimeChips({
+/**
+ * Holds the value and the open section, and opens the Android dialog. Renders a View that
+ * resizes with a layout transition when the picker opens or closes.
+ */
+export function DateTimeChipsRoot({
   value,
   onValueChange,
   expanded: controlled,
@@ -84,8 +137,6 @@ export function DateTimeChips({
   timeLabel = 'Time',
   formatDate,
   formatTime,
-  dateIcon,
-  timeIcon,
   variant,
   size,
   disabled = false,
@@ -98,9 +149,8 @@ export function DateTimeChips({
   style,
   children,
   ...rest
-}: DateTimeChipsProps) {
+}: DateTimeChipsRootProps) {
   const s = useRecipe(dateTimeChipsRecipe, {}, styles)
-  const { theme, rt } = useUnistyles()
   const [uncontrolled, setUncontrolled] = useState(defaultExpanded)
   // `null` is a controlled value too: nothing open.
   const expanded = disabled ? null : controlled !== undefined ? controlled : uncontrolled
@@ -130,69 +180,174 @@ export function DateTimeChips({
   }, [expanded])
 
   const options = { locale, timeZoneName, is24Hour }
-  const dateText = formatDate ? formatDate(value) : formatDateValue(value, 'date', options)
-  const timeText = formatTime ? formatTime(value) : formatDateValue(value, 'time', options)
-  const chip = (
-    section: DateTimeChipsSection,
-    label: string,
-    text: string,
-    icon: ChipProps['icon'],
-  ) => (
+  const texts = {
+    date: formatDate ? formatDate(value) : formatDateValue(value, 'date', options),
+    time: formatTime ? formatTime(value) : formatDateValue(value, 'time', options),
+  }
+  return (
+    <DateTimeChipsContext.Provider
+      value={{
+        styles: s,
+        value,
+        onValueChange,
+        expanded,
+        setExpanded,
+        minimumDate,
+        maximumDate,
+        labels: { date: dateLabel, time: timeLabel },
+        texts,
+        variant,
+        size,
+        disabled,
+        locale,
+        timeZoneName,
+        is24Hour,
+        minuteInterval,
+        display,
+      }}
+    >
+      <Animated.View
+        layout={LinearTransition.duration(DURATION).easing(EASING)}
+        style={[s.root, style]}
+        {...rest}
+      >
+        {children}
+      </Animated.View>
+    </DateTimeChipsContext.Provider>
+  )
+}
+
+export type DateTimeChipsTriggerProps = Omit<
+  ChipProps,
+  'children' | 'value' | 'selected' | 'onDismiss' | 'dismissLabel'
+> & {
+  /** Which value the chip shows and which picker it opens. */
+  section: DateTimeChipsSection
+}
+
+/**
+ * The chip for one section, a Chip that shows the formatted value and opens or closes its
+ * picker. `variant` and `size` default to the root's. `styles` are Chip's own slots, merged
+ * after the root's `chip`, `dateChip` and `timeChip` and before its selected slots.
+ */
+export function DateTimeChipsTrigger({
+  section,
+  variant,
+  size,
+  disabled: own,
+  styles,
+  accessibilityState,
+  onPress,
+  ...rest
+}: DateTimeChipsTriggerProps) {
+  const ctx = useDateTimeChips('DateTimeChipsTrigger')
+  const { styles: s, expanded, setExpanded } = ctx
+  const open = expanded === section
+  const text = ctx.texts[section]
+  return (
     <Chip
-      variant={variant}
-      size={size}
-      icon={icon}
-      selected={expanded === section}
-      disabled={disabled}
-      accessibilityLabel={`${label}, ${text}`}
-      accessibilityState={{ expanded: expanded === section }}
-      onPress={() => setExpanded(expanded === section ? null : section)}
-      styles={{ root: s.chip, label: s.chipLabel }}
+      variant={variant ?? ctx.variant}
+      size={size ?? ctx.size}
+      selected={open}
+      disabled={ctx.disabled || own === true}
+      accessibilityLabel={`${ctx.labels[section]}, ${text}`}
+      {...rest}
+      accessibilityState={{ ...accessibilityState, expanded: open }}
+      onPress={(e) => {
+        setExpanded(open ? null : section)
+        onPress?.(e)
+      }}
+      styles={{
+        ...styles,
+        root: [
+          s.chip,
+          section === 'date' ? s.dateChip : s.timeChip,
+          styles?.root,
+          open && s.chipSelected,
+        ],
+        label: [s.chipLabel, styles?.label, open && s.chipLabelSelected],
+        icon: [s.chipIcon, styles?.icon, open && s.chipIconSelected],
+      }}
     >
       {text}
     </Chip>
   )
+}
 
+export type DateTimeChipsPickerProps = Omit<ViewProps, 'children'>
+
+/**
+ * The open section's picker on iOS: the calendar for the date, the wheels for the time.
+ * Renders nothing while closed, and nothing on Android, where the root opens the dialog.
+ */
+export function DateTimeChipsPicker({ style, ...rest }: DateTimeChipsPickerProps) {
+  const ctx = useDateTimeChips('DateTimeChipsPicker')
+  const { theme, rt } = useUnistyles()
+  const { expanded, display, minimumDate, maximumDate, onValueChange } = ctx
+  if (Platform.OS === 'android' || !expanded) return null
   const iosDisplay = display?.ios ?? (expanded === 'date' ? 'inline' : 'spinner')
   return (
     <Animated.View
-      layout={LinearTransition.duration(DURATION).easing(EASING)}
-      style={[s.root, style]}
+      // The calendar and the wheels are different native views.
+      key={expanded}
+      entering={FadeIn.duration(DURATION)}
+      exiting={FadeOut.duration(DURATION / 2)}
+      style={[ctx.styles.picker, style]}
       {...rest}
     >
-      <View style={s.chips}>
-        {chip('date', dateLabel, dateText, dateIcon)}
-        {chip('time', timeLabel, timeText, timeIcon)}
-      </View>
-      {children}
-      {Platform.OS !== 'android' && expanded ? (
-        <Animated.View
-          // The calendar and the wheels are different native views.
-          key={expanded}
-          entering={FadeIn.duration(DURATION)}
-          exiting={FadeOut.duration(DURATION / 2)}
-          style={s.picker}
-        >
-          <DateTimePicker
-            themeVariant={rt.themeName === 'dark' ? 'dark' : 'light'}
-            accentColor={theme.colors.primary}
-            textColor={theme.colors.foreground}
-            style={iosDisplay === 'inline' ? FILL : undefined}
-            accessibilityLabel={expanded === 'date' ? dateLabel : timeLabel}
-            value={value}
-            mode={expanded}
-            display={iosDisplay}
-            minimumDate={minimumDate}
-            maximumDate={maximumDate}
-            locale={locale}
-            timeZoneName={timeZoneName}
-            minuteInterval={minuteInterval}
-            onValueChange={(_event, picked) =>
-              onValueChange?.(clampDate(picked, minimumDate, maximumDate))
-            }
-          />
-        </Animated.View>
-      ) : null}
+      <DateTimePicker
+        themeVariant={rt.themeName === 'dark' ? 'dark' : 'light'}
+        accentColor={theme.colors.primary}
+        textColor={theme.colors.foreground}
+        style={iosDisplay === 'inline' ? FILL : undefined}
+        accessibilityLabel={ctx.labels[expanded]}
+        value={ctx.value}
+        mode={expanded}
+        display={iosDisplay}
+        minimumDate={minimumDate}
+        maximumDate={maximumDate}
+        locale={ctx.locale}
+        timeZoneName={ctx.timeZoneName}
+        minuteInterval={ctx.minuteInterval}
+        onValueChange={(_event, picked) =>
+          onValueChange?.(clampDate(picked, minimumDate, maximumDate))
+        }
+      />
     </Animated.View>
+  )
+}
+
+function DateTimeChipsRow({ children }: { children: ReactNode }) {
+  const { styles } = useDateTimeChips('DateTimeChips')
+  return <View style={styles.chips}>{children}</View>
+}
+
+export type DateTimeChipsProps = Omit<DateTimeChipsRootProps, 'children'> & {
+  /** Any element accepting `size` and `color` props, e.g. a lucide calendar icon. */
+  dateIcon?: ReactElement<{ size?: number; color?: string }>
+  timeIcon?: ReactElement<{ size?: number; color?: string }>
+  /** Chip's own slots for both chips, such as `body`. Merged as on `DateTimeChipsTrigger`. */
+  chipStyles?: ChipProps['styles']
+  /** Shown under the chips, above the open picker. */
+  children?: ReactNode
+}
+
+/** The chips in a row, then the children, then the picker. */
+export function DateTimeChips({
+  dateIcon,
+  timeIcon,
+  chipStyles,
+  children,
+  ...rest
+}: DateTimeChipsProps) {
+  return (
+    <DateTimeChipsRoot {...rest}>
+      <DateTimeChipsRow>
+        <DateTimeChipsTrigger section="date" icon={dateIcon} styles={chipStyles} />
+        <DateTimeChipsTrigger section="time" icon={timeIcon} styles={chipStyles} />
+      </DateTimeChipsRow>
+      {children}
+      <DateTimeChipsPicker />
+    </DateTimeChipsRoot>
   )
 }

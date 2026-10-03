@@ -6,7 +6,12 @@ import { useUnistyles } from 'react-native-unistyles'
 import { Section } from '@/components/screen'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
-import { DateTimeChips } from '@/components/ui/date-time-chips'
+import {
+  DateTimeChips,
+  DateTimeChipsPicker,
+  DateTimeChipsRoot,
+  DateTimeChipsTrigger,
+} from '@/components/ui/date-time-chips'
 import { Field, FieldControl, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { haptic, withHaptic } from '@/components/ui/haptics'
 import { Image } from '@/components/ui/image'
@@ -34,7 +39,7 @@ import {
   type SelectSheetOption,
   type SelectSheetRef,
 } from '@/components/ui/select-sheet'
-import { HStack } from '@/components/ui/stack'
+import { HStack, VStack } from '@/components/ui/stack'
 import { Text } from '@/components/ui/text'
 import { toast } from '@/components/ui/toast'
 
@@ -329,6 +334,38 @@ export default function NativeScreen() {
           >
             <Text variant="muted">Pickup times are in local time.</Text>
           </DateTimeChips>
+          {/* The parts in a form row: the chips beside the label, the picker full width. */}
+          <DateTimeChipsRoot
+            value={pickup}
+            onValueChange={setPickup}
+            minimumDate={new Date()}
+            minuteInterval={5}
+            styles={{
+              chipSelected: {
+                backgroundColor: theme.colors.accent,
+                borderColor: theme.colors.primary,
+              },
+              chipLabelSelected: { color: theme.colors.foreground },
+              chipIconSelected: { color: theme.colors.primary },
+            }}
+          >
+            <HStack gap={3}>
+              <Clock size={24} color={theme.colors.mutedForeground} />
+              <VStack flex={1} gap={1}>
+                <Text variant="muted">Pickup</Text>
+                <HStack gap={2}>
+                  <DateTimeChipsTrigger
+                    section="date"
+                    icon={<Calendar />}
+                    styles={{ root: { flexGrow: 1, justifyContent: 'center' } }}
+                  />
+                  <DateTimeChipsTrigger section="time" icon={<Clock />} />
+                </HStack>
+              </VStack>
+            </HStack>
+            <Text variant="muted">Pickup times are in local time.</Text>
+            <DateTimeChipsPicker />
+          </DateTimeChipsRoot>
         </Section>
 
         <Section block title="Sheet">

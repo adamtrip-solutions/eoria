@@ -41,6 +41,22 @@ lists what was added or changed and when. The packages have their own pages:
   `accessibilityState.busy`. Before, `busy: true` without `loading` was announced as not busy.
 - [Select Sheet](/components/select-sheet/) `createAction` takes `alwaysShow`, which keeps the
   create row when the query matches an option's label, for records that can share a name.
+- [Date Time Chips](/components/date-time-chips/) comes apart into `DateTimeChipsRoot`,
+  `DateTimeChipsTrigger` and `DateTimeChipsPicker`, so the chips and the picker can sit in
+  different containers, such as chips beside a label and the picker under the whole row.
+  `DateTimeChips` renders as before and is now built from them.
+- Date Time Chips has slots for the open chip, `chipSelected`, `chipLabelSelected` and
+  `chipIconSelected`, which win over `chip`. Before, styling `chip` also restyled the open chip.
+  `dateChip` and `timeChip` style one chip, `chipIcon` reaches the icons, and `chipStyles`
+  reaches Chip's own slots such as `body`.
+- [Password Input](/components/password-input/) takes `InputGroupAddon` children, such as a
+  lock icon at the start, and `showIcon` and `hideIcon` to replace the eyes.
+- [Tabs](/components/tabs/) no longer reads a ref during render, so a copied `tabs.tsx` passes
+  the `react-hooks/refs` lint rule. The indicator moves as before.
+- On Android, [Date Picker](/components/date-picker/) and Date Time Chips close when the system
+  dialog fails to open, for example between Activities. Before, the field stayed open and
+  could not open again. `openAndroidPicker` calls `onDismiss` in that case and takes an
+  optional `onError`.
 
 ## 2026-09-22
 

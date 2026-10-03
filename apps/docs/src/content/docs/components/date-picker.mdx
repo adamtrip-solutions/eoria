@@ -96,6 +96,8 @@ The field is controlled as soon as you pass the `value` key, even as `undefined`
 
 The field sends nothing else to the native picker. On Android that means the default dialog design, with no neutral button.
 
+Android can refuse to open the dialog, for example while the app is between Activities. The field then closes as if the user had dismissed the dialog, and the next press opens it again. In `datetime`, a time dialog that fails to open closes the field without committing the date. The exported `openAndroidPicker` does the same: it calls `onDismiss` and then the optional `onError` with the reason.
+
 | Prop                         | iOS                                       | Android                               |
 | ---------------------------- | ----------------------------------------- | ------------------------------------- |
 | `timeZoneName`               | picker and text                           | both dialogs and text                 |

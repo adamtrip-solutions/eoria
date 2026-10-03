@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type RefObject,
 } from 'react'
 import {
   Pressable,
@@ -141,7 +142,8 @@ type Ctx = {
   variant: Variant
   setValue: (v: string) => void
   styles: SlotStyles<TabsSlots>
-  layouts: Map<string, Layout>
+  /** Trigger positions, read in effects and handlers only. */
+  layouts: RefObject<Map<string, Layout>>
   reportLayout: (value: string, layout: Layout) => void
   layoutVersion: number
 }
@@ -179,17 +181,15 @@ export function Tabs({
     onValueChange?.(next)
   }
   const s = useRecipe(tabsRecipe, { variant }, styles)
-  const layouts = useRef(new Map<string, Layout>()).current
+  // The ref object goes through context, never its contents, so nothing reads it during render.
+  const layouts = useRef(new Map<string, Layout>())
   const [layoutVersion, setLayoutVersion] = useState(0)
-  const reportLayout = useCallback(
-    (v: string, layout: Layout) => {
-      const prev = layouts.get(v)
-      if (prev && prev.x === layout.x && prev.width === layout.width) return
-      layouts.set(v, layout)
-      setLayoutVersion((n) => n + 1)
-    },
-    [layouts],
-  )
+  const reportLayout = useCallback((v: string, layout: Layout) => {
+    const prev = layouts.current.get(v)
+    if (prev && prev.x === layout.x && prev.width === layout.width) return
+    layouts.current.set(v, layout)
+    setLayoutVersion((n) => n + 1)
+  }, [])
   return (
     <TabsContext.Provider
       value={{ value, variant, setValue, styles: s, layouts, reportLayout, layoutVersion }}
@@ -210,7 +210,7 @@ function Indicator() {
   const ready = useRef(false)
 
   useEffect(() => {
-    const target = layouts.get(value)
+    const target = layouts.current.get(value)
     if (!target) return
     if (!ready.current) {
       // First layout: place without animating.

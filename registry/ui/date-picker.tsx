@@ -163,6 +163,8 @@ export function clampDate(date: Date, minimumDate?: Date, maximumDate?: Date): D
  * picker to render inline, so date-time-chips opens it through here too. Only the named
  * options reach the dialog, so it is always the default design with a time zone name, no
  * offset and no neutral button. The picked instant reaches `onPick` clamped to the bounds.
+ * A dialog that fails to open, for example with no Activity during a transition, calls
+ * `onDismiss`, since nothing is on screen, and then `onError` with the reason.
  */
 export function openAndroidPicker(
   step: 'date' | 'time',
@@ -176,11 +178,14 @@ export function openAndroidPicker(
     display,
     onPick,
     onDismiss,
+    onError,
   }: Omit<DatePickerNativeOptions, 'locale'> & {
     minimumDate?: Date
     maximumDate?: Date
     onPick: (date: Date) => void
     onDismiss: () => void
+    /** The native open failed. Runs after `onDismiss`. */
+    onError?: (error: unknown) => void
   },
 ): () => void {
   DateTimePickerAndroid.open({
@@ -196,8 +201,15 @@ export function openAndroidPicker(
     onDismiss,
     // No neutral button is set. Should one appear anyway, it closes like a cancel.
     onNeutralButtonPress: onDismiss,
+    // The library catches a failed open and reports it here only, so without this the
+    // caller would wait for a pick or a dismissal that never comes.
+    onError: (error) => {
+      onDismiss()
+      onError?.(error)
+    },
   })
-  return () => void DateTimePickerAndroid.dismiss(step)
+  // Rejects with no Activity, when there is no dialog to take down anyway.
+  return () => void DateTimePickerAndroid.dismiss(step).catch(() => {})
 }
 
 export type DatePickerProps = Omit<PressableProps, 'style' | 'children' | 'disabled'> &

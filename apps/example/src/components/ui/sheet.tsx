@@ -29,13 +29,7 @@ import {
   type PressableProps,
   type ViewProps,
 } from 'react-native'
-import {
-  Easing,
-  runOnJS,
-  useAnimatedReaction,
-  useSharedValue,
-  type SharedValue,
-} from 'react-native-reanimated'
+import { Easing, runOnJS, useAnimatedReaction, useSharedValue } from 'react-native-reanimated'
 import {
   BottomSheetBackdrop,
   BottomSheetFlatList,
@@ -169,11 +163,17 @@ function createStore<T>(initial: T): Store<T> {
   }
 }
 
-/** Open sheets, oldest first. Only the newest is reachable by screen readers. */
-const openSheets = createStore<readonly object[]>([])
+/**
+ * Presented sheets, in presentation order. The last one is the top: only it is reachable by
+ * screen readers, takes focus and handles Android back. Kept on `globalThis` so a Fast
+ * Refresh does not split it between old and new closures.
+ */
+const shared = globalThis as { __eoriaSheets?: Store<readonly object[]> }
+const openSheets = (shared.__eoriaSheets ??= createStore<readonly object[]>([]))
 const pushSheet = (token: object) =>
   openSheets.set([...openSheets.get().filter((t) => t !== token), token])
 const dropSheet = (token: object) => openSheets.set(openSheets.get().filter((t) => t !== token))
+const isTop = (token: object) => openSheets.get().at(-1) === token
 
 /** Methods on the `Sheet` ref. They go through `onOpenChange` like a trigger press does. */
 export type SheetRef = {
@@ -360,13 +360,13 @@ export function SheetContent({
   const portal = useRef(false)
   const unmounted = useRef(false)
   const index = useRef(-1)
-  // Keeps Android back consumed until the close animation has finished.
-  const [visible, setVisible] = useState(false)
 
+  // Only the top sheet takes focus, so one that finishes opening under another stays quiet.
   const focus = useCallback(() => {
+    if (!isTop(token)) return
     const target = titleRef.current ?? (accessibilityLabel ? handleRef.current : null)
     if (target) AccessibilityInfo.sendAccessibilityEvent(target, 'focus')
-  }, [titleRef, accessibilityLabel])
+  }, [token, titleRef, accessibilityLabel])
 
   // Values the library's callbacks read later. Written after commit, never during render.
   const latest = useRef<Latest>({
@@ -391,7 +391,6 @@ export function SheetContent({
 
   const present = useCallback(() => {
     shown.current = true
-    setVisible(true)
     pushSheet(token)
     modalRef.current?.present()
   }, [modalRef, token])
@@ -424,24 +423,29 @@ export function SheetContent({
     }
   }, [modalRef, token])
 
-  // Android back closes the most recently opened sheet. React Native calls the newest
-  // listener first and stops at the first that returns true, so stacked sheets close top
-  // down and the press never reaches the navigator. A press while it is closing is
-  // swallowed. The keyboard takes the first press on its own, before any listener runs.
-  const guarding = open || visible
+  // Android back belongs to the top sheet, whatever order the listeners were added in. A
+  // sheet listens from presentation until its close animation ends, so a press while it is
+  // closing is swallowed rather than reaching the sheet below or the navigator. The keyboard
+  // takes the first press on its own, before any listener runs.
+  const presented = useSyncExternalStore(
+    openSheets.subscribe,
+    () => openSheets.get().includes(token),
+    () => false,
+  )
   useEffect(() => {
-    if (!guarding) return
+    if (!presented) return
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (!isTop(token)) return false
       if (latest.current.open) latest.current.setOpen(false)
       return true
     })
     return () => sub.remove()
-  }, [guarding])
+  }, [presented, token])
 
   // The library reports no callback when it shows a sheet without animating, so readiness
-  // follows the index, which stays -1 until the sheet is laid out.
-  const ownIndex = useSharedValue(-1)
-  const animatedIndex: SharedValue<number> = providedIndex ?? ownIndex
+  // follows the index, which stays -1 until the sheet is laid out. The value is private, so
+  // a consumer's `animatedIndex` cannot start it above -1; theirs gets a copy.
+  const animatedIndex = useSharedValue(-1)
   const onLaidOut = useCallback(() => {
     if (!shown.current || ready.current) return
     ready.current = true
@@ -453,21 +457,23 @@ export function SheetContent({
     }
   }, [modalRef, animateOnMount, initialIndex])
   useAnimatedReaction(
-    () => animatedIndex.value > -1,
-    (laidOut, previous) => {
-      if (laidOut && !previous) runOnJS(onLaidOut)()
+    () => animatedIndex.value,
+    (next, previous) => {
+      if (providedIndex) providedIndex.value = next
+      if (next > -1 && (previous ?? -1) <= -1) runOnJS(onLaidOut)()
     },
-    [animatedIndex, onLaidOut],
+    [animatedIndex, providedIndex, onLaidOut],
   )
 
   const handleDismiss = useCallback(() => {
+    // One report per presentation, even if the library calls this twice.
+    if (!shown.current) return
     shown.current = false
     ready.current = false
     portal.current = false
     index.current = -1
     dropSheet(token)
     if (unmounted.current) return
-    setVisible(false)
     const requested = closing.current
     closing.current = false
     if (latest.current.open) {
@@ -617,10 +623,7 @@ function createFrame(token: object, latest: RefObject<Latest>) {
   return function SheetFrame({ children }: PropsWithChildren) {
     const top = useSyncExternalStore(
       openSheets.subscribe,
-      () => {
-        const all = openSheets.get()
-        return all[all.length - 1] === token
-      },
+      () => isTop(token),
       () => true,
     )
     const covered = useRef(false)

@@ -211,11 +211,13 @@ Sheet does not dismiss the keyboard for you. A field on the screen behind can ke
 
 Dragging down, tapping the backdrop, Android back, the VoiceOver escape gesture, `SheetClose`, the ref and `open` all close the sheet. [After it closes](#after-it-closes) lists which of them a controlled sheet can refuse. `dismissable={false}` removes the drag and the backdrop. Back and escape still ask, as they do for [Dialog](/components/dialog/).
 
-Each open sheet listens for Android back. React Native calls the newest listener first and stops at the first that handles the press. The most recently opened sheet closes, the one under it stays, and the press never reaches the navigator. The sheet keeps the listener until its close animation has finished, so a press in that window does nothing. When the keyboard is up, Android uses the first press to hide it before any listener runs, so the sheet closes on the second.
+Android back belongs to the top sheet, the one presented last. Each presented sheet listens, but only the top one acts, so the order the listeners were added in does not matter and the press never reaches the sheet below or the navigator. A sheet keeps listening until its close animation has finished, so a press in that window does nothing. When the keyboard is up, Android uses the first press to hide it before any listener runs, so the sheet closes on the second.
 
 ## Stacked sheets
 
-Opening a sheet while another is open follows `stackBehavior`. Sheet defaults to `push`: the first sheet stays open under the second and is on top again when the second closes. Screen readers skip a sheet with another sheet above it, and focus returns to its title when it is on top again.
+Opening a sheet while another is open follows `stackBehavior`. Sheet defaults to `push`: the first sheet stays open under the second and is on top again when the second closes. Screen readers skip a sheet with another sheet above it, and focus returns to its title when it is on top again. A sheet that finishes opening under another one does not take focus.
+
+The order is the order of presentation across the whole app. Sheets from two `BottomSheetModalProvider`s, for example one inside a natively presented modal, are ordered by when they opened, which may not match what is on screen.
 
 In `@gorhom/bottom-sheet` 5.2, `switch` and `replace` both dismiss the lower sheet. `switch` is meant to bring it back, but the lower sheet unmounts once it has moved out of sight, so its `onOpenChange(false)` and `onDismiss` fire and it does not return.
 

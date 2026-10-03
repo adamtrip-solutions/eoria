@@ -117,15 +117,15 @@ Portal entries draw in mount order. A newly opened dialog appears above earlier 
 
 ## Dismissal is part of the flow
 
-| Component              | Backdrop                                               | Android back                                                            | Drag or back gesture                                                            |
-| ---------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Dialog and ActionSheet | Closes unless content has `dismissable={false}`        | Still closes when `dismissable` is false                                | No drag dismissal. A route's edge-back gesture belongs to the navigator.        |
-| AlertDialog            | Closes only with a mounted `AlertDialogCancel`         | Same rule, otherwise consumes the press                                 | No drag dismissal.                                                              |
-| Sheet                  | Closes unless `SheetContent` has `dismissable={false}` | Closes the most recently opened sheet, even when `dismissable` is false | Pan down closes when dismissable. This is separate from a route's back gesture. |
-| Popover                | Closes by default                                      | Closes by default                                                       | No drag dismissal. `dismissable={false}` removes both dismissal handlers.       |
-| DropdownMenu           | Closes                                                 | Closes                                                                  | No drag dismissal.                                                              |
-| Tooltip                | No backdrop                                            | No back handler                                                         | Release the trigger to close.                                                   |
-| Toast                  | No backdrop                                            | No back handler                                                         | Tap the toast or wait for its timer. `toast.dismiss()` closes all toasts.       |
+| Component              | Backdrop                                               | Android back                                                                   | Drag or back gesture                                                            |
+| ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| Dialog and ActionSheet | Closes unless content has `dismissable={false}`        | Still closes when `dismissable` is false                                       | No drag dismissal. A route's edge-back gesture belongs to the navigator.        |
+| AlertDialog            | Closes only with a mounted `AlertDialogCancel`         | Same rule, otherwise consumes the press                                        | No drag dismissal.                                                              |
+| Sheet                  | Closes unless `SheetContent` has `dismissable={false}` | Closes the top sheet, the one presented last, even when `dismissable` is false | Pan down closes when dismissable. This is separate from a route's back gesture. |
+| Popover                | Closes by default                                      | Closes by default                                                              | No drag dismissal. `dismissable={false}` removes both dismissal handlers.       |
+| DropdownMenu           | Closes                                                 | Closes                                                                         | No drag dismissal.                                                              |
+| Tooltip                | No backdrop                                            | No back handler                                                                | Release the trigger to close.                                                   |
+| Toast                  | No backdrop                                            | No back handler                                                                | Tap the toast or wait for its timer. `toast.dismiss()` closes all toasts.       |
 
 Put cleanup in `onOpenChange`, since backdrop and back dismissal do not call a Cancel button's `onPress`. Disabling `AlertDialogCancel` does not remove it, so it still permits backdrop and Android back requests. To reject those requests while saving, guard `onOpenChange` as in the delete example below.
 
